@@ -1,0 +1,23 @@
+{
+  "name": "hexa-merge-e2e-tests",
+  "version": "1.0.0",
+  "description": "Hexa Merge - WebGL 빌드 Playwright E2E 테스트",
+  "private": true,
+  "scripts": {
+    "test": "npx playwright test",
+    "test:headed": "npx playwright test --headed",
+    "test:debug": "npx playwright test --debug",
+    "test:ui": "npx playwright test --ui",
+    "test:hex-grid": "npx playwright test specs/hex-grid.spec.ts",
+    "test:merge": "npx playwright test specs/merge-system.spec.ts",
+    "test:scoring": "npx playwright test specs/scoring.spec.ts",
+    "test:game-state": "npx playwright test specs/game-state.spec.ts",
+    "serve": "npx http-server ../Build/WebGL -p 8080 --cors -c-1",
+    "report": "npx playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "http-server": "^14.1.1",
+    "typescript": "^5.5.0"
+  }
+}
