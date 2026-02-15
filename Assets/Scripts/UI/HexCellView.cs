@@ -4,13 +4,12 @@ namespace HexaMerge.UI
     using HexaMerge.Game;
     using UnityEngine;
     using UnityEngine.UI;
-    using TMPro;
     using System;
 
     public class HexCellView : MonoBehaviour
     {
         [SerializeField] private Image hexBackground;
-        [SerializeField] private TextMeshProUGUI valueText;
+        [SerializeField] private Text valueText;
         [SerializeField] private GameObject crownIcon;
         [SerializeField] private Button button;
         private TileColorConfig colorConfig;
@@ -32,7 +31,7 @@ namespace HexaMerge.UI
             if (hexBackground == null)
                 hexBackground = GetComponent<Image>();
             if (valueText == null)
-                valueText = GetComponentInChildren<TextMeshProUGUI>(true);
+                valueText = GetComponentInChildren<Text>(true);
             if (button == null)
                 button = GetComponent<Button>();
 
@@ -51,6 +50,11 @@ namespace HexaMerge.UI
             {
                 valueText.transform.SetAsLastSibling();
                 valueText.raycastTarget = false;
+                valueText.alignment = TextAnchor.MiddleCenter;
+                valueText.horizontalOverflow = HorizontalWrapMode.Overflow;
+                valueText.verticalOverflow = VerticalWrapMode.Overflow;
+                if (valueText.font == null)
+                    valueText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             }
 
             ShowEmpty();
@@ -147,12 +151,12 @@ namespace HexaMerge.UI
             valueText.text = value.ToString();
             valueText.gameObject.SetActive(true);
 
-            float fontSize;
-            if (value < 10) fontSize = 36f;
-            else if (value < 100) fontSize = 32f;
-            else if (value < 1000) fontSize = 26f;
-            else if (value < 10000) fontSize = 22f;
-            else fontSize = 18f;
+            int fontSize;
+            if (value < 10) fontSize = 36;
+            else if (value < 100) fontSize = 32;
+            else if (value < 1000) fontSize = 26;
+            else if (value < 10000) fontSize = 22;
+            else fontSize = 18;
             valueText.fontSize = fontSize;
         }
 

@@ -4,7 +4,6 @@ namespace HexaMerge.UI
     using HexaMerge.Audio;
     using UnityEngine;
     using UnityEngine.UI;
-    using TMPro;
 
     public class PauseScreen : MonoBehaviour
     {
@@ -14,7 +13,7 @@ namespace HexaMerge.UI
         [SerializeField] private Image soundToggleIcon;
         [SerializeField] private Sprite soundOnSprite;
         [SerializeField] private Sprite soundOffSprite;
-        [SerializeField] private TextMeshProUGUI currentScoreText;
+        [SerializeField] private Text currentScoreText;
 
         private void OnEnable()
         {

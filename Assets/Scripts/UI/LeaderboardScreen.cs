@@ -3,7 +3,6 @@ namespace HexaMerge.UI
     using HexaMerge.Audio;
     using UnityEngine;
     using UnityEngine.UI;
-    using TMPro;
     using System;
     using System.Collections.Generic;
 
@@ -30,7 +29,7 @@ namespace HexaMerge.UI
         [SerializeField] private GameObject entryPrefab;
         [SerializeField] private Button closeButton;
         [SerializeField] private Button clearButton;
-        [SerializeField] private TextMeshProUGUI titleText;
+        [SerializeField] private Text titleText;
         [SerializeField] private int maxEntries = 10;
 
         private List<LeaderboardEntry> entries = new List<LeaderboardEntry>();
@@ -267,13 +266,13 @@ namespace HexaMerge.UI
             spawnedEntries.Clear();
         }
 
-        /// <summary>자식에서 이름으로 TextMeshProUGUI를 찾습니다.</summary>
-        private static TextMeshProUGUI FindChildText(GameObject parent, string childName)
+        /// <summary>자식에서 이름으로 Text를 찾습니다.</summary>
+        private static Text FindChildText(GameObject parent, string childName)
         {
             Transform child = parent.transform.Find(childName);
             if (child != null)
             {
-                return child.GetComponent<TextMeshProUGUI>();
+                return child.GetComponent<Text>();
             }
             return null;
         }

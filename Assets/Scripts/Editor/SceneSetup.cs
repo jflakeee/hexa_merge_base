@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEditor;
-using TMPro;
 
 // Runtime namespaces
 using HexaMerge.Game;
@@ -172,34 +171,34 @@ public static class SceneSetup
         logoLayout.childForceExpandWidth = false;
         logoLayout.childForceExpandHeight = false;
 
-        TextMeshProUGUI logoX = CreateTMPText("LogoX", logoContainer.transform, "X", 48f, White, FontStyles.Bold);
+        Text logoX = CreateTMPText("LogoX", logoContainer.transform, "X", 48f, White, FontStyle.Bold);
         LayoutElement leX = logoX.gameObject.AddComponent<LayoutElement>();
         leX.preferredWidth = 50f;
 
-        TextMeshProUGUI logoUP = CreateTMPText("LogoUP", logoContainer.transform, "UP", 48f, Pink, FontStyles.Bold);
+        Text logoUP = CreateTMPText("LogoUP", logoContainer.transform, "UP", 48f, Pink, FontStyle.Bold);
         LayoutElement leUP = logoUP.gameObject.AddComponent<LayoutElement>();
         leUP.preferredWidth = 80f;
 
         // ---- SCORE label
-        TextMeshProUGUI scoreLabel = CreateTMPText("ScoreLabel", hudRT, "SCORE", 24f, White, FontStyles.Bold);
+        Text scoreLabel = CreateTMPText("ScoreLabel", hudRT, "SCORE", 24f, White, FontStyle.Bold);
         RectTransform scoreLabelRT = scoreLabel.GetComponent<RectTransform>();
         SetAnchored(scoreLabelRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(300f, 40f), new Vector2(0f, -100f));
 
         // ---- Score value
-        TextMeshProUGUI scoreText = CreateTMPText("ScoreText", hudRT, "0", 64f, Pink, FontStyles.Bold);
+        Text scoreText = CreateTMPText("ScoreText", hudRT, "0", 64f, Pink, FontStyle.Bold);
         RectTransform scoreTextRT = scoreText.GetComponent<RectTransform>();
         SetAnchored(scoreTextRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(400f, 80f), new Vector2(0f, -150f));
 
         // ---- HI-SCORE label
-        TextMeshProUGUI hiLabel = CreateTMPText("HiScoreLabel", hudRT, "HI-SCORE", 20f, Grey, FontStyles.Normal);
+        Text hiLabel = CreateTMPText("HiScoreLabel", hudRT, "HI-SCORE", 20f, Grey, FontStyle.Normal);
         RectTransform hiLabelRT = hiLabel.GetComponent<RectTransform>();
         SetAnchored(hiLabelRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(300f, 30f), new Vector2(0f, -230f));
 
         // ---- High score value
-        TextMeshProUGUI hiScoreText = CreateTMPText("HighScoreText", hudRT, "0", 28f, Grey, FontStyles.Normal);
+        Text hiScoreText = CreateTMPText("HighScoreText", hudRT, "0", 28f, Grey, FontStyle.Normal);
         RectTransform hiScoreTextRT = hiScoreText.GetComponent<RectTransform>();
         SetAnchored(hiScoreTextRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(300f, 40f), new Vector2(0f, -265f));
@@ -211,7 +210,7 @@ public static class SceneSetup
                     new Vector2(60f, 60f), new Vector2(50f, -30f));
         Image soundImg = soundBtn.GetComponent<Image>();
         soundImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        TextMeshProUGUI soundLabel = CreateTMPText("Icon", soundBtn.transform, "\u266A", 28f, White, FontStyles.Normal);
+        Text soundLabel = CreateTMPText("Icon", soundBtn.transform, "\u266A", 28f, White, FontStyle.Normal);
         StretchFull(soundLabel.GetComponent<RectTransform>());
 
         // ---- Menu button (right, hexagon-shaped placeholder)
@@ -221,7 +220,7 @@ public static class SceneSetup
                     new Vector2(60f, 60f), new Vector2(-50f, -30f));
         Image menuImg = menuBtn.GetComponent<Image>();
         menuImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        TextMeshProUGUI menuLabel = CreateTMPText("Icon", menuBtn.transform, "\u2630", 28f, White, FontStyles.Normal);
+        Text menuLabel = CreateTMPText("Icon", menuBtn.transform, "\u2630", 28f, White, FontStyle.Normal);
         StretchFull(menuLabel.GetComponent<RectTransform>());
 
         // ---- Help button (right, below menu)
@@ -231,7 +230,7 @@ public static class SceneSetup
                     new Vector2(60f, 60f), new Vector2(-50f, -100f));
         Image helpImg = helpBtn.GetComponent<Image>();
         helpImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        TextMeshProUGUI helpLabel = CreateTMPText("Icon", helpBtn.transform, "?", 28f, White, FontStyles.Bold);
+        Text helpLabel = CreateTMPText("Icon", helpBtn.transform, "?", 28f, White, FontStyle.Bold);
         StretchFull(helpLabel.GetComponent<RectTransform>());
 
         // ---- Wire HUDManager fields via SerializedObject
@@ -279,7 +278,7 @@ public static class SceneSetup
         img.color = new Color(0.15f, 0.15f, 0.15f, 1f);
         img.raycastTarget = false;
 
-        TextMeshProUGUI adLabel = CreateTMPText("AdLabel", rt, "AD BANNER", 20f, Grey, FontStyles.Normal);
+        Text adLabel = CreateTMPText("AdLabel", rt, "AD BANNER", 20f, Grey, FontStyle.Normal);
         StretchFull(adLabel.GetComponent<RectTransform>());
     }
 
@@ -311,13 +310,16 @@ public static class SceneSetup
         RectTransform valRT = valueTxtGO.AddComponent<RectTransform>();
         StretchFull(valRT);
 
-        TextMeshProUGUI valTMP = valueTxtGO.AddComponent<TextMeshProUGUI>();
+        Text valTMP = valueTxtGO.AddComponent<Text>();
         valTMP.text = "";
-        valTMP.fontSize = 32f;
+        valTMP.fontSize = 32;
         valTMP.color = White;
-        valTMP.fontStyle = FontStyles.Bold;
-        valTMP.alignment = TextAlignmentOptions.Center;
+        valTMP.fontStyle = FontStyle.Bold;
+        valTMP.alignment = TextAnchor.MiddleCenter;
         valTMP.raycastTarget = false;
+        valTMP.horizontalOverflow = HorizontalWrapMode.Overflow;
+        valTMP.verticalOverflow = VerticalWrapMode.Overflow;
+        valTMP.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
         // Child: CrownIcon
         GameObject crownGO = new GameObject("CrownIcon");
@@ -561,23 +563,23 @@ public static class SceneSetup
         Image goPanelImg = goPanel.AddComponent<Image>();
         goPanelImg.color = new Color(0f, 0f, 0f, 0.85f);
 
-        TextMeshProUGUI goTitle = CreateTMPText("Title", goPanel.transform, "GAME OVER", 48f, White, FontStyles.Bold);
+        Text goTitle = CreateTMPText("Title", goPanel.transform, "GAME OVER", 48f, White, FontStyle.Bold);
         RectTransform goTitleRT = goTitle.GetComponent<RectTransform>();
         SetAnchored(goTitleRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(600f, 60f), new Vector2(0f, 200f));
 
-        TextMeshProUGUI goFinalScore = CreateTMPText("FinalScoreText", goPanel.transform, "0", 64f, Pink, FontStyles.Bold);
+        Text goFinalScore = CreateTMPText("FinalScoreText", goPanel.transform, "0", 64f, Pink, FontStyle.Bold);
         RectTransform goFSRT = goFinalScore.GetComponent<RectTransform>();
         SetAnchored(goFSRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(400f, 80f), new Vector2(0f, 100f));
 
-        TextMeshProUGUI goHiScore = CreateTMPText("HighScoreText", goPanel.transform, "0", 28f, Grey, FontStyles.Normal);
+        Text goHiScore = CreateTMPText("HighScoreText", goPanel.transform, "0", 28f, Grey, FontStyle.Normal);
         RectTransform goHSRT = goHiScore.GetComponent<RectTransform>();
         SetAnchored(goHSRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(300f, 40f), new Vector2(0f, 40f));
 
-        TextMeshProUGUI goNewRecord = CreateTMPText("NewRecordLabel", goPanel.transform, "NEW RECORD!", 32f,
-                                                     new Color(1f, 0.84f, 0f, 1f), FontStyles.Bold);
+        Text goNewRecord = CreateTMPText("NewRecordLabel", goPanel.transform, "NEW RECORD!", 32f,
+                                                     new Color(1f, 0.84f, 0f, 1f), FontStyle.Bold);
         RectTransform goNRRT = goNewRecord.GetComponent<RectTransform>();
         SetAnchored(goNRRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(400f, 50f), new Vector2(0f, -10f));
@@ -587,7 +589,7 @@ public static class SceneSetup
         SetAnchored(goRestBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(300f, 80f), new Vector2(0f, -100f));
         goRestartBtn.GetComponent<Image>().color = Pink;
-        TextMeshProUGUI restartLabel = CreateTMPText("Label", goRestartBtn.transform, "RESTART", 28f, White, FontStyles.Bold);
+        Text restartLabel = CreateTMPText("Label", goRestartBtn.transform, "RESTART", 28f, White, FontStyle.Bold);
         StretchFull(restartLabel.GetComponent<RectTransform>());
 
         GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(300f, 80f));
@@ -595,7 +597,7 @@ public static class SceneSetup
         SetAnchored(goAdBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(300f, 80f), new Vector2(0f, -200f));
         goWatchAdBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        TextMeshProUGUI adBtnLabel = CreateTMPText("Label", goWatchAdBtn.transform, "WATCH AD", 24f, White, FontStyles.Normal);
+        Text adBtnLabel = CreateTMPText("Label", goWatchAdBtn.transform, "WATCH AD", 24f, White, FontStyle.Normal);
         StretchFull(adBtnLabel.GetComponent<RectTransform>());
 
         CanvasGroup goCG = goScreen.GetComponent<CanvasGroup>();
@@ -623,12 +625,12 @@ public static class SceneSetup
         Image pPanelImg = pPanel.AddComponent<Image>();
         pPanelImg.color = new Color(0f, 0f, 0f, 0.85f);
 
-        TextMeshProUGUI pTitle = CreateTMPText("Title", pPanel.transform, "PAUSED", 48f, White, FontStyles.Bold);
+        Text pTitle = CreateTMPText("Title", pPanel.transform, "PAUSED", 48f, White, FontStyle.Bold);
         RectTransform pTitleRT = pTitle.GetComponent<RectTransform>();
         SetAnchored(pTitleRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(400f, 60f), new Vector2(0f, 200f));
 
-        TextMeshProUGUI pScoreText = CreateTMPText("CurrentScoreText", pPanel.transform, "0", 36f, Pink, FontStyles.Bold);
+        Text pScoreText = CreateTMPText("CurrentScoreText", pPanel.transform, "0", 36f, Pink, FontStyle.Bold);
         RectTransform pScoreRT = pScoreText.GetComponent<RectTransform>();
         SetAnchored(pScoreRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(300f, 50f), new Vector2(0f, 120f));
@@ -638,7 +640,7 @@ public static class SceneSetup
         SetAnchored(pResumeBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(300f, 80f), new Vector2(0f, 20f));
         pResumeBtn.GetComponent<Image>().color = Pink;
-        TextMeshProUGUI resumeLabel = CreateTMPText("Label", pResumeBtn.transform, "RESUME", 28f, White, FontStyles.Bold);
+        Text resumeLabel = CreateTMPText("Label", pResumeBtn.transform, "RESUME", 28f, White, FontStyle.Bold);
         StretchFull(resumeLabel.GetComponent<RectTransform>());
 
         GameObject pRestartBtn = CreateButtonObject("RestartButton", pPanel.transform, new Vector2(300f, 80f));
@@ -646,7 +648,7 @@ public static class SceneSetup
         SetAnchored(pRestartBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
                     new Vector2(300f, 80f), new Vector2(0f, -80f));
         pRestartBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        TextMeshProUGUI pRestartLabel = CreateTMPText("Label", pRestartBtn.transform, "RESTART", 28f, White, FontStyles.Normal);
+        Text pRestartLabel = CreateTMPText("Label", pRestartBtn.transform, "RESTART", 28f, White, FontStyle.Normal);
         StretchFull(pRestartLabel.GetComponent<RectTransform>());
 
         GameObject pSoundBtn = CreateButtonObject("SoundToggleButton", pPanel.transform, new Vector2(60f, 60f));
@@ -681,7 +683,7 @@ public static class SceneSetup
         StretchFull(shopPanel.GetComponent<RectTransform>());
         Image shopPanelImg = shopPanel.AddComponent<Image>();
         shopPanelImg.color = new Color(0f, 0f, 0f, 0.9f);
-        TextMeshProUGUI shopTitle = CreateTMPText("Title", shopPanel.transform, "SHOP", 48f, White, FontStyles.Bold);
+        Text shopTitle = CreateTMPText("Title", shopPanel.transform, "SHOP", 48f, White, FontStyle.Bold);
         RectTransform shopTitleRT = shopTitle.GetComponent<RectTransform>();
         SetAnchored(shopTitleRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(400f, 60f), new Vector2(0f, -60f));
@@ -695,7 +697,7 @@ public static class SceneSetup
         StretchFull(lbPanel.GetComponent<RectTransform>());
         Image lbPanelImg = lbPanel.AddComponent<Image>();
         lbPanelImg.color = new Color(0f, 0f, 0f, 0.9f);
-        TextMeshProUGUI lbTitle = CreateTMPText("Title", lbPanel.transform, "LEADERBOARD", 48f, White, FontStyles.Bold);
+        Text lbTitle = CreateTMPText("Title", lbPanel.transform, "LEADERBOARD", 48f, White, FontStyle.Bold);
         RectTransform lbTitleRT = lbTitle.GetComponent<RectTransform>();
         SetAnchored(lbTitleRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(600f, 60f), new Vector2(0f, -60f));
@@ -775,23 +777,26 @@ public static class SceneSetup
         return go;
     }
 
-    private static TextMeshProUGUI CreateTMPText(
+    private static Text CreateTMPText(
         string name,
         Transform parent,
         string text,
         float fontSize,
         Color color,
-        FontStyles style)
+        FontStyle style)
     {
         GameObject go = CreateUIObject(name, parent);
-        TextMeshProUGUI tmp = go.AddComponent<TextMeshProUGUI>();
-        tmp.text = text;
-        tmp.fontSize = fontSize;
-        tmp.color = color;
-        tmp.fontStyle = style;
-        tmp.alignment = TextAlignmentOptions.Center;
-        tmp.raycastTarget = false;
-        return tmp;
+        Text txt = go.AddComponent<Text>();
+        txt.text = text;
+        txt.fontSize = (int)fontSize;
+        txt.color = color;
+        txt.fontStyle = style;
+        txt.alignment = TextAnchor.MiddleCenter;
+        txt.raycastTarget = false;
+        txt.horizontalOverflow = HorizontalWrapMode.Overflow;
+        txt.verticalOverflow = VerticalWrapMode.Overflow;
+        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        return txt;
     }
 
     private static GameObject CreateButtonObject(string name, Transform parent, Vector2 size)

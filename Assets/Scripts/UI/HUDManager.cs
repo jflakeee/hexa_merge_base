@@ -2,13 +2,12 @@ namespace HexaMerge.UI
 {
     using UnityEngine;
     using UnityEngine.UI;
-    using TMPro;
 
     public class HUDManager : MonoBehaviour
     {
         [Header("Score")]
-        [SerializeField] private TextMeshProUGUI scoreText;
-        [SerializeField] private TextMeshProUGUI highScoreText;
+        [SerializeField] private Text scoreText;
+        [SerializeField] private Text highScoreText;
 
         [Header("Buttons")]
         [SerializeField] private Button soundButton;
@@ -69,7 +68,7 @@ namespace HexaMerge.UI
             if (scoreText == null) return;
 
             scoreText.text = score.ToString("N0");
-            scoreText.fontSize = CalculateScoreFontSize(score);
+            scoreText.fontSize = (int)CalculateScoreFontSize(score);
         }
 
         public void UpdateHighScore(int score)

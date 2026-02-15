@@ -3,14 +3,13 @@ namespace HexaMerge.UI
     using HexaMerge.Game;
     using UnityEngine;
     using UnityEngine.UI;
-    using TMPro;
 
     public class GameOverScreen : MonoBehaviour
     {
         [SerializeField] private GameObject panel;
-        [SerializeField] private TextMeshProUGUI finalScoreText;
-        [SerializeField] private TextMeshProUGUI highScoreText;
-        [SerializeField] private TextMeshProUGUI newRecordLabel;
+        [SerializeField] private Text finalScoreText;
+        [SerializeField] private Text highScoreText;
+        [SerializeField] private Text newRecordLabel;
         [SerializeField] private Button restartButton;
         [SerializeField] private Button watchAdButton;
         [SerializeField] private CanvasGroup canvasGroup;

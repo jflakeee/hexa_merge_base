@@ -3,7 +3,6 @@ namespace HexaMerge.UI
     using HexaMerge.Game;
     using UnityEngine;
     using UnityEngine.UI;
-    using TMPro;
 
     /// <summary>
     /// 상점 화면. IAP 상품 목록을 표시하고 구매를 처리합니다.
@@ -15,8 +14,8 @@ namespace HexaMerge.UI
         {
             public IAPProduct product;
             public Button buyButton;
-            public TextMeshProUGUI nameText;
-            public TextMeshProUGUI priceText;
+            public Text nameText;
+            public Text priceText;
             public GameObject purchasedBadge;
         }
 
