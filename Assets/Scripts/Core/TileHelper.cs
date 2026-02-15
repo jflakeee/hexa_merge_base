@@ -93,5 +93,18 @@ namespace HexaMerge.Core
             // UnityEngine.Random 은 static class 에서도 사용 가능
             return UnityEngine.Random.value < 0.9f ? 2 : 4;
         }
+
+        /// <summary>
+        /// 초기 보드 타일 값을 반환한다 (리필보다 다양한 분포).
+        /// 50% 2, 30% 4, 15% 8, 5% 16
+        /// </summary>
+        public static int GetRandomInitialTileValue()
+        {
+            float roll = UnityEngine.Random.value;
+            if (roll < 0.50f) return 2;
+            if (roll < 0.80f) return 4;
+            if (roll < 0.95f) return 8;
+            return 16;
+        }
     }
 }

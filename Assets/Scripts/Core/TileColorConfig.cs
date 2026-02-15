@@ -18,7 +18,7 @@ namespace HexaMerge.Core
         public TileColorEntry[] entries;
 
         [Header("Defaults")]
-        public Color emptyColor = new Color(0.2f, 0.2f, 0.2f, 1f);
+        public Color emptyColor = new Color(0f, 0f, 0f, 0f);
         public Color defaultTextColor = Color.white;
 
         // ------------------------------------------------------------

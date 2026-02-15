@@ -44,16 +44,15 @@ test.describe('게임 상태 - 시작 및 재시작 검증', () => {
     expect(state.score).toBe(0);
   });
 
-  test('새 게임 시작 시 보드에 초기 타일이 배치된다', async ({ page }) => {
+  test('새 게임 시작 시 보드에 25셀 모두 타일이 배치된다', async ({ page }) => {
     await bridge.startNewGame();
     await page.waitForTimeout(1000);
 
     const state = await bridge.getGameState();
     const nonEmpty = state.cells.filter((c) => c.v > 0);
 
-    // initialTileCount: 4~6 (GameManager.cs 참고)
-    expect(nonEmpty.length).toBeGreaterThanOrEqual(4);
-    expect(nonEmpty.length).toBeLessThanOrEqual(6);
+    // XUP 방식: 25셀 전부 채움
+    expect(nonEmpty.length).toBe(25);
   });
 
   test('재시작(두 번째 StartNewGame) 시 보드와 점수가 초기화된다', async ({ page }) => {
@@ -81,10 +80,9 @@ test.describe('게임 상태 - 시작 및 재시작 검증', () => {
     // 상태가 Playing
     expect(stateAfter.state).toBe('Playing');
 
-    // 보드에 초기 타일만 존재
+    // XUP 방식: 보드에 25셀 모두 타일
     const nonEmptyAfter = stateAfter.cells.filter((c) => c.v > 0);
-    expect(nonEmptyAfter.length).toBeGreaterThanOrEqual(4);
-    expect(nonEmptyAfter.length).toBeLessThanOrEqual(6);
+    expect(nonEmptyAfter.length).toBe(25);
   });
 
   test('게임 상태 조회(getGameState) 응답에 필수 필드가 포함된다', async ({ page }) => {

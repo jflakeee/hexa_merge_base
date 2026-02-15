@@ -72,36 +72,30 @@ test.describe('헥사 그리드 - 보드 로딩 및 구조 검증', () => {
     }
   });
 
-  test('새 게임 시작 시 초기 타일이 배치된다', async () => {
+  test('새 게임 시작 시 25셀 모두에 타일이 배치된다', async () => {
     const nonEmpty = await bridge.getNonEmptyCells();
 
-    // GameManager 에서 initialTileCount (기본 5, 4~6 범위)만큼 타일 배치
-    expect(nonEmpty.length).toBeGreaterThanOrEqual(4);
-    expect(nonEmpty.length).toBeLessThanOrEqual(6);
+    // XUP 방식: 초기 보드 25셀 전부 채움
+    expect(nonEmpty.length).toBe(25);
   });
 
-  test('초기 타일 값은 유효한 값(2 또는 4)이다', async () => {
+  test('초기 타일 값은 유효한 값(2, 4, 8, 16)이다', async () => {
     const nonEmpty = await bridge.getNonEmptyCells();
 
     for (const cell of nonEmpty) {
-      // TileHelper.GetRandomNewTileValue() 는 2 또는 4 를 반환
+      // TileHelper.GetRandomInitialTileValue() 는 2, 4, 8, 16 을 반환
       expect(
-        [2, 4],
-        `셀 (${cell.q}, ${cell.r}) 의 값 ${cell.v} 는 2 또는 4여야 합니다`,
+        [2, 4, 8, 16],
+        `셀 (${cell.q}, ${cell.r}) 의 값 ${cell.v} 는 2, 4, 8, 16 중 하나여야 합니다`,
       ).toContain(cell.v);
     }
   });
 
-  test('빈 셀의 값은 0이다', async () => {
+  test('초기 보드에 빈 셀이 없다', async () => {
     const state = await bridge.getGameState();
     const emptyCells = state.cells.filter((c) => c.v === 0);
 
-    // 25 - 초기타일수 만큼 빈 셀이 있어야 함
-    const nonEmptyCount = state.cells.filter((c) => c.v > 0).length;
-    expect(emptyCells.length).toBe(25 - nonEmptyCount);
-
-    for (const cell of emptyCells) {
-      expect(cell.v).toBe(0);
-    }
+    // XUP 방식: 25셀 전부 채워짐 → 빈 셀 0개
+    expect(emptyCells.length).toBe(0);
   });
 });

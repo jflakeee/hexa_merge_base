@@ -134,9 +134,8 @@ test.describe('머지 시스템 - 탭 머지 동작 검증', () => {
     expect((mergeEvt as any).score).toBeGreaterThan(0);
   });
 
-  test('머지 후 새 타일이 보드에 추가된다', async () => {
+  test('머지 후 빈 셀이 모두 리필된다', async () => {
     const stateBefore = await bridge.getGameState();
-    const nonEmptyBefore = stateBefore.cells.filter((c) => c.v > 0).length;
 
     // 머지 가능 셀 탐색
     const cellMap = new Map<string, CellInfo>();
@@ -166,19 +165,17 @@ test.describe('머지 시스템 - 탭 머지 동작 검증', () => {
     test.skip(!mergeableCell, '머지 가능한 인접 셀 그룹이 없어서 테스트를 건너뜁니다');
 
     await bridge.tapCell(mergeableCell!.q, mergeableCell!.r);
-    // 머지 처리 + 새 타일 스폰 대기
+    // 머지 처리 + 리필 대기
     await new Promise((r) => setTimeout(r, 1500));
 
     const stateAfter = await bridge.getGameState();
     const nonEmptyAfter = stateAfter.cells.filter((c) => c.v > 0).length;
 
-    // 머지로 n개가 합쳐져 1개가 되고, 새 타일 1개가 스폰
-    // 즉 nonEmpty 는 (before - mergedCount + 1 + 1) 이 된다
-    // 정확한 수는 머지 그룹 크기에 따라 다르지만, 보드가 완전히 비어있지는 않아야 함
-    expect(nonEmptyAfter).toBeGreaterThan(0);
+    // XUP 방식: 머지 후 빈 셀 모두 리필 → 25셀 전부 채워짐
+    expect(nonEmptyAfter).toBe(25);
   });
 
-  test('머지 결과 값은 기존 값의 2배 이상이다', async () => {
+  test('머지 결과 값은 정확히 기존 값의 2배이다', async () => {
     const state = await bridge.getGameState();
     const cellMap = new Map<string, CellInfo>();
     for (const c of state.cells) {
@@ -213,8 +210,7 @@ test.describe('머지 시스템 - 탭 머지 동작 검증', () => {
     await bridge.tapCell(mergeableCell!.q, mergeableCell!.r);
     const mergeEvt = await mergePromise;
 
-    // 2개 머지 시 value * 2, 3개 머지 시 value * 4, ...
-    // 최소 2개이므로 결과값은 원래 값의 2배 이상
-    expect((mergeEvt as any).value).toBeGreaterThanOrEqual(originalValue * 2);
+    // XUP 방식: 그룹 크기 무관, 항상 value × 2
+    expect((mergeEvt as any).value).toBe(originalValue * 2);
   });
 });

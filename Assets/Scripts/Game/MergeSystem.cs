@@ -106,14 +106,10 @@ namespace HexaMerge.Game
 
         private int CalculateMergeValue(int baseValue, int count)
         {
-            // n개 머지 시 value * 2^(n-1), MaxValue 제한
-            long value = baseValue;
-            for (int i = 1; i < count; i++)
-            {
-                value *= 2;
-                if (value >= TileHelper.MaxValue)
-                    return TileHelper.MaxValue;
-            }
+            // XUP 방식: 그룹 크기 무관, 항상 value × 2 (한 단계 업)
+            long value = (long)baseValue * 2;
+            if (value >= TileHelper.MaxValue)
+                return TileHelper.MaxValue;
             return (int)value;
         }
     }

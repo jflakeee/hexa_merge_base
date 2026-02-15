@@ -22,11 +22,11 @@ namespace HexaMerge.UI
         [SerializeField] private Sprite soundOffSprite;
 
         [Header("Score Colors")]
-        [SerializeField] private Color scoreColor = new Color(1f, 0.41f, 0.71f, 1f); // #FF69B4 핑크
+        [SerializeField] private Color scoreColor = new Color(0.914f, 0.118f, 0.388f, 1f); // #E91E63
         [SerializeField] private Color highScoreColor = new Color(0.6f, 0.6f, 0.6f, 1f); // 회색
 
         [Header("Score Font Sizes")]
-        [SerializeField] private float baseScoreFontSize = 64f;
+        [SerializeField] private float baseScoreFontSize = 96f;
         [SerializeField] private float minScoreFontSize = 36f;
 
         private bool isSoundOn = true;

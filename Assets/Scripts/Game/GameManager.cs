@@ -51,11 +51,7 @@ namespace HexaMerge.Game
             Grid.Initialize();
             Score.Reset();
 
-            int count = Mathf.Clamp(initialTileCount, 4, 6);
-            for (int i = 0; i < count; i++)
-            {
-                SpawnNewTile();
-            }
+            FillAllEmptyCells(useInitialWeights: true);
 
             UpdateCrowns();
             SetState(GameState.Playing);
@@ -71,7 +67,7 @@ namespace HexaMerge.Game
             Score.AddScore(result.ScoreGained);
             OnMergePerformed?.Invoke(result);
 
-            SpawnNewTile();
+            FillAllEmptyCells(useInitialWeights: false);
             OnNewTilesSpawned?.Invoke();
 
             UpdateCrowns();
@@ -109,19 +105,30 @@ namespace HexaMerge.Game
             }
         }
 
+        public void FillAllEmptyCells(bool useInitialWeights = false)
+        {
+            List<HexCell> emptyCells = Grid.GetEmptyCells();
+            for (int i = 0; i < emptyCells.Count; i++)
+            {
+                int value = useInitialWeights
+                    ? TileHelper.GetRandomInitialTileValue()
+                    : TileHelper.GetRandomNewTileValue();
+                emptyCells[i].SetValue(value);
+            }
+        }
+
         private void UpdateCrowns()
         {
-            HexCell highest = Grid.GetHighestValueCell();
             List<HexCell> allCells = Grid.GetAllCells();
-
+            int highestValue = 0;
             for (int i = 0; i < allCells.Count; i++)
             {
-                allCells[i].HasCrown = false;
+                if (allCells[i].TileValue > highestValue)
+                    highestValue = allCells[i].TileValue;
             }
-
-            if (highest != null && !highest.IsEmpty)
+            for (int i = 0; i < allCells.Count; i++)
             {
-                highest.HasCrown = true;
+                allCells[i].HasCrown = (highestValue > 0 && allCells[i].TileValue == highestValue);
             }
         }
 

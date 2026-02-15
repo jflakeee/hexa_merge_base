@@ -60,7 +60,6 @@ namespace HexaMerge.UI
         public void RefreshAll(HexGrid grid)
         {
             HexCell highestCell = grid.GetHighestValueCell();
-            HexCoord highestCoord = highestCell != null ? highestCell.Coord : new HexCoord(0, 0);
             int highestValue = highestCell != null ? highestCell.TileValue : 0;
 
             foreach (HexCoord coord in grid.AllCoords)
@@ -70,8 +69,7 @@ namespace HexaMerge.UI
 
                 bool hasCrown = !cell.IsEmpty
                     && highestValue > 0
-                    && cell.TileValue == highestValue
-                    && coord == highestCoord;
+                    && cell.TileValue == highestValue;
 
                 cellViews[coord].UpdateView(cell.TileValue, hasCrown);
             }
