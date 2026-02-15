@@ -28,6 +28,14 @@ namespace HexaMerge.UI
             onTapCallback = onTap;
             colorConfig = config ?? (GameManager.Instance != null ? GameManager.Instance.ColorConfig : null);
 
+            // Auto-find components if not assigned in Inspector
+            if (hexBackground == null)
+                hexBackground = GetComponent<Image>();
+            if (valueText == null)
+                valueText = GetComponentInChildren<TextMeshProUGUI>(true);
+            if (button == null)
+                button = GetComponent<Button>();
+
             if (button != null)
                 button.onClick.AddListener(() => onTapCallback?.Invoke(Coord));
 
@@ -36,6 +44,13 @@ namespace HexaMerge.UI
             {
                 hexBackground.sprite = GetOrCreateHexSprite(128);
                 hexBackground.preserveAspect = true;
+            }
+
+            // Ensure valueText renders on top of background
+            if (valueText != null)
+            {
+                valueText.transform.SetAsLastSibling();
+                valueText.raycastTarget = false;
             }
 
             ShowEmpty();
@@ -109,15 +124,27 @@ namespace HexaMerge.UI
 
         private void UpdateColors(int value)
         {
-            if (colorConfig == null) return;
-
-            hexBackground.color = colorConfig.GetColor(value);
-            valueText.color = colorConfig.GetTextColor(value);
+            if (colorConfig != null)
+            {
+                if (hexBackground != null)
+                    hexBackground.color = colorConfig.GetColor(value);
+                if (valueText != null)
+                    valueText.color = colorConfig.GetTextColor(value);
+            }
+            else
+            {
+                if (hexBackground != null)
+                    hexBackground.color = new Color(0.3f, 0.3f, 0.35f, 1f);
+                if (valueText != null)
+                    valueText.color = Color.white;
+            }
         }
 
         private void UpdateText(int value)
         {
-            valueText.text = TileHelper.FormatValue(value);
+            if (valueText == null) return;
+
+            valueText.text = value.ToString();
             valueText.gameObject.SetActive(true);
 
             float fontSize;
@@ -137,10 +164,14 @@ namespace HexaMerge.UI
 
         private void ShowEmpty()
         {
-            hexBackground.color = Color.clear;
+            if (hexBackground != null)
+                hexBackground.color = Color.clear;
 
-            valueText.text = string.Empty;
-            valueText.gameObject.SetActive(false);
+            if (valueText != null)
+            {
+                valueText.text = string.Empty;
+                valueText.gameObject.SetActive(false);
+            }
 
             if (crownIcon != null)
                 crownIcon.SetActive(false);
