@@ -51,11 +51,6 @@ namespace HexaMerge.Core
         /// </summary>
         public static string FormatValue(int value)
         {
-            if (value >= 16384)
-            {
-                // 정수 나눗셈으로 소수점 없이 K 단위 표기
-                return (value / 1024) + "K";
-            }
             return value.ToString();
         }
 

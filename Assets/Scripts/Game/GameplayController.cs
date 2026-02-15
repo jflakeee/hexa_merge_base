@@ -92,6 +92,19 @@ namespace HexaMerge.Game
         {
             isAnimating = true;
 
+            // Cache source cell original positions (animation moves them to target)
+            var sourcePositions = new Dictionary<HexCoord, Vector2>();
+            if (boardRenderer != null)
+            {
+                foreach (var coord in result.MergedCoords)
+                {
+                    if (coord == result.MergeTargetCoord) continue;
+                    var view = boardRenderer.GetCellView(coord);
+                    if (view != null)
+                        sourcePositions[coord] = view.RectTransform.anchoredPosition;
+                }
+            }
+
             // Play merge animation
             if (TileAnimator.Instance != null && boardRenderer != null)
             {
@@ -110,6 +123,19 @@ namespace HexaMerge.Game
                     bool done = false;
                     TileAnimator.Instance.PlayMergeAnimation(sources, targetView.RectTransform, () => done = true);
                     while (!done) yield return null;
+                }
+            }
+
+            // Restore source cells after animation
+            // (animation deactivates them and moves to target position)
+            foreach (var kvp in sourcePositions)
+            {
+                var view = boardRenderer.GetCellView(kvp.Key);
+                if (view != null)
+                {
+                    view.gameObject.SetActive(true);
+                    view.RectTransform.anchoredPosition = kvp.Value;
+                    view.RectTransform.localScale = Vector3.one;
                 }
             }
 

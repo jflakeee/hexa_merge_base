@@ -67,6 +67,10 @@ namespace HexaMerge.UI
                 HexCell cell = grid.GetCell(coord);
                 if (cell == null || !cellViews.ContainsKey(coord)) continue;
 
+                // Ensure cell view is active (animation may have deactivated it)
+                if (!cellViews[coord].gameObject.activeSelf)
+                    cellViews[coord].gameObject.SetActive(true);
+
                 bool hasCrown = !cell.IsEmpty
                     && highestValue > 0
                     && cell.TileValue == highestValue;
