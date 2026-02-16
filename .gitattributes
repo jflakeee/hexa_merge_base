@@ -1,0 +1,18 @@
+# Unity WebGL build binaries
+*.wasm binary
+*.data binary
+*.unityweb binary
+
+# Other binaries
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.asset binary
+*.prefab binary
+*.unity binary
+*.meta text
