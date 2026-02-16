@@ -252,12 +252,12 @@ public static class SceneSetup
     {
         GameObject board = CreateUIObject("BoardContainer", canvasRT);
         RectTransform rt = board.GetComponent<RectTransform>();
-        // centre anchor
-        rt.anchorMin = new Vector2(0.5f, 0.5f);
-        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        // Stretch from below HUD (top -350) to bottom of screen
+        rt.anchorMin = new Vector2(0f, 0f);
+        rt.anchorMax = new Vector2(1f, 1f);
         rt.pivot     = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(800f, 800f);
-        rt.anchoredPosition = Vector2.zero;
+        rt.offsetMin = new Vector2(0f, 0f);     // left, bottom
+        rt.offsetMax = new Vector2(0f, -350f);   // right, top (350px from top = below HUD)
         return rt;
     }
 

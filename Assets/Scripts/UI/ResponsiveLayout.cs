@@ -17,8 +17,8 @@ namespace HexaMerge.UI
 
         [Header("Board Scale per Layout")]
         [SerializeField] private float mobileBoardScale = 0.85f;
-        [SerializeField] private float tabletBoardScale = 0.7f;
-        [SerializeField] private float desktopBoardScale = 0.5f;
+        [SerializeField] private float tabletBoardScale = 0.85f;
+        [SerializeField] private float desktopBoardScale = 0.85f;
 
         public LayoutMode CurrentLayout { get; private set; }
 
@@ -68,11 +68,8 @@ namespace HexaMerge.UI
                     break;
             }
 
-            if (boardContainer != null)
-                boardContainer.localScale = Vector3.one * scale;
-
             if (boardRenderer != null)
-                boardRenderer.AutoFitToContainer();
+                boardRenderer.AutoFitToContainer(scale);
         }
     }
 }

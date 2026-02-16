@@ -11,7 +11,7 @@ namespace HexaMerge.UI
         [SerializeField] private GameObject hexCellPrefab;
         [SerializeField] private RectTransform boardContainer;
         [SerializeField] private float hexSize = 80f;
-        [SerializeField] private float hexSpacing = 4f;
+        [SerializeField] private float hexSpacing = -8f;
 
         private Dictionary<HexCoord, HexCellView> cellViews = new Dictionary<HexCoord, HexCellView>();
 
@@ -96,7 +96,7 @@ namespace HexaMerge.UI
             OnCellTapped?.Invoke(coord);
         }
 
-        public void AutoFitToContainer()
+        public void AutoFitToContainer(float extraScale = 1f)
         {
             if (boardContainer == null || cellViews.Count == 0) return;
 
@@ -120,7 +120,7 @@ namespace HexaMerge.UI
 
             float scaleX = containerSize.x / boardWidth;
             float scaleY = containerSize.y / boardHeight;
-            float scale = Mathf.Min(scaleX, scaleY, 1f);
+            float scale = Mathf.Min(scaleX, scaleY) * extraScale;
 
             boardContainer.localScale = Vector3.one * scale;
 
