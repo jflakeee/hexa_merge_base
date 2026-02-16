@@ -257,7 +257,7 @@ public static class SceneSetup
         rt.anchorMax = new Vector2(1f, 1f);
         rt.pivot     = new Vector2(0.5f, 0.5f);
         rt.offsetMin = new Vector2(0f, 0f);     // left, bottom
-        rt.offsetMax = new Vector2(0f, -350f);   // right, top (350px from top = below HUD)
+        rt.offsetMax = new Vector2(0f, -400f);   // right, top (400px from top = below HUD + margin)
         return rt;
     }
 
