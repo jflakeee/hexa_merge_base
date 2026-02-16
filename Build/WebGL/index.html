@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Hexa Merge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+    #unity-container {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #unity-canvas {
+      width: 100%; height: 100%;
+      background: #000;
+    }
+
+    /* 로딩 화면 */
+    #loading-screen {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100;
+      transition: opacity 0.5s ease;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loading-title {
+      font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+      font-size: 48px;
+      font-weight: 900;
+      color: #FF69B4;
+      letter-spacing: 8px;
+      margin-bottom: 40px;
+      text-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+    }
+
+    #loading-bar-container {
+      width: 300px; height: 6px;
+      background: #222;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    #loading-bar {
+      width: 0%; height: 100%;
+      background: linear-gradient(90deg, #FF69B4, #FF1493);
+      border-radius: 3px;
+      transition: width 0.2s ease;
+    }
+
+    #loading-text {
+      font-family: 'Arial', sans-serif;
+      font-size: 14px;
+      color: #666;
+    }
+
+    /* 경고 배너 */
+    #warning-banner {
+      position: fixed; top: 0; left: 0;
+      width: 100%; padding: 10px;
+      background: #FF4444; color: white;
+      font-family: Arial, sans-serif;
+      text-align: center; z-index: 200;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+  </div>
+
+  <div id="loading-screen">
+    <div id="loading-title">HEXA MERGE</div>
+    <div id="loading-bar-container">
+      <div id="loading-bar"></div>
+    </div>
+    <div id="loading-text">Loading...</div>
+  </div>
+
+  <div id="warning-banner"></div>
+
+  <script>
+    // window.onerror 핸들러 등록 (TC-PLAT-035)
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error('[HexaMerge] Uncaught error:', message, 'at', source, lineno, colno);
+      return false;
+    };
+
+    // gamebridge 객체 (IAP 연동)
+    window.__adsRemovedState = false;
+    window.gamebridge = {
+      isAdsRemoved: function() { return window.__adsRemovedState; },
+      isBannerReady: function() { return true; },
+      isRewardedReady: function() { return true; }
+    };
+
+    // Unity → JS 메시지 수신 (WebGLBridge에서 호출)
+    window.unityMessageCallbacks = {};
+
+    window.SendMessageFromUnity = function(message) {
+      try {
+        var data = JSON.parse(message);
+
+        // 콜백 ID가 있으면 해당 콜백 호출
+        if (data.callbackId && window.unityMessageCallbacks[data.callbackId]) {
+          window.unityMessageCallbacks[data.callbackId](data);
+          delete window.unityMessageCallbacks[data.callbackId];
+          return;
+        }
+
+        // adsRemoved/bannerHidden 이벤트 수신 시 상태 업데이트
+        if (data.event === 'adsRemoved' || data.event === 'adsRemovedBlocked') {
+          window.__adsRemovedState = true;
+        }
+        if (data.event === 'bannerHidden' && data.adsRemoved) {
+          window.__adsRemovedState = true;
+        }
+
+        // 이벤트 발송
+        window.dispatchEvent(new CustomEvent('unityMessage', { detail: data }));
+      } catch(e) {
+        console.warn('[HexaMerge] Failed to parse Unity message:', message, e);
+      }
+    };
+
+    // JS → Unity 메시지 전송 헬퍼
+    window.sendToUnity = function(objectName, methodName, value) {
+      if (window.unityInstance) {
+        window.unityInstance.SendMessage(objectName, methodName, value || '');
+      }
+    };
+
+    // 게임 상태 조회 Promise
+    window.getGameState = function() {
+      return new Promise(function(resolve) {
+        var callbackId = 'gs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        window.unityMessageCallbacks[callbackId] = resolve;
+        window.sendToUnity('WebGLBridge', 'JS_GetGameState', callbackId);
+
+        // 5초 타임아웃
+        setTimeout(function() {
+          if (window.unityMessageCallbacks[callbackId]) {
+            delete window.unityMessageCallbacks[callbackId];
+            resolve(null);
+          }
+        }, 5000);
+      });
+    };
+
+    // Unity 로더
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/WebGL.loader.js";
+    var config = {
+      dataUrl: buildUrl + "/WebGL.data",
+      frameworkUrl: buildUrl + "/WebGL.framework.js",
+      codeUrl: buildUrl + "/WebGL.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "HexaMerge",
+      productName: "Hexa Merge",
+      productVersion: "1.0.0",
+      showBanner: function(msg, type) {
+        var banner = document.getElementById('warning-banner');
+        banner.style.display = 'block';
+        banner.innerText = msg;
+        setTimeout(function() { banner.style.display = 'none'; }, 5000);
+      }
+    };
+
+    var loadingBar = document.getElementById('loading-bar');
+    var loadingText = document.getElementById('loading-text');
+    var loadingScreen = document.getElementById('loading-screen');
+
+    var script = document.createElement('script');
+    script.src = loaderUrl;
+    script.onload = function() {
+      createUnityInstance(document.getElementById('unity-canvas'), config, function(progress) {
+        var percent = Math.round(progress * 100);
+        loadingBar.style.width = percent + '%';
+        loadingText.innerText = 'Loading... ' + percent + '%';
+      }).then(function(instance) {
+        window.unityInstance = instance;
+        loadingScreen.classList.add('hidden');
+        setTimeout(function() {
+          loadingScreen.style.display = 'none';
+        }, 600);
+      }).catch(function(message) {
+        console.error('[HexaMerge] Unity load error:', message);
+        loadingText.innerText = 'Error: ' + message;
+        loadingText.style.color = '#FF4444';
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>
