@@ -210,7 +210,8 @@ test.describe('머지 시스템 - 탭 머지 동작 검증', () => {
     await bridge.tapCell(mergeableCell!.q, mergeableCell!.r);
     const mergeEvt = await mergePromise;
 
-    // XUP 방식: 그룹 크기 무관, 항상 value × 2
-    expect((mergeEvt as any).value).toBe(originalValue * 2);
+    // XUP 방식: value × 2^(count-1) (단계별 더블링)
+    const mergeCount = (mergeEvt as any).count;
+    expect((mergeEvt as any).value).toBe(originalValue * Math.pow(2, mergeCount - 1));
   });
 });

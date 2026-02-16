@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 using HexaMerge.Core;
 
 namespace HexaMerge.Game
@@ -12,6 +13,7 @@ namespace HexaMerge.Game
         public int MergedCount;
         public int ScoreGained;
         public List<HexCoord> MergedCoords;
+        public List<int> StepValues;
     }
 
     public class MergeSystem
@@ -85,14 +87,33 @@ namespace HexaMerge.Game
                 group[i].Clear();
             }
 
+            // tapCoord 기준 거리 내림차순 정렬 (farthest first)
+            // tapCoord는 항상 첫 번째 (타겟)
+            mergedCoords.Sort((a, b) =>
+            {
+                if (a == tapCoord) return -1;
+                if (b == tapCoord) return 1;
+                return b.Distance(tapCoord).CompareTo(a.Distance(tapCoord));
+            });
+
+            // StepValues 계산 (단계별 2배씩 증가)
+            var stepValues = new List<int>();
+            int stepValue = baseValue;
+            for (int i = 1; i < count; i++)
+            {
+                stepValue = Mathf.Min(stepValue * 2, TileHelper.MaxValue);
+                stepValues.Add(stepValue);
+            }
+
             tapCell.SetValue(mergedValue);
 
             result.Success = true;
             result.MergeTargetCoord = tapCoord;
             result.ResultValue = mergedValue;
             result.MergedCount = count;
-            result.ScoreGained = mergedValue * count;
+            result.ScoreGained = mergedValue * (count - 1);
             result.MergedCoords = mergedCoords;
+            result.StepValues = stepValues;
 
             return result;
         }
@@ -106,10 +127,14 @@ namespace HexaMerge.Game
 
         private int CalculateMergeValue(int baseValue, int count)
         {
-            // XUP 방식: 그룹 크기 무관, 항상 value × 2 (한 단계 업)
-            long value = (long)baseValue * 2;
-            if (value >= TileHelper.MaxValue)
-                return TileHelper.MaxValue;
+            // XUP 방식: value × 2^(count-1) (단계별 더블링)
+            long value = (long)baseValue;
+            for (int i = 1; i < count; i++)
+            {
+                value *= 2;
+                if (value >= TileHelper.MaxValue)
+                    return TileHelper.MaxValue;
+            }
             return (int)value;
         }
     }

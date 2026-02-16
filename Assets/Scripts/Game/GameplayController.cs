@@ -92,8 +92,9 @@ namespace HexaMerge.Game
         {
             isAnimating = true;
 
-            // Cache source cell original positions (animation moves them to target)
+            // Cache source cell original positions and coords
             var sourcePositions = new Dictionary<HexCoord, Vector2>();
+            var sourceCoords = new List<HexCoord>();
             if (boardRenderer != null)
             {
                 foreach (var coord in result.MergedCoords)
@@ -101,33 +102,41 @@ namespace HexaMerge.Game
                     if (coord == result.MergeTargetCoord) continue;
                     var view = boardRenderer.GetCellView(coord);
                     if (view != null)
+                    {
                         sourcePositions[coord] = view.RectTransform.anchoredPosition;
+                        sourceCoords.Add(coord);
+                    }
                 }
             }
 
-            // Play merge animation
-            if (TileAnimator.Instance != null && boardRenderer != null)
+            // Sequential merge animation (farthest first)
+            var targetView = boardRenderer.GetCellView(result.MergeTargetCoord);
+            if (TileAnimator.Instance != null && targetView != null)
             {
-                var sources = new List<RectTransform>();
-                foreach (var coord in result.MergedCoords)
+                int stepIndex = 0;
+                foreach (var coord in sourceCoords)
                 {
-                    if (coord == result.MergeTargetCoord) continue;
-                    var view = boardRenderer.GetCellView(coord);
-                    if (view != null)
-                        sources.Add(view.RectTransform);
-                }
+                    var sourceView = boardRenderer.GetCellView(coord);
+                    if (sourceView == null) continue;
 
-                var targetView = boardRenderer.GetCellView(result.MergeTargetCoord);
-                if (targetView != null && sources.Count > 0)
-                {
+                    // 1) Source -> Target move animation
                     bool done = false;
-                    TileAnimator.Instance.PlayMergeAnimation(sources, targetView.RectTransform, () => done = true);
+                    TileAnimator.Instance.PlaySingleMergeStep(
+                        sourceView.RectTransform, targetView.RectTransform,
+                        () => done = true);
                     while (!done) yield return null;
+
+                    // 2) Update target value (step-by-step doubling)
+                    if (result.StepValues != null && stepIndex < result.StepValues.Count)
+                    {
+                        int stepValue = result.StepValues[stepIndex];
+                        targetView.UpdateView(stepValue, false);
+                    }
+                    stepIndex++;
                 }
             }
 
             // Restore source cells after animation
-            // (animation deactivates them and moves to target position)
             foreach (var kvp in sourcePositions)
             {
                 var view = boardRenderer.GetCellView(kvp.Key);
@@ -140,15 +149,11 @@ namespace HexaMerge.Game
             }
 
             // Play splash effect
-            if (MergeEffect.Instance != null && boardRenderer != null && gm.ColorConfig != null)
+            if (MergeEffect.Instance != null && targetView != null && gm.ColorConfig != null)
             {
-                var targetView = boardRenderer.GetCellView(result.MergeTargetCoord);
-                if (targetView != null)
-                {
-                    Color tileColor = gm.ColorConfig.GetColor(result.ResultValue);
-                    Vector2 pos = targetView.RectTransform.anchoredPosition;
-                    MergeEffect.Instance.PlayMergeEffect(pos, tileColor);
-                }
+                Color tileColor = gm.ColorConfig.GetColor(result.ResultValue);
+                MergeEffect.Instance.PlayMergeEffect(
+                    targetView.RectTransform.anchoredPosition, tileColor);
             }
 
             // Play SFX

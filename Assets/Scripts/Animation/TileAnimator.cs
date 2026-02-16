@@ -136,6 +136,53 @@ namespace HexaMerge.Animation
         }
 
         // ----------------------------------------------------------------
+        // Single Merge Step: source -> target (sequential merge)
+        // ----------------------------------------------------------------
+
+        public Coroutine PlaySingleMergeStep(
+            RectTransform source,
+            RectTransform target,
+            Action onComplete = null)
+        {
+            if (source == null || target == null) { onComplete?.Invoke(); return null; }
+            return StartCoroutine(SingleMergeStepCoroutine(source, target, onComplete));
+        }
+
+        private IEnumerator SingleMergeStepCoroutine(
+            RectTransform source, RectTransform target, Action onComplete)
+        {
+            Vector2 startPos = source.anchoredPosition;
+            Vector2 targetPos = target.anchoredPosition;
+            float duration = 0.15f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float eased = mergeCurve.Evaluate(t);
+                source.anchoredPosition = Vector2.Lerp(startPos, targetPos, eased);
+                source.localScale = Vector3.one * Mathf.Lerp(1f, 0f, eased);
+                yield return null;
+            }
+
+            source.gameObject.SetActive(false);
+
+            // Mini scale punch on target
+            yield return StartCoroutine(MiniScalePunch(target));
+            onComplete?.Invoke();
+        }
+
+        private IEnumerator MiniScalePunch(RectTransform target)
+        {
+            float dur = 0.05f;
+            yield return StartCoroutine(AnimateScale(target, Vector3.one,
+                Vector3.one * 1.15f, dur, null, null));
+            yield return StartCoroutine(AnimateScale(target, Vector3.one * 1.15f,
+                Vector3.one, dur, null, null));
+        }
+
+        // ----------------------------------------------------------------
         // Scale Punch: 1 -> mergeScalePunch -> 1
         // ----------------------------------------------------------------
 

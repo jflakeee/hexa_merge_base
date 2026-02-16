@@ -108,8 +108,8 @@ test.describe('스코어링 - 점수 계산 및 이벤트 검증', () => {
     const mergeEvt = await mergePromise;
 
     const { value, count, score } = mergeEvt as any;
-    // ScoreGained = ResultValue * MergedCount (MergeSystem.cs 라인 94)
-    expect(score).toBe(value * count);
+    // ScoreGained = ResultValue * (MergedCount - 1) (MergeSystem.cs 라인 114)
+    expect(score).toBe(value * (count - 1));
   });
 
   test('여러 번 머지 시 점수가 누적된다', async () => {
