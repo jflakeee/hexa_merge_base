@@ -92,80 +92,65 @@ namespace HexaMerge.Game
         {
             isAnimating = true;
 
-            // Cache source cell original positions and coords
-            var sourcePositions = new Dictionary<HexCoord, Vector2>();
-            var sourceCoords = new List<HexCoord>();
-            if (boardRenderer != null)
+            var targetView = boardRenderer != null
+                ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
+
+            // 1) 타겟에 최종 결과값 즉시 표시
+            if (targetView != null)
             {
+                var highestCell = gm.Grid.GetHighestValueCell();
+                int highestValue = highestCell != null ? highestCell.TileValue : 0;
+                bool hasCrown = result.ResultValue == highestValue && highestValue > 0;
+                targetView.UpdateView(result.ResultValue, hasCrown);
+            }
+
+            // 2) Splat 이펙트 시작 (소스 타일 소멸을 마스킹)
+            if (MergeEffect.Instance != null && targetView != null && gm.ColorConfig != null)
+            {
+                Color baseColor = gm.ColorConfig.GetColor(result.ResultValue);
+                MergeEffect.Instance.PlaySplatEffect(
+                    targetView.RectTransform.anchoredPosition, baseColor,
+                    result.MergedCount);
+            }
+
+            // 3) 소스 타일 동시 소멸 (제자리 축소, 0.15초)
+            if (TileAnimator.Instance != null && boardRenderer != null)
+            {
+                var sourceViews = new List<RectTransform>();
                 foreach (var coord in result.MergedCoords)
                 {
                     if (coord == result.MergeTargetCoord) continue;
                     var view = boardRenderer.GetCellView(coord);
-                    if (view != null)
-                    {
-                        sourcePositions[coord] = view.RectTransform.anchoredPosition;
-                        sourceCoords.Add(coord);
-                    }
+                    if (view != null) sourceViews.Add(view.RectTransform);
                 }
+
+                bool disappearDone = false;
+                TileAnimator.Instance.PlaySimultaneousDisappear(
+                    sourceViews, () => disappearDone = true);
+                while (!disappearDone) yield return null;
             }
 
-            // Sequential merge animation (farthest first)
-            var targetView = boardRenderer.GetCellView(result.MergeTargetCoord);
+            // 4) Splat 페이드 대기 (0.3초)
+            yield return new WaitForSeconds(0.3f);
+
+            // 5) 타겟 스케일 펀치
             if (TileAnimator.Instance != null && targetView != null)
             {
-                int stepIndex = 0;
-                foreach (var coord in sourceCoords)
-                {
-                    var sourceView = boardRenderer.GetCellView(coord);
-                    if (sourceView == null) continue;
-
-                    // 1) Source -> Target move animation
-                    bool done = false;
-                    TileAnimator.Instance.PlaySingleMergeStep(
-                        sourceView.RectTransform, targetView.RectTransform,
-                        () => done = true);
-                    while (!done) yield return null;
-
-                    // 2) Update target value (step-by-step doubling)
-                    if (result.StepValues != null && stepIndex < result.StepValues.Count)
-                    {
-                        int stepValue = result.StepValues[stepIndex];
-                        targetView.UpdateView(stepValue, false);
-                    }
-                    stepIndex++;
-                }
+                bool punchDone = false;
+                TileAnimator.Instance.PlayScalePunch(
+                    targetView.RectTransform, () => punchDone = true);
+                while (!punchDone) yield return null;
             }
 
-            // Restore source cells after animation
-            foreach (var kvp in sourcePositions)
-            {
-                var view = boardRenderer.GetCellView(kvp.Key);
-                if (view != null)
-                {
-                    view.gameObject.SetActive(true);
-                    view.RectTransform.anchoredPosition = kvp.Value;
-                    view.RectTransform.localScale = Vector3.one;
-                }
-            }
-
-            // Play splash effect
-            if (MergeEffect.Instance != null && targetView != null && gm.ColorConfig != null)
-            {
-                Color tileColor = gm.ColorConfig.GetColor(result.ResultValue);
-                MergeEffect.Instance.PlayMergeEffect(
-                    targetView.RectTransform.anchoredPosition, tileColor);
-            }
-
-            // Play SFX
+            // 6) SFX
             if (AudioManager.Instance != null)
             {
                 SFXType sfx = AudioManager.GetMergeSFXType(result.ResultValue);
                 AudioManager.Instance.PlaySFX(sfx);
             }
 
-            // Refresh board after animation
+            // 7) 보드 갱신 (리필 트리거)
             RefreshBoard();
-
             isAnimating = false;
         }
 

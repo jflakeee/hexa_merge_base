@@ -162,6 +162,69 @@ namespace HexaMerge.Animation
         }
 
         // ----------------------------------------------------------------
+        // Splat Effect: expand -> hold -> shrink+fade (XUP style)
+        // ----------------------------------------------------------------
+
+        public void PlaySplatEffect(Vector2 position, Color color, int mergedCount)
+        {
+            GameObject splash = GetFromPool();
+            if (splash == null) return;
+            float splatScale = Mathf.Clamp(mergedCount * 0.6f, 1.2f, 4f);
+            StartCoroutine(SplatCoroutine(splash, position, color, splatScale));
+        }
+
+        private IEnumerator SplatCoroutine(
+            GameObject splash, Vector2 position, Color color, float maxScale)
+        {
+            splash.SetActive(true);
+            RectTransform rt = splash.GetComponent<RectTransform>();
+            Image img = splash.GetComponent<Image>();
+
+            rt.anchoredPosition = position;
+            rt.localScale = Vector3.zero;
+
+            Color splatColor = color;
+            splatColor.a = 0.85f;
+            if (img != null) img.color = splatColor;
+
+            // Phase 1: expand (0.15s, EaseOut)
+            float expandDur = 0.15f;
+            float elapsed = 0f;
+            while (elapsed < expandDur)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / expandDur);
+                float eased = EaseOutQuad(t);
+                rt.localScale = Vector3.one * Mathf.Lerp(0f, maxScale, eased);
+                yield return null;
+            }
+
+            // Phase 2: hold (0.1s)
+            yield return new WaitForSeconds(0.1f);
+
+            // Phase 3: shrink + fade (0.25s)
+            float shrinkDur = 0.25f;
+            elapsed = 0f;
+            Vector3 peakScale = rt.localScale;
+            while (elapsed < shrinkDur)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / shrinkDur);
+                rt.localScale = Vector3.Lerp(peakScale, Vector3.zero, t);
+                if (img != null)
+                {
+                    Color c = splatColor;
+                    c.a = Mathf.Lerp(0.85f, 0f, t);
+                    img.color = c;
+                }
+                yield return null;
+            }
+
+            splash.SetActive(false);
+            rt.localScale = Vector3.zero;
+        }
+
+        // ----------------------------------------------------------------
         // Combined: splash + particles
         // ----------------------------------------------------------------
 

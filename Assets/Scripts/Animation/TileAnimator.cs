@@ -183,6 +183,49 @@ namespace HexaMerge.Animation
         }
 
         // ----------------------------------------------------------------
+        // Simultaneous Disappear: all sources shrink in place at once
+        // ----------------------------------------------------------------
+
+        public Coroutine PlaySimultaneousDisappear(
+            List<RectTransform> sources, Action onComplete = null)
+        {
+            if (sources == null || sources.Count == 0)
+            {
+                onComplete?.Invoke();
+                return null;
+            }
+            return StartCoroutine(SimultaneousDisappearCoroutine(sources, onComplete));
+        }
+
+        private IEnumerator SimultaneousDisappearCoroutine(
+            List<RectTransform> sources, Action onComplete)
+        {
+            float duration = 0.15f;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                float scale = Mathf.Lerp(1f, 0f, t);
+
+                for (int i = 0; i < sources.Count; i++)
+                {
+                    if (sources[i] != null)
+                        sources[i].localScale = Vector3.one * scale;
+                }
+                yield return null;
+            }
+
+            for (int i = 0; i < sources.Count; i++)
+            {
+                if (sources[i] != null)
+                    sources[i].gameObject.SetActive(false);
+            }
+            onComplete?.Invoke();
+        }
+
+        // ----------------------------------------------------------------
         // Scale Punch: 1 -> mergeScalePunch -> 1
         // ----------------------------------------------------------------
 
