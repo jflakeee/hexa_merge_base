@@ -95,45 +95,62 @@ namespace HexaMerge.Game
             var targetView = boardRenderer != null
                 ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
 
-            // 깊이별 순차 머지: 가장 깊은(먼) 블럭부터 타겟으로 이동
-            if (TileAnimator.Instance != null && boardRenderer != null && targetView != null
-                && result.DepthGroups != null)
+            // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 소스 위치에 splat 생성
+            if (boardRenderer != null && result.DepthGroups != null)
             {
-                int stepIndex = 0;
+                Color splatColor = Color.yellow;
+                if (gm.ColorConfig != null)
+                    splatColor = gm.ColorConfig.GetColor(result.ResultValue);
+
                 for (int g = 0; g < result.DepthGroups.Count; g++)
                 {
                     var group = result.DepthGroups[g];
 
-                    // 이 깊이의 블럭들을 하나씩 타겟으로 이동
+                    // 그룹 중심 위치 계산
+                    Vector2 centerPos = Vector2.zero;
+                    int validCount = 0;
                     for (int c = 0; c < group.Count; c++)
                     {
-                        var sourceView = boardRenderer.GetCellView(group[c]);
-                        if (sourceView == null) continue;
-
-                        bool stepDone = false;
-                        TileAnimator.Instance.PlaySingleMergeStep(
-                            sourceView.RectTransform,
-                            targetView.RectTransform,
-                            () => stepDone = true);
-                        while (!stepDone) yield return null;
+                        var view = boardRenderer.GetCellView(group[c]);
+                        if (view != null)
+                        {
+                            centerPos += view.RectTransform.anchoredPosition;
+                            validCount++;
+                        }
                     }
+                    if (validCount > 0) centerPos /= validCount;
 
-                    // 깊이 레벨 완료 → 단계별 값 갱신 (2배)
-                    if (stepIndex < result.StepValues.Count)
+                    // Splat 이펙트 (소스 위치에)
+                    if (MergeEffect.Instance != null)
                     {
-                        targetView.UpdateView(result.StepValues[stepIndex], false);
+                        MergeEffect.Instance.PlaySplatEffect(
+                            centerPos, splatColor, group.Count);
                     }
-                    stepIndex++;
+
+                    // 소스 셀 숨기기 (splat이 마스킹)
+                    for (int c = 0; c < group.Count; c++)
+                    {
+                        var view = boardRenderer.GetCellView(group[c]);
+                        if (view != null)
+                            view.gameObject.SetActive(false);
+                    }
+
+                    // 다음 깊이 그룹까지 대기 (벤치마크: ~0.17초)
+                    yield return new WaitForSeconds(0.17f);
                 }
             }
 
-            // Splat 이펙트
-            if (MergeEffect.Instance != null && targetView != null && gm.ColorConfig != null)
+            // splat 페이드 대기
+            yield return new WaitForSeconds(0.15f);
+
+            // 타겟에 최종값 표시
+            if (targetView != null)
             {
-                Color baseColor = gm.ColorConfig.GetColor(result.ResultValue);
-                MergeEffect.Instance.PlaySplatEffect(
-                    targetView.RectTransform.anchoredPosition, baseColor,
-                    result.MergedCount);
+                targetView.gameObject.SetActive(true);
+                var highestCell = gm.Grid.GetHighestValueCell();
+                int highestValue = highestCell != null ? highestCell.TileValue : 0;
+                bool hasCrown = result.ResultValue == highestValue && highestValue > 0;
+                targetView.UpdateView(result.ResultValue, hasCrown);
             }
 
             // 타겟 스케일 펀치
@@ -152,7 +169,7 @@ namespace HexaMerge.Game
                 AudioManager.Instance.PlaySFX(sfx);
             }
 
-            // 보드 갱신 (모든 병합 완료 후 리필 타일 표시)
+            // 보드 갱신 (리필)
             RefreshBoard();
             isAnimating = false;
         }

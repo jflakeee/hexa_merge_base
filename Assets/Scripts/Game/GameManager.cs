@@ -57,6 +57,16 @@ namespace HexaMerge.Game
             SetState(GameState.Playing);
         }
 
+        // JS에서 호출 가능한 문자열 기반 탭 핸들러 (예: "0,0")
+        public void HandleTapString(string coordStr)
+        {
+            var parts = coordStr.Split(',');
+            if (parts.Length != 2) return;
+            int q, r;
+            if (!int.TryParse(parts[0].Trim(), out q) || !int.TryParse(parts[1].Trim(), out r)) return;
+            HandleTap(new HexCoord(q, r));
+        }
+
         public void HandleTap(HexCoord coord)
         {
             if (State != GameState.Playing) return;
