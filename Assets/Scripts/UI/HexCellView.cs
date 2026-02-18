@@ -43,6 +43,8 @@ namespace HexaMerge.UI
             {
                 hexBackground.sprite = GetOrCreateHexSprite(128);
                 hexBackground.preserveAspect = false;
+                // 육각형 모양으로 클릭 영역 제한 (투명 영역 클릭 무시)
+                hexBackground.alphaHitTestMinimumThreshold = 0.5f;
             }
 
             // Ensure valueText renders on top of background
@@ -53,6 +55,7 @@ namespace HexaMerge.UI
                 valueText.alignment = TextAnchor.MiddleCenter;
                 valueText.horizontalOverflow = HorizontalWrapMode.Overflow;
                 valueText.verticalOverflow = VerticalWrapMode.Overflow;
+                valueText.supportRichText = true;
                 if (valueText.font == null)
                     valueText.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
             }
@@ -76,8 +79,8 @@ namespace HexaMerge.UI
 
             float cx = texW * 0.5f;
             float cy = texH * 0.5f;
-            float radiusX = texW * 0.5f;  // outer radius (horizontal)
-            float radiusY = texH * 0.5f;  // inner radius (vertical)
+            float radiusX = texW * 0.48f;  // 96% scale for gap between tiles
+            float radiusY = texH * 0.48f;
 
             // flat-top 헥사곤 6개 꼭짓점
             float[] vx = new float[6];
@@ -128,8 +131,8 @@ namespace HexaMerge.UI
             }
 
             UpdateColors(value);
-            UpdateText(value);
             UpdateCrown(hasCrown);
+            UpdateText(value);
         }
 
         private void UpdateColors(int value)
@@ -154,7 +157,6 @@ namespace HexaMerge.UI
         {
             if (valueText == null) return;
 
-            valueText.text = value.ToString();
             valueText.gameObject.SetActive(true);
 
             int fontSize;
@@ -164,12 +166,103 @@ namespace HexaMerge.UI
             else if (value < 10000) fontSize = 22;
             else fontSize = 18;
             valueText.fontSize = fontSize;
+            valueText.text = value.ToString();
         }
+
+        private Image crownImage;
+        private bool hasCrownShown;
+        private static Sprite cachedCrownSprite;
 
         private void UpdateCrown(bool show)
         {
+            hasCrownShown = show;
+
+            // Hide legacy crownIcon
             if (crownIcon != null)
-                crownIcon.SetActive(show);
+                crownIcon.SetActive(false);
+
+            if (show)
+            {
+                if (crownImage == null)
+                    CreateCrownImage();
+                crownImage.gameObject.SetActive(true);
+            }
+            else if (crownImage != null)
+            {
+                crownImage.gameObject.SetActive(false);
+            }
+        }
+
+        private void CreateCrownImage()
+        {
+            GameObject crownObj = new GameObject("CrownIcon");
+            crownObj.transform.SetParent(transform, false);
+
+            RectTransform rt = crownObj.AddComponent<RectTransform>();
+            rt.anchorMin = new Vector2(0.5f, 0.5f);
+            rt.anchorMax = new Vector2(0.5f, 0.5f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.anchoredPosition = new Vector2(0f, 24f);
+            rt.sizeDelta = new Vector2(28f, 20f);
+
+            crownImage = crownObj.AddComponent<Image>();
+            crownImage.sprite = GetOrCreateCrownSprite();
+            crownImage.color = new Color(1f, 0.843f, 0f, 1f); // Gold
+            crownImage.raycastTarget = false;
+            crownImage.preserveAspect = true;
+
+            crownObj.transform.SetAsLastSibling();
+        }
+
+        private static Sprite GetOrCreateCrownSprite()
+        {
+            if (cachedCrownSprite != null) return cachedCrownSprite;
+
+            int w = 56, h = 40;
+            Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
+            Color32[] px = new Color32[w * h];
+            Color32 white = new Color32(255, 255, 255, 255);
+            Color32 clear = new Color32(0, 0, 0, 0);
+
+            for (int i = 0; i < px.Length; i++) px[i] = clear;
+
+            // Draw crown shape: base rect + 3 triangular points
+            // Base: bottom 60% is a rectangle
+            int baseTop = h * 2 / 5; // y=16
+            for (int y = 0; y < baseTop; y++)
+                for (int x = 4; x < w - 4; x++)
+                    px[y * w + x] = white;
+
+            // Three triangular peaks
+            int peakH = h - baseTop; // 24px for peaks
+            float[] peakCenters = new float[] { w * 0.18f, w * 0.5f, w * 0.82f };
+            float peakHalfW = w * 0.22f;
+
+            for (int y = baseTop; y < h; y++)
+            {
+                float progress = (float)(y - baseTop) / peakH; // 0 at base, 1 at tip
+                float halfWidth = peakHalfW * (1f - progress);
+                foreach (float cx in peakCenters)
+                {
+                    int xStart = Mathf.Max(0, Mathf.RoundToInt(cx - halfWidth));
+                    int xEnd = Mathf.Min(w - 1, Mathf.RoundToInt(cx + halfWidth));
+                    for (int x = xStart; x <= xEnd; x++)
+                        px[y * w + x] = white;
+                }
+                // Fill between peaks at lower heights
+                if (progress < 0.5f)
+                {
+                    int leftEnd = Mathf.RoundToInt(peakCenters[0] + halfWidth);
+                    int rightStart = Mathf.RoundToInt(peakCenters[2] - halfWidth);
+                    for (int x = leftEnd; x <= rightStart; x++)
+                        px[y * w + x] = white;
+                }
+            }
+
+            tex.SetPixels32(px);
+            tex.Apply();
+            cachedCrownSprite = Sprite.Create(tex, new Rect(0, 0, w, h), new Vector2(0.5f, 0.5f), 100f);
+            return cachedCrownSprite;
         }
 
         private void ShowEmpty()

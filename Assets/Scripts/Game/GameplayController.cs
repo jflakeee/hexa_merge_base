@@ -100,7 +100,7 @@ namespace HexaMerge.Game
             {
                 Color splatColor = Color.yellow;
                 if (gm.ColorConfig != null)
-                    splatColor = gm.ColorConfig.GetColor(result.ResultValue);
+                    splatColor = gm.ColorConfig.GetColor(result.BaseValue);
 
                 for (int g = 0; g < result.DepthGroups.Count; g++)
                 {
@@ -167,6 +167,34 @@ namespace HexaMerge.Game
             {
                 SFXType sfx = AudioManager.GetMergeSFXType(result.ResultValue);
                 AudioManager.Instance.PlaySFX(sfx);
+            }
+
+            // 리필 파티클: 빈 셀 위치에 컬러 파티클 흩뿌리기
+            if (boardRenderer != null && MergeEffect.Instance != null && gm.ColorConfig != null)
+            {
+                var refillPositions = new System.Collections.Generic.List<Vector2>();
+                var refillColors = new System.Collections.Generic.List<Color>();
+
+                foreach (var coord in gm.Grid.AllCoords)
+                {
+                    var cell = gm.Grid.GetCell(coord);
+                    if (cell != null && cell.IsEmpty)
+                    {
+                        var view = boardRenderer.GetCellView(coord);
+                        if (view != null)
+                        {
+                            refillPositions.Add(view.RectTransform.anchoredPosition);
+                            // Use base value color for refill particles
+                            refillColors.Add(gm.ColorConfig.GetColor(result.BaseValue));
+                        }
+                    }
+                }
+
+                if (refillPositions.Count > 0)
+                {
+                    MergeEffect.Instance.PlayRefillParticles(refillPositions, refillColors);
+                    yield return new WaitForSeconds(0.2f);
+                }
             }
 
             // 보드 갱신 (리필)

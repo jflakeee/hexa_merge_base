@@ -203,33 +203,39 @@ public static class SceneSetup
         SetAnchored(hiScoreTextRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
                     new Vector2(300f, 40f), new Vector2(0f, -265f));
 
-        // ---- Sound button (left, circular)
+        // Pink hexagon sprite for HUD buttons
+        Sprite hexBtnSprite = CreateHexButtonSprite(64);
+
+        // ---- Sound button (left, pink hexagon)
         GameObject soundBtn = CreateButtonObject("SoundButton", hudRT, new Vector2(60f, 60f));
         RectTransform soundBtnRT = soundBtn.GetComponent<RectTransform>();
         SetAnchored(soundBtnRT, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
                     new Vector2(60f, 60f), new Vector2(50f, -30f));
         Image soundImg = soundBtn.GetComponent<Image>();
-        soundImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        soundImg.color = Pink;
+        soundImg.sprite = hexBtnSprite;
         Text soundLabel = CreateTMPText("Icon", soundBtn.transform, "\u266A", 28f, White, FontStyle.Normal);
         StretchFull(soundLabel.GetComponent<RectTransform>());
 
-        // ---- Menu button (right, hexagon-shaped placeholder)
+        // ---- Menu button (right, pink hexagon)
         GameObject menuBtn = CreateButtonObject("MenuButton", hudRT, new Vector2(60f, 60f));
         RectTransform menuBtnRT = menuBtn.GetComponent<RectTransform>();
         SetAnchored(menuBtnRT, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
                     new Vector2(60f, 60f), new Vector2(-50f, -30f));
         Image menuImg = menuBtn.GetComponent<Image>();
-        menuImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        menuImg.color = Pink;
+        menuImg.sprite = hexBtnSprite;
         Text menuLabel = CreateTMPText("Icon", menuBtn.transform, "\u2630", 28f, White, FontStyle.Normal);
         StretchFull(menuLabel.GetComponent<RectTransform>());
 
-        // ---- Help button (right, below menu)
+        // ---- Help button (right, below menu, pink hexagon)
         GameObject helpBtn = CreateButtonObject("HelpButton", hudRT, new Vector2(60f, 60f));
         RectTransform helpBtnRT = helpBtn.GetComponent<RectTransform>();
         SetAnchored(helpBtnRT, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
                     new Vector2(60f, 60f), new Vector2(-50f, -100f));
         Image helpImg = helpBtn.GetComponent<Image>();
-        helpImg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+        helpImg.color = Pink;
+        helpImg.sprite = hexBtnSprite;
         Text helpLabel = CreateTMPText("Icon", helpBtn.transform, "?", 28f, White, FontStyle.Bold);
         StretchFull(helpLabel.GetComponent<RectTransform>());
 
@@ -321,19 +327,36 @@ public static class SceneSetup
         valTMP.verticalOverflow = VerticalWrapMode.Overflow;
         valTMP.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
 
-        // Child: CrownIcon
+        // Child: CrownIcon (top-center)
         GameObject crownGO = new GameObject("CrownIcon");
         crownGO.transform.SetParent(cellGO.transform, false);
         RectTransform crownRT = crownGO.AddComponent<RectTransform>();
-        crownRT.anchorMin = new Vector2(1f, 1f);
-        crownRT.anchorMax = new Vector2(1f, 1f);
-        crownRT.pivot     = new Vector2(1f, 1f);
-        crownRT.sizeDelta = new Vector2(24f, 24f);
-        crownRT.anchoredPosition = new Vector2(-2f, -2f);
+        crownRT.anchorMin = new Vector2(0.5f, 1f);
+        crownRT.anchorMax = new Vector2(0.5f, 1f);
+        crownRT.pivot     = new Vector2(0.5f, 1f);
+        crownRT.sizeDelta = new Vector2(28f, 28f);
+        crownRT.anchoredPosition = new Vector2(0f, -2f);
 
         Image crownImg = crownGO.AddComponent<Image>();
-        crownImg.color = new Color(1f, 0.84f, 0f, 1f); // gold
+        crownImg.color = new Color(0f, 0f, 0f, 0f); // transparent bg
         crownImg.raycastTarget = false;
+
+        // Crown text child
+        GameObject crownTextGO = new GameObject("CrownText");
+        crownTextGO.transform.SetParent(crownGO.transform, false);
+        RectTransform crownTextRT = crownTextGO.AddComponent<RectTransform>();
+        StretchFull(crownTextRT);
+        Text crownTxt = crownTextGO.AddComponent<Text>();
+        crownTxt.text = "\u265B";
+        crownTxt.fontSize = 20;
+        crownTxt.color = new Color(1f, 0.84f, 0f, 1f); // gold
+        crownTxt.fontStyle = FontStyle.Normal;
+        crownTxt.alignment = TextAnchor.MiddleCenter;
+        crownTxt.raycastTarget = false;
+        crownTxt.horizontalOverflow = HorizontalWrapMode.Overflow;
+        crownTxt.verticalOverflow = VerticalWrapMode.Overflow;
+        crownTxt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+
         crownGO.SetActive(false);
 
         // HexCellView component + field wiring
@@ -361,7 +384,7 @@ public static class SceneSetup
 
         GameObject go = new GameObject("SplashEffect");
         RectTransform rt = go.AddComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(100f, 100f);
+        rt.sizeDelta = new Vector2(200f, 200f);
 
         Image img = go.AddComponent<Image>();
         img.color = White;
@@ -853,6 +876,56 @@ public static class SceneSetup
         entry.color = bg;
         entry.textColor = txt;
         return entry;
+    }
+
+    private static Sprite CreateHexButtonSprite(int size)
+    {
+        int texW = size;
+        int texH = Mathf.RoundToInt(size * Mathf.Sqrt(3f) / 2f);
+        Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+        Color32[] pixels = new Color32[texW * texH];
+        Color32 white = new Color32(255, 255, 255, 255);
+        Color32 clear = new Color32(0, 0, 0, 0);
+
+        float cx = texW * 0.5f;
+        float cy = texH * 0.5f;
+        float radiusX = texW * 0.5f;
+        float radiusY = texH * 0.5f;
+
+        float[] vx = new float[6];
+        float[] vy = new float[6];
+        for (int i = 0; i < 6; i++)
+        {
+            float angle = Mathf.Deg2Rad * (60f * i);
+            vx[i] = cx + radiusX * Mathf.Cos(angle);
+            vy[i] = cy + radiusY * Mathf.Sin(angle);
+        }
+
+        for (int y = 0; y < texH; y++)
+        {
+            for (int x = 0; x < texW; x++)
+            {
+                pixels[y * texW + x] = PointInHexBtn(x + 0.5f, y + 0.5f, vx, vy) ? white : clear;
+            }
+        }
+
+        tex.SetPixels32(pixels);
+        tex.Apply();
+        return Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), 100f);
+    }
+
+    private static bool PointInHexBtn(float px, float py, float[] vx, float[] vy)
+    {
+        bool inside = false;
+        for (int i = 0, j = 5; i < 6; j = i++)
+        {
+            if (((vy[i] > py) != (vy[j] > py)) &&
+                (px < (vx[j] - vx[i]) * (py - vy[i]) / (vy[j] - vy[i]) + vx[i]))
+            {
+                inside = !inside;
+            }
+        }
+        return inside;
     }
 
     private static void EnsureFolder(string path)

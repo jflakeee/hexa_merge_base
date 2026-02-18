@@ -3,6 +3,7 @@ namespace HexaMerge.Animation
     using UnityEngine;
     using UnityEngine.UI;
     using System.Collections;
+    using System.Collections.Generic;
 
     public class MergeEffect : MonoBehaviour
     {
@@ -26,6 +27,8 @@ namespace HexaMerge.Animation
         private GameObject[] splashPool;
         private int poolIndex;
 
+        private static Sprite cachedSplatSprite;
+
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -36,6 +39,81 @@ namespace HexaMerge.Animation
 
             Instance = this;
             InitializePool();
+        }
+
+        // ----------------------------------------------------------------
+        // Procedural Splat Sprite (paint splash shape)
+        // ----------------------------------------------------------------
+
+        private static Sprite GetOrCreateSplatSprite()
+        {
+            if (cachedSplatSprite != null) return cachedSplatSprite;
+
+            int size = 256;
+            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            Color32[] pixels = new Color32[size * size];
+            Color32 white = new Color32(255, 255, 255, 255);
+            Color32 clear = new Color32(0, 0, 0, 0);
+
+            float cx = size * 0.5f;
+            float cy = size * 0.5f;
+            float baseRadius = size * 0.35f;
+
+            // Pre-compute radius at each angle with noise (6~8 bumps)
+            int bumps = 7;
+            float[] bumpPhase = new float[bumps];
+            float[] bumpAmp = new float[bumps];
+            // Use deterministic seed for consistency
+            Random.State oldState = Random.state;
+            Random.InitState(42);
+            for (int i = 0; i < bumps; i++)
+            {
+                bumpPhase[i] = Random.Range(0f, Mathf.PI * 2f);
+                bumpAmp[i] = Random.Range(0.08f, 0.25f);
+            }
+            Random.state = oldState;
+
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = x - cx;
+                    float dy = y - cy;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    float angle = Mathf.Atan2(dy, dx);
+
+                    // Compute noisy radius
+                    float r = baseRadius;
+                    for (int b = 0; b < bumps; b++)
+                    {
+                        float freq = (b + 1) * 1.0f;
+                        r += baseRadius * bumpAmp[b] * Mathf.Sin(angle * freq + bumpPhase[b]);
+                    }
+
+                    // Anti-aliased edge
+                    float edge = r - dist;
+                    if (edge > 1.5f)
+                    {
+                        pixels[y * size + x] = white;
+                    }
+                    else if (edge > -0.5f)
+                    {
+                        byte a = (byte)(Mathf.Clamp01((edge + 0.5f) / 2f) * 255);
+                        pixels[y * size + x] = new Color32(255, 255, 255, a);
+                    }
+                    else
+                    {
+                        pixels[y * size + x] = clear;
+                    }
+                }
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply();
+
+            cachedSplatSprite = Sprite.Create(
+                tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            return cachedSplatSprite;
         }
 
         // ----------------------------------------------------------------
@@ -169,7 +247,7 @@ namespace HexaMerge.Animation
         {
             GameObject splash = GetFromPool();
             if (splash == null) return;
-            float splatScale = Mathf.Clamp(mergedCount * 0.6f, 1.2f, 4f);
+            float splatScale = Mathf.Clamp(mergedCount * 1.0f, 2.0f, 6f);
             StartCoroutine(SplatCoroutine(splash, position, color, splatScale));
         }
 
@@ -184,7 +262,7 @@ namespace HexaMerge.Animation
             rt.localScale = Vector3.zero;
 
             Color splatColor = color;
-            splatColor.a = 0.85f;
+            splatColor.a = 0.9f;
             if (img != null) img.color = splatColor;
 
             // Phase 1: expand (0.15s, EaseOut)
@@ -199,8 +277,8 @@ namespace HexaMerge.Animation
                 yield return null;
             }
 
-            // Phase 2: hold (0.1s)
-            yield return new WaitForSeconds(0.1f);
+            // Phase 2: hold (0.15s)
+            yield return new WaitForSeconds(0.15f);
 
             // Phase 3: shrink + fade (0.25s)
             float shrinkDur = 0.25f;
@@ -214,13 +292,90 @@ namespace HexaMerge.Animation
                 if (img != null)
                 {
                     Color c = splatColor;
-                    c.a = Mathf.Lerp(0.85f, 0f, t);
+                    c.a = Mathf.Lerp(0.9f, 0f, t);
                     img.color = c;
                 }
                 yield return null;
             }
 
             splash.SetActive(false);
+            rt.localScale = Vector3.zero;
+        }
+
+        // ----------------------------------------------------------------
+        // Refill Particles: small colored circles at refill positions
+        // ----------------------------------------------------------------
+
+        public void PlayRefillParticles(List<Vector2> positions, List<Color> colors)
+        {
+            if (positions == null) return;
+
+            for (int i = 0; i < positions.Count; i++)
+            {
+                Color col = (colors != null && i < colors.Count) ? colors[i] : Color.white;
+                int count = Random.Range(3, 5); // 3~4 particles per cell
+                float angleStep = 360f / count;
+
+                for (int p = 0; p < count; p++)
+                {
+                    GameObject particle = GetFromPool();
+                    if (particle == null) continue;
+
+                    float angle = angleStep * p + Random.Range(-30f, 30f);
+                    float rad = angle * Mathf.Deg2Rad;
+                    Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
+
+                    StartCoroutine(RefillParticleCoroutine(
+                        particle, positions[i], dir, col));
+                }
+            }
+        }
+
+        private IEnumerator RefillParticleCoroutine(
+            GameObject particle, Vector2 startPos, Vector2 direction, Color color)
+        {
+            particle.SetActive(true);
+
+            RectTransform rt = particle.GetComponent<RectTransform>();
+            Image img = particle.GetComponent<Image>();
+
+            float size = Random.Range(8f, 14f);
+            rt.anchoredPosition = startPos;
+            rt.sizeDelta = Vector2.one * size;
+            rt.localScale = Vector3.one;
+
+            Color startColor = color;
+            startColor.a = 0.9f;
+            if (img != null) img.color = startColor;
+
+            float speed = Random.Range(80f, 150f);
+            float duration = Random.Range(0.3f, 0.5f);
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+
+                // Move outward with deceleration
+                float decel = 1f - t * t;
+                rt.anchoredPosition = startPos + direction * (speed * t * decel);
+
+                // Fade out
+                float scale = Mathf.Lerp(1f, 0.2f, t);
+                rt.localScale = Vector3.one * scale;
+
+                if (img != null)
+                {
+                    Color c = startColor;
+                    c.a = Mathf.Lerp(0.9f, 0f, t);
+                    img.color = c;
+                }
+
+                yield return null;
+            }
+
+            particle.SetActive(false);
             rt.localScale = Vector3.zero;
         }
 
@@ -242,16 +397,28 @@ namespace HexaMerge.Animation
         {
             if (splashPrefab == null || effectContainer == null) return;
 
-            // Extra capacity for particles
-            int totalPoolSize = splashPoolSize + splashParticleCount * 2;
+            // Extra capacity for particles + refill particles
+            int totalPoolSize = splashPoolSize + splashParticleCount * 4;
             splashPool = new GameObject[totalPoolSize];
             poolIndex = 0;
+
+            Sprite splatSprite = GetOrCreateSplatSprite();
 
             for (int i = 0; i < totalPoolSize; i++)
             {
                 GameObject go = Instantiate(splashPrefab, effectContainer);
                 go.SetActive(false);
-                go.name = $"Effect_{i}";
+                go.name = string.Format("Effect_{0}", i);
+
+                // Apply splat sprite and enlarged size
+                RectTransform rt = go.GetComponent<RectTransform>();
+                if (rt != null)
+                    rt.sizeDelta = new Vector2(200f, 200f);
+
+                Image img = go.GetComponent<Image>();
+                if (img != null && splatSprite != null)
+                    img.sprite = splatSprite;
+
                 splashPool[i] = go;
             }
         }

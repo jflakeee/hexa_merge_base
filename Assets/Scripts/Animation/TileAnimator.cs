@@ -53,12 +53,13 @@ namespace HexaMerge.Animation
         {
             target.localScale = Vector3.zero;
             float elapsed = 0f;
+            float elasticDuration = 0.35f;
 
-            while (elapsed < spawnDuration)
+            while (elapsed < elasticDuration)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / spawnDuration);
-                float eased = EaseOutBack(t);
+                float t = Mathf.Clamp01(elapsed / elasticDuration);
+                float eased = EaseOutElastic(t);
                 target.localScale = Vector3.one * eased;
                 yield return null;
             }
@@ -490,6 +491,14 @@ namespace HexaMerge.Animation
             return t < 0.5f
                 ? 2f * t * t
                 : 1f - Mathf.Pow(-2f * t + 2f, 2f) * 0.5f;
+        }
+
+        private static float EaseOutElastic(float t)
+        {
+            if (t <= 0f) return 0f;
+            if (t >= 1f) return 1f;
+            float p = 0.3f;
+            return Mathf.Pow(2f, -10f * t) * Mathf.Sin((t - p / 4f) * (2f * Mathf.PI) / p) + 1f;
         }
     }
 }

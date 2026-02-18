@@ -10,6 +10,7 @@ namespace HexaMerge.Game
         public bool Success;
         public HexCoord MergeTargetCoord;
         public int ResultValue;
+        public int BaseValue;
         public int MergedCount;
         public int ScoreGained;
         public List<HexCoord> MergedCoords;
@@ -162,6 +163,7 @@ namespace HexaMerge.Game
             result.Success = true;
             result.MergeTargetCoord = tapCoord;
             result.ResultValue = mergedValue;
+            result.BaseValue = baseValue;
             result.MergedCount = totalCells;
             result.ScoreGained = mergedValue * depthLevels;
             result.MergedCoords = mergedCoords;

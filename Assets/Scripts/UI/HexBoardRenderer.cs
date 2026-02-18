@@ -14,6 +14,7 @@ namespace HexaMerge.UI
         [SerializeField] private float hexSpacing = 1f;
 
         private Dictionary<HexCoord, HexCellView> cellViews = new Dictionary<HexCoord, HexCellView>();
+        private Dictionary<HexCoord, Vector2> originalPositions = new Dictionary<HexCoord, Vector2>();
 
         public event Action<HexCoord> OnCellTapped;
 
@@ -25,6 +26,7 @@ namespace HexaMerge.UI
                     Destroy(view.gameObject);
             }
             cellViews.Clear();
+            originalPositions.Clear();
 
             foreach (HexCoord coord in grid.AllCoords)
             {
@@ -43,6 +45,7 @@ namespace HexaMerge.UI
                 cellView.Initialize(coord, OnCellTappedInternal, colorConfig);
 
                 cellViews[coord] = cellView;
+                originalPositions[coord] = rt.anchoredPosition;
             }
         }
 
@@ -70,9 +73,13 @@ namespace HexaMerge.UI
                 HexCell cell = grid.GetCell(coord);
                 if (cell == null || !cellViews.ContainsKey(coord)) continue;
 
-                // Ensure cell view is active (animation may have deactivated it)
+                // Ensure cell view is active and reset transform (animation may have changed it)
                 if (!cellViews[coord].gameObject.activeSelf)
                     cellViews[coord].gameObject.SetActive(true);
+
+                cellViews[coord].RectTransform.localScale = Vector3.one;
+                if (originalPositions.ContainsKey(coord))
+                    cellViews[coord].RectTransform.anchoredPosition = originalPositions[coord];
 
                 bool hasCrown = !cell.IsEmpty
                     && highestValue > 0
