@@ -71,7 +71,7 @@ namespace HexaMerge.UI
 
             float cx = size * 0.5f;
             float cy = size * 0.5f;
-            float radius = size * 0.5f - 1f;
+            float radius = size * 0.5f;
 
             // flat-top 헥사곤 6개 꼭짓점
             float[] vx = new float[6];

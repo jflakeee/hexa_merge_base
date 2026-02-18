@@ -95,16 +95,39 @@ namespace HexaMerge.Game
             var targetView = boardRenderer != null
                 ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
 
-            // 1) 타겟에 최종 결과값 즉시 표시
-            if (targetView != null)
+            // 깊이별 순차 머지: 가장 깊은(먼) 블럭부터 타겟으로 이동
+            if (TileAnimator.Instance != null && boardRenderer != null && targetView != null
+                && result.DepthGroups != null)
             {
-                var highestCell = gm.Grid.GetHighestValueCell();
-                int highestValue = highestCell != null ? highestCell.TileValue : 0;
-                bool hasCrown = result.ResultValue == highestValue && highestValue > 0;
-                targetView.UpdateView(result.ResultValue, hasCrown);
+                int stepIndex = 0;
+                for (int g = 0; g < result.DepthGroups.Count; g++)
+                {
+                    var group = result.DepthGroups[g];
+
+                    // 이 깊이의 블럭들을 하나씩 타겟으로 이동
+                    for (int c = 0; c < group.Count; c++)
+                    {
+                        var sourceView = boardRenderer.GetCellView(group[c]);
+                        if (sourceView == null) continue;
+
+                        bool stepDone = false;
+                        TileAnimator.Instance.PlaySingleMergeStep(
+                            sourceView.RectTransform,
+                            targetView.RectTransform,
+                            () => stepDone = true);
+                        while (!stepDone) yield return null;
+                    }
+
+                    // 깊이 레벨 완료 → 단계별 값 갱신 (2배)
+                    if (stepIndex < result.StepValues.Count)
+                    {
+                        targetView.UpdateView(result.StepValues[stepIndex], false);
+                    }
+                    stepIndex++;
+                }
             }
 
-            // 2) Splat 이펙트 시작 (소스 타일 소멸을 마스킹)
+            // Splat 이펙트
             if (MergeEffect.Instance != null && targetView != null && gm.ColorConfig != null)
             {
                 Color baseColor = gm.ColorConfig.GetColor(result.ResultValue);
@@ -113,27 +136,7 @@ namespace HexaMerge.Game
                     result.MergedCount);
             }
 
-            // 3) 소스 타일 동시 소멸 (제자리 축소, 0.15초)
-            if (TileAnimator.Instance != null && boardRenderer != null)
-            {
-                var sourceViews = new List<RectTransform>();
-                foreach (var coord in result.MergedCoords)
-                {
-                    if (coord == result.MergeTargetCoord) continue;
-                    var view = boardRenderer.GetCellView(coord);
-                    if (view != null) sourceViews.Add(view.RectTransform);
-                }
-
-                bool disappearDone = false;
-                TileAnimator.Instance.PlaySimultaneousDisappear(
-                    sourceViews, () => disappearDone = true);
-                while (!disappearDone) yield return null;
-            }
-
-            // 4) Splat 페이드 대기 (0.3초)
-            yield return new WaitForSeconds(0.3f);
-
-            // 5) 타겟 스케일 펀치
+            // 타겟 스케일 펀치
             if (TileAnimator.Instance != null && targetView != null)
             {
                 bool punchDone = false;
@@ -142,20 +145,23 @@ namespace HexaMerge.Game
                 while (!punchDone) yield return null;
             }
 
-            // 6) SFX
+            // SFX
             if (AudioManager.Instance != null)
             {
                 SFXType sfx = AudioManager.GetMergeSFXType(result.ResultValue);
                 AudioManager.Instance.PlaySFX(sfx);
             }
 
-            // 7) 보드 갱신 (리필 트리거)
+            // 보드 갱신 (모든 병합 완료 후 리필 타일 표시)
             RefreshBoard();
             isAnimating = false;
         }
 
         private void OnNewTilesSpawned()
         {
+            // 머지 애니메이션 중이면 스킵 (RefreshBoard는 애니메이션 완료 후 호출)
+            if (isAnimating) return;
+
             // Animate new tiles
             if (boardRenderer == null || TileAnimator.Instance == null) return;
 

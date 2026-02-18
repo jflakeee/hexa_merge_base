@@ -11,7 +11,7 @@ namespace HexaMerge.UI
         [SerializeField] private GameObject hexCellPrefab;
         [SerializeField] private RectTransform boardContainer;
         [SerializeField] private float hexSize = 80f;
-        [SerializeField] private float hexSpacing = -8f;
+        [SerializeField] private float hexSpacing = -46f;
 
         private Dictionary<HexCoord, HexCellView> cellViews = new Dictionary<HexCoord, HexCellView>();
 

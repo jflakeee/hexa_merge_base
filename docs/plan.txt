@@ -69,14 +69,16 @@
 [B-2] 헥사 그리드 시스템
   [x] B-2-1. 큐브 좌표계 구현 (HexCoord 구조체)
               → Scripts/Core/HexCoord.cs
-  [x] B-2-2. 그리드 데이터 모델 (25셀 다이아몬드형 1-2-3-4-5-4-3-2-1)
+  [x] B-2-2. 그리드 데이터 모델 (19셀 정육각형 반지름2: 3-4-5-4-3)
               → Scripts/Core/HexGrid.cs
+              ※ 큰 육각형 내부에 19개 작은 육각형 빈칸없이 배치
   [x] B-2-3. 인접 셀 탐색 (6방향)
               → HexCoord.GetNeighbors(), HexGrid.GetNeighbors()
   [x] B-2-4. 헥사곤 렌더링 (프리팹, 색상, 텍스트)
               → Scripts/UI/HexCellView.cs
-  [x] B-2-5. 그리드 레이아웃 계산 (반응형 사이즈)
+  [x] B-2-5. 그리드 레이아웃 계산 (반응형 사이즈, 빈칸없이 배치)
               → Scripts/UI/HexBoardRenderer.cs, ResponsiveLayout.cs
+              ※ 블럭 간격 최소화 (벤치마크 이미지 기준 밀착 배치)
 
 [B-3] 타일 시스템
   [x] B-3-1. 타일 데이터 모델 (값: 2~65536)
@@ -91,16 +93,22 @@
               → GameManager.SpawnNewTile(), HexCell.SetValue/Clear
 
 [B-4] 머지 시스템
-  [x] B-4-1. 인접 동일 숫자 탐색 (BFS/DFS)
+  [x] B-4-1. 인접 동일 숫자 탐색 (BFS 트리 구조)
               → Scripts/Game/MergeSystem.cs FindConnectedGroup()
+              ※ 바로 인접한 블럭만 병합, BFS 트리 깊이로 거리 계산
   [x] B-4-2. 탭 머지 로직 (동일 숫자 인접 타일 합성)
               → MergeSystem.TryMerge()
-  [x] B-4-3. 머지 결과 계산 (값 × 2^(n-1))
+              ※ 가장 먼 블럭(깊이 깊은)부터 순서대로 차례로 병합
+  [x] B-4-3. 머지 결과 계산 (값 × 2^(깊이레벨수))
               → MergeSystem.CalculateMergeValue()
-  [x] B-4-4. 연쇄 머지 (체인 콤보) 처리
-              → BFS 그룹 전체 한번에 머지 (연쇄 아닌 그룹 머지)
+              ※ 트리 깊이 레벨 수 기준 (동일 깊이 블럭은 계산에서 제외)
+              ※ 다른 깊이에 있는 블럭만 단계별 2배 증가 계산에 포함
+  [x] B-4-4. 순차 머지 처리 (깊이별 순서)
+              → 깊이 깊은 블럭부터 → 타겟으로 이동 → 단계별 값 표시
+              ※ 동일 깊이 블럭은 동시 처리, 다른 깊이는 순차 처리
   [x] B-4-5. 새 타일 자동 생성 (머지 후 빈 공간)
-              → GameManager.HandleTap() → SpawnNewTile()
+              → GameManager.HandleTap() → FillAllEmptyCells()
+              ※ 모든 병합 완료 후 소멸된 블럭자리에 새로 채움
   [x] B-4-6. 머지 유효성 검증
               → MergeSystem.CanMerge(), HexGrid.HasValidMerge()
 
@@ -108,7 +116,8 @@
   [x] B-5-1. 점수 계산 로직 (머지 값 기반)
               → Scripts/Game/ScoreManager.cs
   [x] B-5-2. 콤보 보너스 계산
-              → MergeResult.ScoreGained = mergedValue * count
+              → MergeResult.ScoreGained = mergedValue * depthLevels
+              ※ 깊이 레벨 수 기반 (동일 깊이 중복 블럭 제외)
   [x] B-5-3. 현재 점수 표시 (핑크, 대형 폰트, 자동 스케일링)
               → Scripts/UI/HUDManager.cs
   [x] B-5-4. 최고 점수 저장/표시 (PlayerPrefs)
@@ -139,8 +148,9 @@
               → Scripts/Animation/MergeEffect.cs PlayMergeSplash()
   [x] C-4. 점수 증가 애니메이션 (카운트업)
               → TileAnimator.PlayScorePopup()
-  [x] C-5. 연쇄 머지 연출 (순차 애니메이션)
+  [x] C-5. 순차 머지 연출 (깊이별 순차 애니메이션)
               → GameplayController.PlayMergeSequence()
+              ※ 깊이 깊은 블럭부터 타겟으로 순차 이동, 단계별 값 증가 표시
   [x] C-6. 왕관 전환 애니메이션
               → TileAnimator.PlayCrownTransition() (페이드 아웃 + 바운스 인)
   [x] C-7. 게임 오버 연출
