@@ -42,7 +42,7 @@ namespace HexaMerge.UI
             if (hexBackground != null && hexBackground.sprite == null)
             {
                 hexBackground.sprite = GetOrCreateHexSprite(128);
-                hexBackground.preserveAspect = true;
+                hexBackground.preserveAspect = false;
             }
 
             // Ensure valueText renders on top of background
@@ -64,14 +64,20 @@ namespace HexaMerge.UI
         {
             if (cachedHexSprite != null) return cachedHexSprite;
 
-            Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            Color32[] pixels = new Color32[size * size];
+            // flat-top hex: width = 2*r, height = sqrt(3)*r
+            // 텍스처를 헥사곤 비율에 맞춰 생성 (빈틈 없는 타일링을 위해)
+            int texW = size;
+            int texH = Mathf.RoundToInt(size * Mathf.Sqrt(3f) / 2f);
+
+            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            Color32[] pixels = new Color32[texW * texH];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
 
-            float cx = size * 0.5f;
-            float cy = size * 0.5f;
-            float radius = size * 0.5f;
+            float cx = texW * 0.5f;
+            float cy = texH * 0.5f;
+            float radiusX = texW * 0.5f;  // outer radius (horizontal)
+            float radiusY = texH * 0.5f;  // inner radius (vertical)
 
             // flat-top 헥사곤 6개 꼭짓점
             float[] vx = new float[6];
@@ -79,22 +85,22 @@ namespace HexaMerge.UI
             for (int i = 0; i < 6; i++)
             {
                 float angle = Mathf.Deg2Rad * (60f * i);
-                vx[i] = cx + radius * Mathf.Cos(angle);
-                vy[i] = cy + radius * Mathf.Sin(angle);
+                vx[i] = cx + radiusX * Mathf.Cos(angle);
+                vy[i] = cy + radiusY * Mathf.Sin(angle);
             }
 
-            for (int y = 0; y < size; y++)
+            for (int y = 0; y < texH; y++)
             {
-                for (int x = 0; x < size; x++)
+                for (int x = 0; x < texW; x++)
                 {
-                    pixels[y * size + x] = PointInHex(x + 0.5f, y + 0.5f, vx, vy) ? white : clear;
+                    pixels[y * texW + x] = PointInHex(x + 0.5f, y + 0.5f, vx, vy) ? white : clear;
                 }
             }
 
             tex.SetPixels32(pixels);
             tex.Apply();
 
-            cachedHexSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 100f);
+            cachedHexSprite = Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), 100f);
             return cachedHexSprite;
         }
 

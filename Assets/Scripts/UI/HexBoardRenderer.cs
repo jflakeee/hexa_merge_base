@@ -11,7 +11,7 @@ namespace HexaMerge.UI
         [SerializeField] private GameObject hexCellPrefab;
         [SerializeField] private RectTransform boardContainer;
         [SerializeField] private float hexSize = 80f;
-        [SerializeField] private float hexSpacing = -46f;
+        [SerializeField] private float hexSpacing = 1f;
 
         private Dictionary<HexCoord, HexCellView> cellViews = new Dictionary<HexCoord, HexCellView>();
 
@@ -33,7 +33,10 @@ namespace HexaMerge.UI
 
                 RectTransform rt = (RectTransform)go.transform;
                 rt.anchoredPosition = CalculateCellPosition(coord);
-                rt.sizeDelta = new Vector2(hexSize, hexSize);
+                // flat-top hex: width = 2*hexSize, height = sqrt(3)*hexSize
+                float hexWidth = hexSize * 2f;
+                float hexHeight = hexSize * Mathf.Sqrt(3f);
+                rt.sizeDelta = new Vector2(hexWidth, hexHeight);
 
                 HexCellView cellView = go.GetComponent<HexCellView>();
                 var colorConfig = GameManager.Instance != null ? GameManager.Instance.ColorConfig : null;
@@ -45,13 +48,13 @@ namespace HexaMerge.UI
 
         private Vector2 CalculateCellPosition(HexCoord coord)
         {
-            float totalSize = hexSize + hexSpacing;
+            float size = hexSize + hexSpacing;
 
-            // Flat-top hexagon layout:
+            // Flat-top hexagon layout (size = outer radius):
             // x = size * 3/2 * q
-            // y = size * sqrt(3) * (r + q / 2)
-            float x = totalSize * 1.5f * coord.q;
-            float y = totalSize * Mathf.Sqrt(3f) * (coord.r + coord.q * 0.5f);
+            // y = size * sqrt(3) * (r + q/2)
+            float x = size * 1.5f * coord.q;
+            float y = size * Mathf.Sqrt(3f) * (coord.r + coord.q * 0.5f);
 
             // Y is inverted in UI (positive r goes downward)
             return new Vector2(x, -y);
@@ -112,8 +115,10 @@ namespace HexaMerge.UI
                 if (pos.y > maxY) maxY = pos.y;
             }
 
-            float boardWidth = (maxX - minX) + hexSize;
-            float boardHeight = (maxY - minY) + hexSize;
+            float hexWidth = hexSize * 2f;
+            float hexHeight = hexSize * Mathf.Sqrt(3f);
+            float boardWidth = (maxX - minX) + hexWidth;
+            float boardHeight = (maxY - minY) + hexHeight;
 
             Vector2 containerSize = boardContainer.rect.size;
             if (containerSize.x <= 0 || containerSize.y <= 0) return;
