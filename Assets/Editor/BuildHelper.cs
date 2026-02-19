@@ -39,8 +39,8 @@ namespace HexaMerge.Editor
             if (!Directory.Exists(outputPath))
                 Directory.CreateDirectory(outputPath);
 
-            // WebGL 빌드 설정
-            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+            // WebGL 빌드 설정 (GitHub Pages 등 정적 호스팅 호환을 위해 압축 비활성화)
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Disabled;
             PlayerSettings.WebGL.dataCaching = true;
             PlayerSettings.WebGL.linkerTarget = WebGLLinkerTarget.Wasm;
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.None;
