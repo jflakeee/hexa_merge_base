@@ -1,6 +1,7 @@
 # Unity WebGL build binaries
 *.wasm binary
 *.data binary
+*.framework.js binary
 *.unityweb binary
 
 # Other binaries
