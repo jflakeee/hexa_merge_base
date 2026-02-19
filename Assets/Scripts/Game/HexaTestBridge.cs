@@ -4,6 +4,7 @@ namespace HexaMerge.Game
     using HexaMerge.UI;
     using HexaMerge.Animation;
     using UnityEngine;
+    using UnityEngine.Scripting;
     using System;
     using System.Collections;
     using System.Collections.Generic;
@@ -18,6 +19,7 @@ namespace HexaMerge.Game
     ///
     /// 콜백 응답은 WebGLBridge.SendToJS 로 __hexaTestCallback 이벤트를 전송합니다.
     /// </summary>
+    [Preserve]
     public class HexaTestBridge : MonoBehaviour
     {
         public static HexaTestBridge Instance { get; private set; }

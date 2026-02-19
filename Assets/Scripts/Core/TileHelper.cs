@@ -51,6 +51,9 @@ namespace HexaMerge.Core
         /// </summary>
         public static string FormatValue(int value)
         {
+            if (value >= 1000000000) return (value / 1000000000f).ToString("0.#") + "b";
+            if (value >= 1000000) return (value / 1000000f).ToString("0.#") + "m";
+            if (value >= 1000) return (value / 1000f).ToString("0.#") + "k";
             return value.ToString();
         }
 

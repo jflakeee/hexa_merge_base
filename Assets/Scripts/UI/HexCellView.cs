@@ -159,14 +159,16 @@ namespace HexaMerge.UI
 
             valueText.gameObject.SetActive(true);
 
+            string display = TileHelper.FormatValue(value);
+            int len = display.Length;
             int fontSize;
-            if (value < 10) fontSize = 36;
-            else if (value < 100) fontSize = 32;
-            else if (value < 1000) fontSize = 26;
-            else if (value < 10000) fontSize = 22;
+            if (len <= 1) fontSize = 36;
+            else if (len <= 2) fontSize = 32;
+            else if (len <= 3) fontSize = 26;
+            else if (len <= 4) fontSize = 22;
             else fontSize = 18;
             valueText.fontSize = fontSize;
-            valueText.text = value.ToString();
+            valueText.text = display;
         }
 
         private Image crownImage;

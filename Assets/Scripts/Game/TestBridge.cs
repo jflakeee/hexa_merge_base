@@ -1,6 +1,7 @@
 namespace HexaMerge.Game
 {
     using UnityEngine;
+    using UnityEngine.Scripting;
 
     /// <summary>
     /// Playwright E2E 테스트용 브릿지.
@@ -8,6 +9,7 @@ namespace HexaMerge.Game
     /// SendMessage('TestBridge', 'Query', queryPath) 형태로 호출합니다.
     /// 결과는 window.__unityQueryCallback(result) 콜백으로 반환합니다.
     /// </summary>
+    [Preserve]
     public class TestBridge : MonoBehaviour
     {
         public static TestBridge Instance { get; private set; }

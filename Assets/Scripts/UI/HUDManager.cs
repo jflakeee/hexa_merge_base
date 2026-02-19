@@ -1,5 +1,6 @@
 namespace HexaMerge.UI
 {
+    using HexaMerge.Core;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -238,7 +239,7 @@ namespace HexaMerge.UI
         {
             if (scoreText == null) return;
 
-            scoreText.text = score.ToString("N0");
+            scoreText.text = TileHelper.FormatValue(score);
             scoreText.fontSize = (int)CalculateScoreFontSize(score);
         }
 
@@ -246,7 +247,7 @@ namespace HexaMerge.UI
         {
             if (highScoreText == null) return;
 
-            highScoreText.text = $"HI-SCORE {score:N0}";
+            highScoreText.text = "HI-SCORE " + TileHelper.FormatValue(score);
         }
 
         private void OnSoundButtonClicked()
