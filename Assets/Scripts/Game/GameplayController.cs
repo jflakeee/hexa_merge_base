@@ -95,12 +95,17 @@ namespace HexaMerge.Game
             var targetView = boardRenderer != null
                 ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
 
-            // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 소스 위치에 splat 생성
+            // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 타겟으로 스며드는 점성 액체 효과
             if (boardRenderer != null && result.DepthGroups != null)
             {
                 Color splatColor = Color.yellow;
                 if (gm.ColorConfig != null)
                     splatColor = gm.ColorConfig.GetColor(result.BaseValue);
+
+                // 타겟 위치 (머지 결과가 놓이는 셀)
+                Vector2 targetPos = Vector2.zero;
+                if (targetView != null)
+                    targetPos = targetView.RectTransform.anchoredPosition;
 
                 for (int g = 0; g < result.DepthGroups.Count; g++)
                 {
@@ -120,11 +125,11 @@ namespace HexaMerge.Game
                     }
                     if (validCount > 0) centerPos /= validCount;
 
-                    // Splat 이펙트 (소스 위치에)
+                    // Splat 이펙트 (소스→타겟으로 스며드는 점성 액체)
                     if (MergeEffect.Instance != null)
                     {
                         MergeEffect.Instance.PlaySplatEffect(
-                            centerPos, splatColor, group.Count);
+                            centerPos, targetPos, splatColor, group.Count);
                     }
 
                     // 소스 셀 숨기기 (splat이 마스킹)

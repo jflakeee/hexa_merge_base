@@ -243,30 +243,31 @@ namespace HexaMerge.Animation
         // Splat Effect: expand -> hold -> shrink+fade (XUP style)
         // ----------------------------------------------------------------
 
-        public void PlaySplatEffect(Vector2 position, Color color, int mergedCount)
+        public void PlaySplatEffect(Vector2 sourcePosition, Vector2 targetPosition, Color color, int mergedCount)
         {
             GameObject splash = GetFromPool();
             if (splash == null) return;
-            float splatScale = Mathf.Clamp(mergedCount * 1.0f, 2.0f, 6f);
-            StartCoroutine(SplatCoroutine(splash, position, color, splatScale));
+            // 블럭 크기(~160px)보다 크지 않게 제한 (풀 오브젝트 200px 기준)
+            float splatScale = Mathf.Clamp(mergedCount * 0.15f + 0.5f, 0.5f, 0.8f);
+            StartCoroutine(SplatCoroutine(splash, sourcePosition, targetPosition, color, splatScale));
         }
 
         private IEnumerator SplatCoroutine(
-            GameObject splash, Vector2 position, Color color, float maxScale)
+            GameObject splash, Vector2 sourcePos, Vector2 targetPos, Color color, float maxScale)
         {
             splash.SetActive(true);
             RectTransform rt = splash.GetComponent<RectTransform>();
             Image img = splash.GetComponent<Image>();
 
-            rt.anchoredPosition = position;
+            rt.anchoredPosition = sourcePos;
             rt.localScale = Vector3.zero;
 
             Color splatColor = color;
             splatColor.a = 0.9f;
             if (img != null) img.color = splatColor;
 
-            // Phase 1: expand (0.15s, EaseOut)
-            float expandDur = 0.15f;
+            // Phase 1: 소스 위치에 출현 (0.08s) — 빠른 splash 등장
+            float expandDur = 0.08f;
             float elapsed = 0f;
             while (elapsed < expandDur)
             {
@@ -277,22 +278,41 @@ namespace HexaMerge.Animation
                 yield return null;
             }
 
-            // Phase 2: hold (0.15s)
-            yield return new WaitForSeconds(0.15f);
-
-            // Phase 3: shrink + fade (0.25s)
-            float shrinkDur = 0.25f;
+            // Phase 2: 타겟으로 흘러가기 (0.2s) — 점성 액체 스며드는 느낌
+            float flowDur = 0.2f;
             elapsed = 0f;
-            Vector3 peakScale = rt.localScale;
-            while (elapsed < shrinkDur)
+            while (elapsed < flowDur)
             {
                 elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / shrinkDur);
-                rt.localScale = Vector3.Lerp(peakScale, Vector3.zero, t);
+                float t = Mathf.Clamp01(elapsed / flowDur);
+                // EaseIn 이동: 점성 액체처럼 점점 가속
+                float moveT = t * t;
+                rt.anchoredPosition = Vector2.Lerp(sourcePos, targetPos, moveT);
+                // 흘러가면서 점차 축소
+                float scale = Mathf.Lerp(maxScale, maxScale * 0.5f, t);
+                rt.localScale = Vector3.one * scale;
                 if (img != null)
                 {
                     Color c = splatColor;
-                    c.a = Mathf.Lerp(0.9f, 0f, t);
+                    c.a = Mathf.Lerp(0.9f, 0.6f, t);
+                    img.color = c;
+                }
+                yield return null;
+            }
+
+            // Phase 3: 타겟에서 흡수 (0.1s) — 스며들어 사라짐
+            float absorbDur = 0.1f;
+            elapsed = 0f;
+            Vector3 peakScale = rt.localScale;
+            while (elapsed < absorbDur)
+            {
+                elapsed += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsed / absorbDur);
+                rt.localScale = Vector3.Lerp(peakScale, Vector3.zero, EaseInQuad(t));
+                if (img != null)
+                {
+                    Color c = splatColor;
+                    c.a = Mathf.Lerp(0.6f, 0f, t);
                     img.color = c;
                 }
                 yield return null;

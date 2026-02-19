@@ -90,6 +90,46 @@ namespace HexaMerge.Core
         }
 
         /// <summary>
+        /// 현재 보드 최소값 기준 8배 범위 내에서 리필 타일 값을 반환한다.
+        /// 예: min=4 → {4,8,16,32} 중 가중 랜덤 (낮은 값일수록 높은 확률)
+        /// </summary>
+        public static int GetRandomRefillValue(int minDisplayedValue)
+        {
+            if (minDisplayedValue < MinValue) minDisplayedValue = MinValue;
+            int maxRange = minDisplayedValue * 8;
+            if (maxRange > MaxValue) maxRange = MaxValue;
+
+            // 범위 내 유효 레벨 수 계산
+            int levels = 0;
+            int v = minDisplayedValue;
+            while (v <= maxRange && v <= MaxValue)
+            {
+                levels++;
+                v *= 2;
+            }
+
+            if (levels <= 1) return minDisplayedValue;
+
+            // 가중 랜덤: 낮은 값일수록 높은 확률 (1/1, 1/2, 1/3, ...)
+            float totalWeight = 0f;
+            for (int i = 1; i <= levels; i++)
+                totalWeight += 1f / i;
+
+            float roll = UnityEngine.Random.Range(0f, totalWeight);
+            float cumulative = 0f;
+            int result = minDisplayedValue;
+            for (int i = 1; i <= levels; i++)
+            {
+                cumulative += 1f / i;
+                if (roll <= cumulative)
+                    return result;
+                result *= 2;
+            }
+
+            return minDisplayedValue;
+        }
+
+        /// <summary>
         /// 초기 보드 타일 값을 반환한다 (리필보다 다양한 분포).
         /// 50% 2, 30% 4, 15% 8, 5% 16
         /// </summary>

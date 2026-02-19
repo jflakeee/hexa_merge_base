@@ -71,11 +71,20 @@ namespace HexaMerge.Game
         {
             if (State != GameState.Playing) return;
 
+            // 머지 전 최고값 기록 (32배 소멸 규칙 판정용)
+            int previousMax = GetHighestValue();
+
             MergeResult result = MergeSystem.TryMerge(coord);
             if (!result.Success) return;
 
             Score.AddScore(result.ScoreGained);
             OnMergePerformed?.Invoke(result);
+
+            // 32배 소멸 규칙: 새 최대값 블럭 생성 시, 32배 작은 블럭 일괄 소멸
+            if (result.ResultValue > previousMax)
+            {
+                DestroySmallBlocks(result.ResultValue);
+            }
 
             FillAllEmptyCells(useInitialWeights: false);
             OnNewTilesSpawned?.Invoke();
@@ -117,14 +126,59 @@ namespace HexaMerge.Game
 
         public void FillAllEmptyCells(bool useInitialWeights = false)
         {
+            int minDisplayed = GetMinDisplayedValue();
             List<HexCell> emptyCells = Grid.GetEmptyCells();
             for (int i = 0; i < emptyCells.Count; i++)
             {
                 int value = useInitialWeights
                     ? TileHelper.GetRandomInitialTileValue()
-                    : TileHelper.GetRandomNewTileValue();
+                    : TileHelper.GetRandomRefillValue(minDisplayed);
                 emptyCells[i].SetValue(value);
             }
+        }
+
+        private int GetHighestValue()
+        {
+            int max = 0;
+            foreach (var coord in Grid.AllCoords)
+            {
+                var cell = Grid.GetCell(coord);
+                if (cell != null && cell.TileValue > max)
+                    max = cell.TileValue;
+            }
+            return max;
+        }
+
+        private int GetMinDisplayedValue()
+        {
+            int min = int.MaxValue;
+            foreach (var coord in Grid.AllCoords)
+            {
+                var cell = Grid.GetCell(coord);
+                if (cell != null && !cell.IsEmpty && cell.TileValue < min)
+                    min = cell.TileValue;
+            }
+            return min == int.MaxValue ? 2 : min;
+        }
+
+        private void DestroySmallBlocks(int maxValue)
+        {
+            int threshold = maxValue / 32;
+            if (threshold < TileHelper.MinValue) return;
+
+            int destroyed = 0;
+            foreach (var coord in Grid.AllCoords)
+            {
+                var cell = Grid.GetCell(coord);
+                if (cell != null && !cell.IsEmpty && cell.TileValue <= threshold)
+                {
+                    cell.Clear();
+                    destroyed++;
+                }
+            }
+
+            if (destroyed > 0)
+                Debug.Log(string.Format("[GameManager] 32x rule: destroyed {0} blocks <= {1}", destroyed, threshold));
         }
 
         private void UpdateCrowns()
