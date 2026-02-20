@@ -22,6 +22,7 @@ public static class SceneSetup
 {
     // ------------------------------------------------------------------ colours
     private static readonly Color Pink   = HexColor("#E91E63");
+    private static readonly Color Purple = HexColor("#7B1FA2");
     private static readonly Color Grey   = new Color(0.6f, 0.6f, 0.6f, 1f);
     private static readonly Color Black  = Color.black;
     private static readonly Color White  = Color.white;
@@ -61,6 +62,9 @@ public static class SceneSetup
 
         // ---- 9. Controllers wired to Canvas / BoardContainer
         SetupControllers(canvas, boardContainer, hud, hexCellPrefab);
+
+        // ---- 9b. Wire ThemeManager to background image and camera
+        WireThemeManager(canvasRT, mainCam);
 
         // ---- 10. TileColorConfig ScriptableObject
         TileColorConfig colorConfig = CreateTileColorConfig();
@@ -407,6 +411,7 @@ public static class SceneSetup
         GameObject gmGO = new GameObject("GameManager");
         gmGO.AddComponent<GameManager>();
         gmGO.AddComponent<WebGLBridge>();
+        gmGO.AddComponent<ThemeManager>();
         Undo.RegisterCreatedObjectUndo(gmGO, "Create GameManager");
 
         // --- AudioManager + SFXInitializer
@@ -560,6 +565,21 @@ public static class SceneSetup
         return config;
     }
 
+    private static void WireThemeManager(RectTransform canvasRT, Camera mainCam)
+    {
+        ThemeManager tm = Object.FindObjectOfType<ThemeManager>();
+        if (tm == null) return;
+
+        // Find the Background image in the canvas
+        Transform bgTransform = canvasRT.Find("Background");
+        Image bgImage = bgTransform != null ? bgTransform.GetComponent<Image>() : null;
+
+        SerializedObject soTM = new SerializedObject(tm);
+        soTM.FindProperty("backgroundImage").objectReferenceValue = bgImage;
+        soTM.FindProperty("mainCamera").objectReferenceValue = mainCam;
+        soTM.ApplyModifiedPropertiesWithoutUndo();
+    }
+
     private static void WireTileColorConfig(TileColorConfig config)
     {
         GameManager gm = Object.FindObjectOfType<GameManager>();
@@ -686,7 +706,7 @@ public static class SceneSetup
         // GameOverScreen은 Start()에서 이벤트 구독이 필요하므로 루트 GO를 활성 유지
         // panel 자식만 Hide()로 숨김 (Start()에서 처리)
 
-        // ---- PauseScreen panel
+        // ---- PauseScreen panel (benchmark-style MENU screen)
         DestroyExistingChild("PauseScreen", canvasRT);
         GameObject pauseScreen = CreateScreenPanel("PauseScreen", canvasRT);
         PauseScreen ps = pauseScreen.AddComponent<PauseScreen>();
@@ -696,52 +716,98 @@ public static class SceneSetup
         Image pPanelImg = pPanel.AddComponent<Image>();
         pPanelImg.color = new Color(0f, 0f, 0f, 0.85f);
 
-        Text pTitle = CreateTMPText("Title", pPanel.transform, "PAUSED", 48f, White, FontStyle.Bold);
-        RectTransform pTitleRT = pTitle.GetComponent<RectTransform>();
-        SetAnchored(pTitleRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(400f, 60f), new Vector2(0f, 200f));
+        // Purple "MENU" header bar
+        GameObject menuHeader = CreateUIObject("MenuHeader", pPanel.transform);
+        RectTransform menuHeaderRT = menuHeader.GetComponent<RectTransform>();
+        menuHeaderRT.anchorMin = new Vector2(0.05f, 1f);
+        menuHeaderRT.anchorMax = new Vector2(0.95f, 1f);
+        menuHeaderRT.pivot = new Vector2(0.5f, 1f);
+        menuHeaderRT.sizeDelta = new Vector2(0f, 80f);
+        menuHeaderRT.anchoredPosition = new Vector2(0f, -200f);
+        Image menuHeaderImg = menuHeader.AddComponent<Image>();
+        menuHeaderImg.color = Purple;
+        Text menuTitle = CreateTMPText("Title", menuHeader.transform, "MENU", 40f, White, FontStyle.Bold);
+        StretchFull(menuTitle.GetComponent<RectTransform>());
 
-        Text pScoreText = CreateTMPText("CurrentScoreText", pPanel.transform, "0", 36f, Pink, FontStyle.Bold);
-        RectTransform pScoreRT = pScoreText.GetComponent<RectTransform>();
-        SetAnchored(pScoreRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(300f, 50f), new Vector2(0f, 120f));
+        // 2x2 icon grid container
+        float gridTop = -310f;
+        float iconSize = 110f;
+        float iconGap = 20f;
+        float gridCenterX = 0f;
 
-        GameObject pResumeBtn = CreateButtonObject("ResumeButton", pPanel.transform, new Vector2(300f, 80f));
-        RectTransform pResumeBtnRT = pResumeBtn.GetComponent<RectTransform>();
-        SetAnchored(pResumeBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(300f, 80f), new Vector2(0f, 20f));
-        pResumeBtn.GetComponent<Image>().color = Pink;
-        Text resumeLabel = CreateTMPText("Label", pResumeBtn.transform, "RESUME", 28f, White, FontStyle.Bold);
-        StretchFull(resumeLabel.GetComponent<RectTransform>());
+        // Row 1: Rate (star) | Favorite (heart)
+        GameObject rateBtn = CreateButtonObject("RateButton", pPanel.transform, new Vector2(iconSize, iconSize));
+        RectTransform rateBtnRT = rateBtn.GetComponent<RectTransform>();
+        SetAnchored(rateBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(iconSize, iconSize), new Vector2(gridCenterX - iconSize/2 - iconGap/2, gridTop));
+        rateBtn.GetComponent<Image>().color = HexColor("#FF9800");
+        Text rateIcon = CreateTMPText("Icon", rateBtn.transform, "*", 40f, White, FontStyle.Bold);
+        StretchFull(rateIcon.GetComponent<RectTransform>());
 
-        GameObject pRestartBtn = CreateButtonObject("RestartButton", pPanel.transform, new Vector2(300f, 80f));
+        GameObject favBtn = CreateButtonObject("FavoriteButton", pPanel.transform, new Vector2(iconSize, iconSize));
+        RectTransform favBtnRT = favBtn.GetComponent<RectTransform>();
+        SetAnchored(favBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(iconSize, iconSize), new Vector2(gridCenterX + iconSize/2 + iconGap/2, gridTop));
+        favBtn.GetComponent<Image>().color = HexColor("#E91E63");
+        Text favIcon = CreateTMPText("Icon", favBtn.transform, "<3", 36f, White, FontStyle.Bold);
+        StretchFull(favIcon.GetComponent<RectTransform>());
+
+        // Row 2: Theme (sun/moon) | Leaderboard (trophy)
+        float row2Y = gridTop - iconSize - iconGap;
+        GameObject themeBtn = CreateButtonObject("ThemeButton", pPanel.transform, new Vector2(iconSize, iconSize));
+        RectTransform themeBtnRT = themeBtn.GetComponent<RectTransform>();
+        SetAnchored(themeBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(iconSize, iconSize), new Vector2(gridCenterX - iconSize/2 - iconGap/2, row2Y));
+        themeBtn.GetComponent<Image>().color = HexColor("#1565C0");
+
+        // Theme icon as Image child (procedurally created at runtime by PauseScreen)
+        GameObject themeIconObj = CreateUIObject("ThemeIcon", themeBtn.transform);
+        RectTransform themeIconRT = themeIconObj.GetComponent<RectTransform>();
+        themeIconRT.anchorMin = new Vector2(0.2f, 0.2f);
+        themeIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        themeIconRT.offsetMin = Vector2.zero;
+        themeIconRT.offsetMax = Vector2.zero;
+        Image themeIconImg = themeIconObj.AddComponent<Image>();
+        themeIconImg.color = White;
+        themeIconImg.raycastTarget = false;
+
+        GameObject lbBtn = CreateButtonObject("LeaderboardButton", pPanel.transform, new Vector2(iconSize, iconSize));
+        RectTransform lbBtnRT = lbBtn.GetComponent<RectTransform>();
+        SetAnchored(lbBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(iconSize, iconSize), new Vector2(gridCenterX + iconSize/2 + iconGap/2, row2Y));
+        lbBtn.GetComponent<Image>().color = HexColor("#4CAF50");
+        Text lbIcon = CreateTMPText("Icon", lbBtn.transform, "#1", 36f, White, FontStyle.Bold);
+        StretchFull(lbIcon.GetComponent<RectTransform>());
+
+        // RESTART button (outlined style)
+        float btnY = row2Y - iconSize/2 - 60f;
+        GameObject pRestartBtn = CreateButtonObject("RestartButton", pPanel.transform, new Vector2(400f, 70f));
         RectTransform pRestartBtnRT = pRestartBtn.GetComponent<RectTransform>();
-        SetAnchored(pRestartBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(300f, 80f), new Vector2(0f, -80f));
-        pRestartBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        Text pRestartLabel = CreateTMPText("Label", pRestartBtn.transform, "RESTART", 28f, White, FontStyle.Normal);
+        SetAnchored(pRestartBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(400f, 70f), new Vector2(0f, btnY));
+        pRestartBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.35f, 1f);
+        Text pRestartLabel = CreateTMPText("Label", pRestartBtn.transform, "RESTART", 28f, White, FontStyle.Bold);
         StretchFull(pRestartLabel.GetComponent<RectTransform>());
 
-        GameObject pSoundBtn = CreateButtonObject("SoundToggleButton", pPanel.transform, new Vector2(60f, 60f));
-        RectTransform pSoundBtnRT = pSoundBtn.GetComponent<RectTransform>();
-        SetAnchored(pSoundBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(60f, 60f), new Vector2(0f, -180f));
-        pSoundBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
-
-        // SoundToggleIcon is an Image child of SoundToggleButton
-        GameObject pSoundIcon = CreateUIObject("SoundToggleIcon", pSoundBtn.transform);
-        StretchFull(pSoundIcon.GetComponent<RectTransform>());
-        Image pSoundIconImg = pSoundIcon.AddComponent<Image>();
-        pSoundIconImg.color = White;
-        pSoundIconImg.raycastTarget = false;
+        // CONTINUE button (pink)
+        float contY = btnY - 90f;
+        GameObject pContinueBtn = CreateButtonObject("ContinueButton", pPanel.transform, new Vector2(400f, 70f));
+        RectTransform pContinueBtnRT = pContinueBtn.GetComponent<RectTransform>();
+        SetAnchored(pContinueBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
+                    new Vector2(400f, 70f), new Vector2(0f, contY));
+        pContinueBtn.GetComponent<Image>().color = Pink;
+        Text pContinueLabel = CreateTMPText("Label", pContinueBtn.transform, "CONTINUE", 28f, White, FontStyle.Bold);
+        StretchFull(pContinueLabel.GetComponent<RectTransform>());
 
         // Wire PauseScreen
         SerializedObject soPS = new SerializedObject(ps);
-        soPS.FindProperty("resumeButton").objectReferenceValue       = pResumeBtn.GetComponent<Button>();
+        soPS.FindProperty("continueButton").objectReferenceValue     = pContinueBtn.GetComponent<Button>();
         soPS.FindProperty("restartButton").objectReferenceValue      = pRestartBtn.GetComponent<Button>();
-        soPS.FindProperty("soundToggleButton").objectReferenceValue  = pSoundBtn.GetComponent<Button>();
-        soPS.FindProperty("soundToggleIcon").objectReferenceValue    = pSoundIconImg;
-        soPS.FindProperty("currentScoreText").objectReferenceValue   = pScoreText;
+        soPS.FindProperty("rateButton").objectReferenceValue         = rateBtn.GetComponent<Button>();
+        soPS.FindProperty("favoriteButton").objectReferenceValue     = favBtn.GetComponent<Button>();
+        soPS.FindProperty("themeButton").objectReferenceValue        = themeBtn.GetComponent<Button>();
+        soPS.FindProperty("leaderboardButton").objectReferenceValue  = lbBtn.GetComponent<Button>();
+        soPS.FindProperty("themeButtonImage").objectReferenceValue   = themeIconImg;
         soPS.ApplyModifiedPropertiesWithoutUndo();
 
         pauseScreen.SetActive(false);
@@ -760,19 +826,184 @@ public static class SceneSetup
                     new Vector2(400f, 60f), new Vector2(0f, -60f));
         shopScreen.SetActive(false);
 
-        // ---- LeaderboardScreen panel
+        // ---- LeaderboardScreen panel (full UI with ScrollView)
         DestroyExistingChild("LeaderboardScreen", canvasRT);
         GameObject lbScreen = CreateScreenPanel("LeaderboardScreen", canvasRT);
-        lbScreen.AddComponent<LeaderboardScreen>();
+        LeaderboardScreen lbs = lbScreen.AddComponent<LeaderboardScreen>();
+
         GameObject lbPanel = CreateUIObject("Panel", lbScreen.transform);
         StretchFull(lbPanel.GetComponent<RectTransform>());
         Image lbPanelImg = lbPanel.AddComponent<Image>();
         lbPanelImg.color = new Color(0f, 0f, 0f, 0.9f);
-        Text lbTitle = CreateTMPText("Title", lbPanel.transform, "LEADERBOARD", 48f, White, FontStyle.Bold);
-        RectTransform lbTitleRT = lbTitle.GetComponent<RectTransform>();
-        SetAnchored(lbTitleRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(600f, 60f), new Vector2(0f, -60f));
+
+        // Purple header
+        GameObject lbHeader = CreateUIObject("Header", lbPanel.transform);
+        RectTransform lbHeaderRT = lbHeader.GetComponent<RectTransform>();
+        lbHeaderRT.anchorMin = new Vector2(0.05f, 1f);
+        lbHeaderRT.anchorMax = new Vector2(0.95f, 1f);
+        lbHeaderRT.pivot = new Vector2(0.5f, 1f);
+        lbHeaderRT.sizeDelta = new Vector2(0f, 80f);
+        lbHeaderRT.anchoredPosition = new Vector2(0f, -80f);
+        Image lbHeaderImg = lbHeader.AddComponent<Image>();
+        lbHeaderImg.color = Purple;
+        Text lbTitle = CreateTMPText("Title", lbHeader.transform, "LEADERBOARD", 36f, White, FontStyle.Bold);
+        StretchFull(lbTitle.GetComponent<RectTransform>());
+
+        // ScrollView area for entries
+        GameObject scrollView = CreateUIObject("ScrollView", lbPanel.transform);
+        RectTransform scrollRT = scrollView.GetComponent<RectTransform>();
+        scrollRT.anchorMin = new Vector2(0.05f, 0.15f);
+        scrollRT.anchorMax = new Vector2(0.95f, 1f);
+        scrollRT.pivot = new Vector2(0.5f, 1f);
+        scrollRT.offsetMin = new Vector2(0f, 0f);
+        scrollRT.offsetMax = new Vector2(0f, -180f);
+        ScrollRect scrollRect = scrollView.AddComponent<ScrollRect>();
+        scrollRect.horizontal = false;
+        Image scrollBg = scrollView.AddComponent<Image>();
+        scrollBg.color = new Color(0.1f, 0.1f, 0.12f, 0.5f);
+        scrollView.AddComponent<Mask>().showMaskGraphic = true;
+
+        // Content container (vertical layout)
+        GameObject content = CreateUIObject("Content", scrollView.transform);
+        RectTransform contentRT = content.GetComponent<RectTransform>();
+        contentRT.anchorMin = new Vector2(0f, 1f);
+        contentRT.anchorMax = new Vector2(1f, 1f);
+        contentRT.pivot = new Vector2(0.5f, 1f);
+        contentRT.sizeDelta = new Vector2(0f, 0f);
+        contentRT.anchoredPosition = Vector2.zero;
+        VerticalLayoutGroup vlg = content.AddComponent<VerticalLayoutGroup>();
+        vlg.spacing = 4f;
+        vlg.childAlignment = TextAnchor.UpperCenter;
+        vlg.childControlWidth = true;
+        vlg.childControlHeight = false;
+        vlg.childForceExpandWidth = true;
+        vlg.childForceExpandHeight = false;
+        ContentSizeFitter csf = content.AddComponent<ContentSizeFitter>();
+        csf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        scrollRect.content = contentRT;
+
+        // Entry prefab (created in-scene, then saved as prefab)
+        GameObject entryPrefab = CreateUIObject("LeaderboardEntry", content.transform);
+        RectTransform entryRT = entryPrefab.GetComponent<RectTransform>();
+        entryRT.sizeDelta = new Vector2(0f, 60f);
+        Image entryBg = entryPrefab.AddComponent<Image>();
+        entryBg.color = new Color(0.15f, 0.15f, 0.18f, 0.8f);
+        LayoutElement entryLE = entryPrefab.AddComponent<LayoutElement>();
+        entryLE.preferredHeight = 60f;
+
+        // Rank text (left)
+        Text rankText = CreateTMPText("RankText", entryPrefab.transform, "#1", 24f, Pink, FontStyle.Bold);
+        RectTransform rankRT = rankText.GetComponent<RectTransform>();
+        rankRT.anchorMin = new Vector2(0f, 0f);
+        rankRT.anchorMax = new Vector2(0.15f, 1f);
+        rankRT.offsetMin = Vector2.zero;
+        rankRT.offsetMax = Vector2.zero;
+
+        // Score text (center)
+        Text entryScoreText = CreateTMPText("ScoreText", entryPrefab.transform, "0", 26f, White, FontStyle.Bold);
+        RectTransform entryScoreRT = entryScoreText.GetComponent<RectTransform>();
+        entryScoreRT.anchorMin = new Vector2(0.15f, 0f);
+        entryScoreRT.anchorMax = new Vector2(0.65f, 1f);
+        entryScoreRT.offsetMin = Vector2.zero;
+        entryScoreRT.offsetMax = Vector2.zero;
+
+        // Date text (right)
+        Text dateText = CreateTMPText("DateText", entryPrefab.transform, "", 18f, Grey, FontStyle.Normal);
+        RectTransform dateRT = dateText.GetComponent<RectTransform>();
+        dateRT.anchorMin = new Vector2(0.65f, 0f);
+        dateRT.anchorMax = new Vector2(1f, 1f);
+        dateRT.offsetMin = Vector2.zero;
+        dateRT.offsetMax = Vector2.zero;
+
+        entryPrefab.SetActive(false);
+
+        // Close button (bottom)
+        GameObject lbCloseBtn = CreateButtonObject("CloseButton", lbPanel.transform, new Vector2(400f, 70f));
+        RectTransform lbCloseBtnRT = lbCloseBtn.GetComponent<RectTransform>();
+        SetAnchored(lbCloseBtnRT, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                    new Vector2(400f, 70f), new Vector2(0f, 40f));
+        lbCloseBtn.GetComponent<Image>().color = Pink;
+        Text lbCloseLabel = CreateTMPText("Label", lbCloseBtn.transform, "CLOSE", 28f, White, FontStyle.Bold);
+        StretchFull(lbCloseLabel.GetComponent<RectTransform>());
+
+        // Wire LeaderboardScreen
+        SerializedObject soLB = new SerializedObject(lbs);
+        soLB.FindProperty("entryContainer").objectReferenceValue = content.transform;
+        soLB.FindProperty("entryPrefab").objectReferenceValue    = entryPrefab;
+        soLB.FindProperty("closeButton").objectReferenceValue    = lbCloseBtn.GetComponent<Button>();
+        soLB.FindProperty("titleText").objectReferenceValue      = lbTitle;
+        soLB.ApplyModifiedPropertiesWithoutUndo();
+
         lbScreen.SetActive(false);
+
+        // ---- HowToPlayScreen panel
+        DestroyExistingChild("HowToPlayScreen", canvasRT);
+        GameObject htpScreen = CreateScreenPanel("HowToPlayScreen", canvasRT);
+        HowToPlayScreen htps = htpScreen.AddComponent<HowToPlayScreen>();
+
+        GameObject htpPanel = CreateUIObject("Panel", htpScreen.transform);
+        StretchFull(htpPanel.GetComponent<RectTransform>());
+        Image htpPanelImg = htpPanel.AddComponent<Image>();
+        htpPanelImg.color = new Color(0f, 0f, 0f, 0.9f);
+
+        // Purple "HOW TO PLAY?" header
+        GameObject htpHeader = CreateUIObject("Header", htpPanel.transform);
+        RectTransform htpHeaderRT = htpHeader.GetComponent<RectTransform>();
+        htpHeaderRT.anchorMin = new Vector2(0.05f, 1f);
+        htpHeaderRT.anchorMax = new Vector2(0.95f, 1f);
+        htpHeaderRT.pivot = new Vector2(0.5f, 1f);
+        htpHeaderRT.sizeDelta = new Vector2(0f, 80f);
+        htpHeaderRT.anchoredPosition = new Vector2(0f, -120f);
+        Image htpHeaderImg = htpHeader.AddComponent<Image>();
+        htpHeaderImg.color = Purple;
+        Text htpTitle = CreateTMPText("Title", htpHeader.transform, "HOW TO PLAY?", 36f, White, FontStyle.Bold);
+        StretchFull(htpTitle.GetComponent<RectTransform>());
+
+        // Step 1: "TAP a number"
+        float stepY = -240f;
+        float stepH = 140f;
+        Text step1Label = CreateTMPText("Step1", htpPanel.transform, "1. TAP a number block\n   to start a merge", 28f, White, FontStyle.Normal);
+        RectTransform step1RT = step1Label.GetComponent<RectTransform>();
+        step1Label.alignment = TextAnchor.MiddleLeft;
+        SetAnchored(step1RT, new Vector2(0.1f, 1f), new Vector2(0.9f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, stepH), new Vector2(0f, stepY));
+
+        // Step 2: "MATCH adjacent same numbers"
+        Text step2Label = CreateTMPText("Step2", htpPanel.transform, "2. MATCH adjacent blocks\n   with the same number", 28f, White, FontStyle.Normal);
+        RectTransform step2RT = step2Label.GetComponent<RectTransform>();
+        step2Label.alignment = TextAnchor.MiddleLeft;
+        SetAnchored(step2RT, new Vector2(0.1f, 1f), new Vector2(0.9f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, stepH), new Vector2(0f, stepY - stepH));
+
+        // Step 3: "MERGE to create bigger numbers"
+        Text step3Label = CreateTMPText("Step3", htpPanel.transform, "3. MERGE to create\n   bigger numbers!", 28f, White, FontStyle.Normal);
+        RectTransform step3RT = step3Label.GetComponent<RectTransform>();
+        step3Label.alignment = TextAnchor.MiddleLeft;
+        SetAnchored(step3RT, new Vector2(0.1f, 1f), new Vector2(0.9f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, stepH), new Vector2(0f, stepY - stepH * 2));
+
+        // Example: "4 + 4 + 4 = 32"
+        Text exampleText = CreateTMPText("Example", htpPanel.transform,
+            "Example:  4 + 4 + 4 = 32", 24f, Pink, FontStyle.Bold);
+        RectTransform exRT = exampleText.GetComponent<RectTransform>();
+        SetAnchored(exRT, new Vector2(0.1f, 1f), new Vector2(0.9f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(0f, 50f), new Vector2(0f, stepY - stepH * 3));
+
+        // GOT IT button
+        GameObject gotItBtn = CreateButtonObject("GotItButton", htpPanel.transform, new Vector2(400f, 70f));
+        RectTransform gotItBtnRT = gotItBtn.GetComponent<RectTransform>();
+        SetAnchored(gotItBtnRT, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0.5f, 0f),
+                    new Vector2(400f, 70f), new Vector2(0f, 60f));
+        gotItBtn.GetComponent<Image>().color = Pink;
+        Text gotItLabel = CreateTMPText("Label", gotItBtn.transform, "GOT IT!", 28f, White, FontStyle.Bold);
+        StretchFull(gotItLabel.GetComponent<RectTransform>());
+
+        // Wire HowToPlayScreen
+        SerializedObject soHTP = new SerializedObject(htps);
+        soHTP.FindProperty("gotItButton").objectReferenceValue = gotItBtn.GetComponent<Button>();
+        soHTP.ApplyModifiedPropertiesWithoutUndo();
+
+        htpScreen.SetActive(false);
 
         // ---- ScreenManager on Canvas
         ScreenManager sm = canvasRT.gameObject.GetComponent<ScreenManager>();
@@ -781,7 +1012,7 @@ public static class SceneSetup
 
         SerializedObject soSM = new SerializedObject(sm);
         SerializedProperty screensProp = soSM.FindProperty("screens");
-        screensProp.arraySize = 3;
+        screensProp.arraySize = 4;
 
         // Entry 0 : Pause
         SerializedProperty entry0 = screensProp.GetArrayElementAtIndex(0);
@@ -798,8 +1029,12 @@ public static class SceneSetup
         entry2.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Leaderboard;
         entry2.FindPropertyRelative("screenObject").objectReferenceValue = lbScreen;
 
+        // Entry 3 : HowToPlay
+        SerializedProperty entry3 = screensProp.GetArrayElementAtIndex(3);
+        entry3.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.HowToPlay;
+        entry3.FindPropertyRelative("screenObject").objectReferenceValue = htpScreen;
+
         // GameOverScreen은 자체 이벤트 관리 (OnStateChanged 구독)이므로 ScreenManager에 등록하지 않음
-        // ScreenManager.HideAll()이 GameOverScreen 루트를 비활성화하면 Start()가 실행되지 않아 이벤트 구독 불가
 
         soSM.FindProperty("initialScreen").enumValueIndex = (int)ScreenType.Gameplay;
         soSM.ApplyModifiedPropertiesWithoutUndo();

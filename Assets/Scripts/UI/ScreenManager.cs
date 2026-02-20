@@ -12,7 +12,8 @@ namespace HexaMerge.UI
         Pause,
         Settings,
         Leaderboard,
-        Shop
+        Shop,
+        HowToPlay
     }
 
     public class ScreenManager : MonoBehaviour
@@ -132,7 +133,8 @@ namespace HexaMerge.UI
             if (currentScreen == ScreenType.Pause ||
                 currentScreen == ScreenType.Settings ||
                 currentScreen == ScreenType.Leaderboard ||
-                currentScreen == ScreenType.Shop)
+                currentScreen == ScreenType.Shop ||
+                currentScreen == ScreenType.HowToPlay)
             {
                 ShowScreen(ScreenType.Gameplay);
             }

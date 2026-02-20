@@ -271,6 +271,8 @@ namespace HexaMerge.Game
                     if (TileAnimator.Instance != null && boardRenderer != null)
                         TileAnimator.Instance.PlayGameOverAnimation(
                             boardRenderer.GetComponent<RectTransform>());
+                    // 리더보드에 최종 점수 등록
+                    RegisterLeaderboardEntry();
                     break;
             }
         }
@@ -296,6 +298,17 @@ namespace HexaMerge.Game
             }
 
             lastCrownCoord = newCrown;
+        }
+
+        private void RegisterLeaderboardEntry()
+        {
+            if (gm == null) return;
+            double score = gm.Score.CurrentScore;
+            if (score <= 0) return;
+
+            var lb = Object.FindObjectOfType<LeaderboardScreen>();
+            if (lb != null)
+                lb.AddEntry(score);
         }
 
         private void RefreshBoard()

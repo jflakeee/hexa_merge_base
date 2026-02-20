@@ -49,6 +49,10 @@
 
 @res/KakaoTalk_20260219_202633217.png 벤치마크 이미지 참고 병합할 블럭이 없으면 게임 오버 화면 표시
 
+벤치마크영상 참고해서 사운드 효과 적용
+병합, 연속병합, 왕관바뀜, 게임 시작, 게임오버, 메뉴버튼
+
+
 git test url check
 local test url http://localhost/test_/hexa_merge_basic/Build/WebGL/
 원격 깃 빌드 테스트 not localhost

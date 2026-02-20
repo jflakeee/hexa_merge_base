@@ -1,6 +1,8 @@
 namespace HexaMerge.UI
 {
     using HexaMerge.Core;
+    using HexaMerge.Game;
+    using HexaMerge.Audio;
     using UnityEngine;
     using UnityEngine.UI;
 
@@ -54,6 +56,17 @@ namespace HexaMerge.UI
             ApplyHexButtonStyle(soundButton, "sound");
             ApplyHexButtonStyle(menuButton, "menu");
             ApplyHexButtonStyle(helpButton, null);
+
+            // Sync mute state from AudioManager
+            if (AudioManager.Instance != null)
+                isSoundOn = !AudioManager.Instance.IsMuted;
+
+            // Subscribe to theme changes
+            if (ThemeManager.Instance != null)
+            {
+                ThemeManager.Instance.OnThemeChanged += OnThemeChanged;
+                ApplyThemeColors();
+            }
 
             UpdateScore(0);
             UpdateHighScore(0);
@@ -233,6 +246,27 @@ namespace HexaMerge.UI
 
             if (helpButton != null)
                 helpButton.onClick.RemoveListener(OnHelpButtonClicked);
+
+            if (ThemeManager.Instance != null)
+                ThemeManager.Instance.OnThemeChanged -= OnThemeChanged;
+        }
+
+        private void OnThemeChanged(bool isDark)
+        {
+            ApplyThemeColors();
+        }
+
+        private void ApplyThemeColors()
+        {
+            if (ThemeManager.Instance == null) return;
+
+            Color sc = ThemeManager.Instance.GetScoreColor();
+            Color hc = ThemeManager.Instance.GetHiScoreColor();
+
+            if (scoreText != null)
+                scoreText.color = sc;
+            if (highScoreText != null)
+                highScoreText.color = hc;
         }
 
         public void UpdateScore(double score)
@@ -252,22 +286,41 @@ namespace HexaMerge.UI
 
         private void OnSoundButtonClicked()
         {
-            isSoundOn = !isSoundOn;
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(SFXType.ButtonClick);
+                AudioManager.Instance.ToggleMute();
+                isSoundOn = !AudioManager.Instance.IsMuted;
+            }
+            else
+            {
+                isSoundOn = !isSoundOn;
+                AudioListener.volume = isSoundOn ? 1f : 0f;
+            }
 
             if (soundIcon != null)
                 soundIcon.sprite = isSoundOn ? soundOnSprite : soundOffSprite;
-
-            AudioListener.volume = isSoundOn ? 1f : 0f;
         }
 
         private void OnMenuButtonClicked()
         {
-            Debug.Log("[HUDManager] Menu button clicked");
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(SFXType.ButtonClick);
+
+            if (GameManager.Instance != null)
+                GameManager.Instance.PauseGame();
+
+            if (ScreenManager.Instance != null)
+                ScreenManager.Instance.ShowScreen(ScreenType.Pause);
         }
 
         private void OnHelpButtonClicked()
         {
-            Debug.Log("[HUDManager] Help button clicked");
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlaySFX(SFXType.ButtonClick);
+
+            if (ScreenManager.Instance != null)
+                ScreenManager.Instance.ShowScreen(ScreenType.HowToPlay);
         }
 
         private float CalculateScoreFontSize(double score)

@@ -1,6 +1,7 @@
 namespace HexaMerge.UI
 {
     using HexaMerge.Audio;
+    using HexaMerge.Core;
     using UnityEngine;
     using UnityEngine.UI;
     using System;
@@ -169,7 +170,7 @@ namespace HexaMerge.UI
                 var scoreText = FindChildText(entryObj, "ScoreText");
                 if (scoreText != null)
                 {
-                    scoreText.text = entry.score.ToString("N0");
+                    scoreText.text = TileHelper.FormatValue(entry.score);
                 }
 
                 // 날짜 텍스트
