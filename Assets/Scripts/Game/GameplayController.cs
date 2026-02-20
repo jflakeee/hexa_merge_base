@@ -306,9 +306,8 @@ namespace HexaMerge.Game
             double score = gm.Score.CurrentScore;
             if (score <= 0) return;
 
-            var lb = Object.FindObjectOfType<LeaderboardScreen>();
-            if (lb != null)
-                lb.AddEntry(score);
+            if (LeaderboardScreen.Instance != null)
+                LeaderboardScreen.Instance.AddEntry(score);
         }
 
         private void RefreshBoard()

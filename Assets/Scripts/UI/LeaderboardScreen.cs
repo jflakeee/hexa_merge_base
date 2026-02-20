@@ -26,6 +26,8 @@ namespace HexaMerge.UI
             public List<LeaderboardEntry> entries;
         }
 
+        public static LeaderboardScreen Instance { get; private set; }
+
         [SerializeField] private Transform entryContainer;
         [SerializeField] private GameObject entryPrefab;
         [SerializeField] private Button closeButton;
@@ -37,6 +39,11 @@ namespace HexaMerge.UI
         private readonly List<GameObject> spawnedEntries = new List<GameObject>();
 
         private const string LEADERBOARD_KEY = "Leaderboard";
+
+        private void Awake()
+        {
+            Instance = this;
+        }
 
         private void OnEnable()
         {
