@@ -26,7 +26,7 @@ namespace HexaMerge.UI
             public List<LeaderboardEntry> entries;
         }
 
-        public static LeaderboardScreen Instance { get; private set; }
+        private static readonly int StaticMaxEntries = 10;
 
         [SerializeField] private Transform entryContainer;
         [SerializeField] private GameObject entryPrefab;
@@ -39,11 +39,6 @@ namespace HexaMerge.UI
         private readonly List<GameObject> spawnedEntries = new List<GameObject>();
 
         private const string LEADERBOARD_KEY = "Leaderboard";
-
-        private void Awake()
-        {
-            Instance = this;
-        }
 
         private void OnEnable()
         {
@@ -65,41 +60,47 @@ namespace HexaMerge.UI
         }
 
         /// <summary>
-        /// 새 점수를 리더보드에 추가합니다.
-        /// 자동으로 정렬하고 maxEntries 이상이면 하위 항목을 제거합니다.
+        /// 새 점수를 리더보드에 추가합니다 (정적 메서드 — 비활성 객체에서도 호출 가능).
+        /// PlayerPrefs에 직접 저장하고, 화면이 활성화되면 OnEnable에서 자동 로드됩니다.
         /// </summary>
-        public void AddEntry(double score)
+        public static void AddEntry(double score)
         {
-            LoadEntries();
+            string json = PlayerPrefs.GetString(LEADERBOARD_KEY, "");
+            List<LeaderboardEntry> list = new List<LeaderboardEntry>();
 
-            var newEntry = new LeaderboardEntry
+            if (!string.IsNullOrEmpty(json))
+            {
+                try
+                {
+                    var data = JsonUtility.FromJson<LeaderboardData>(json);
+                    if (data.entries != null)
+                        list.AddRange(data.entries);
+                }
+                catch (Exception) { }
+            }
+
+            list.Add(new LeaderboardEntry
             {
                 rank = 0,
                 score = score,
                 date = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-            };
+            });
 
-            entries.Add(newEntry);
+            list.Sort((a, b) => b.score.CompareTo(a.score));
 
-            // 점수 내림차순 정렬
-            entries.Sort((a, b) => b.score.CompareTo(a.score));
+            if (list.Count > StaticMaxEntries)
+                list.RemoveRange(StaticMaxEntries, list.Count - StaticMaxEntries);
 
-            // 최대 개수 제한
-            if (entries.Count > maxEntries)
+            for (int i = 0; i < list.Count; i++)
             {
-                entries.RemoveRange(maxEntries, entries.Count - maxEntries);
+                var e = list[i];
+                e.rank = i + 1;
+                list[i] = e;
             }
 
-            // 순위 재할당
-            ReassignRanks();
-
-            SaveEntries();
-
-            // UI가 활성화 상태이면 즉시 갱신
-            if (gameObject.activeInHierarchy)
-            {
-                RefreshUI();
-            }
+            var saveData = new LeaderboardData { entries = list };
+            PlayerPrefs.SetString(LEADERBOARD_KEY, JsonUtility.ToJson(saveData));
+            PlayerPrefs.Save();
         }
 
         /// <summary>
