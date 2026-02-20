@@ -272,6 +272,10 @@ namespace HexaMerge.Game
                     if (sm != null)
                         sm.ForceShowScreen(HexaMerge.UI.ScreenType.MainMenu);
                     break;
+                case "HowToPlay":
+                    if (sm != null)
+                        sm.ForceShowScreen(HexaMerge.UI.ScreenType.HowToPlay);
+                    break;
                 default:
                     Debug.LogWarning("[TestBridge] Unknown screen: " + screenName);
                     break;
