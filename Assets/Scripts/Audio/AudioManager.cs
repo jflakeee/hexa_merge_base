@@ -16,7 +16,8 @@ namespace HexaMerge.Audio
         GameOver,
         GameStart,
         ButtonClick,
-        TileDrop
+        TileDrop,
+        NumberUp
     }
 
     public class AudioManager : MonoBehaviour

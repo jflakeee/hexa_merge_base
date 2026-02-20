@@ -161,7 +161,7 @@ namespace HexaMerge.Game
             // splat 페이드 대기
             yield return new WaitForSeconds(0.15f);
 
-            // 타겟에 최종값 표시
+            // 타겟에 최종값 표시 + 숫자증가 사운드
             if (targetView != null)
             {
                 targetView.gameObject.SetActive(true);
@@ -169,6 +169,9 @@ namespace HexaMerge.Game
                 double highestValue = highestCell != null ? highestCell.TileValue : 0;
                 bool hasCrown = result.ResultValue == highestValue && highestValue > 0;
                 targetView.UpdateView(result.ResultValue, hasCrown);
+
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlaySFX(SFXType.NumberUp);
             }
 
             // 타겟 스케일 펀치

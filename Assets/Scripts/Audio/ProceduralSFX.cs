@@ -271,6 +271,19 @@ namespace HexaMerge.Audio
         }
 
         // ──────────────────────────────────────────────
+        //  숫자증가 — 상승 크리스탈 글리산도
+        // ──────────────────────────────────────────────
+        public static AudioClip CreateNumberUpSound()
+        {
+            return CreateClip("SFX_NumberUp", 0.25f, (t, p) =>
+            {
+                // 빠른 상승 글리산도: C5→C6
+                float freq = Mathf.Lerp(523.25f, 1046.5f, p * p);
+                return CrystalNote(freq, 0.25f, t, p) * 0.6f;
+            });
+        }
+
+        // ──────────────────────────────────────────────
         //  유틸리티 메서드
         // ──────────────────────────────────────────────
 
@@ -356,7 +369,8 @@ namespace HexaMerge.Audio
                 { SFXType.GameOver,    CreateGameOverSound() },
                 { SFXType.GameStart,   CreateGameStartSound() },
                 { SFXType.ButtonClick, CreateButtonClickSound() },
-                { SFXType.TileDrop,    CreateTileDropSound() }
+                { SFXType.TileDrop,    CreateTileDropSound() },
+                { SFXType.NumberUp,    CreateNumberUpSound() }
             };
             return clips;
         }
