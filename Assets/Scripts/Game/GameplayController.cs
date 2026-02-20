@@ -108,6 +108,8 @@ namespace HexaMerge.Game
                 if (targetView != null)
                     targetPos = targetView.RectTransform.anchoredPosition;
 
+                SFXType mergeSfx = AudioManager.GetMergeSFXType(result.ResultValue);
+
                 for (int g = 0; g < result.DepthGroups.Count; g++)
                 {
                     var group = result.DepthGroups[g];
@@ -134,6 +136,13 @@ namespace HexaMerge.Game
                             MergeEffect.Instance.PlaySplatEffect(
                                 sourcePos, parentPos, splatColor, 1);
                         }
+                    }
+
+                    // 단계별 피치 상승 사운드
+                    if (AudioManager.Instance != null)
+                    {
+                        float pitch = 1.0f + g * 0.15f;
+                        AudioManager.Instance.PlaySFX(mergeSfx, pitch);
                     }
 
                     // 소스 셀 숨기기 (splat이 마스킹)
@@ -171,15 +180,11 @@ namespace HexaMerge.Game
                 while (!punchDone) yield return null;
             }
 
-            // SFX: 머지 사운드 + 연속병합 콤보
-            if (AudioManager.Instance != null)
+            // SFX: 단일 셀 머지 (DepthGroups 없는 경우 fallback)
+            if (AudioManager.Instance != null && (result.DepthGroups == null || result.DepthGroups.Count == 0))
             {
                 SFXType sfx = AudioManager.GetMergeSFXType(result.ResultValue);
                 AudioManager.Instance.PlaySFX(sfx);
-
-                // 깊이 그룹이 2개 이상이면 연속병합 콤보 사운드
-                if (result.DepthGroups != null && result.DepthGroups.Count > 1)
-                    AudioManager.Instance.PlaySFX(SFXType.ChainCombo);
             }
 
             // 리필 파티클: 빈 셀 위치에 컬러 파티클 흩뿌리기

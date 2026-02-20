@@ -83,6 +83,11 @@ namespace HexaMerge.Audio
 
         public void PlaySFX(SFXType type)
         {
+            PlaySFX(type, 1.0f);
+        }
+
+        public void PlaySFX(SFXType type, float pitch)
+        {
             if (isMuted) return;
 
             if (!sfxLookup.TryGetValue(type, out SFXEntry entry)) return;
@@ -93,6 +98,7 @@ namespace HexaMerge.Audio
 
             source.clip = entry.clip;
             source.volume = entry.volume * masterVolume;
+            source.pitch = pitch;
             source.Play();
 
             string sfxName = type.ToString();
