@@ -93,6 +93,41 @@
   <div id="warning-banner"></div>
 
   <script>
+    // AudioContext resume for mobile browsers (Chrome, Safari, etc.)
+    // Must be before Unity loads to intercept all AudioContext creation
+    (function() {
+      var _allAudioContexts = [];
+      var _OrigAC = window.AudioContext || window.webkitAudioContext;
+      if (_OrigAC) {
+        var _Patched = function() {
+          var ctx = new _OrigAC();
+          _allAudioContexts.push(ctx);
+          return ctx;
+        };
+        _Patched.prototype = _OrigAC.prototype;
+        if (window.AudioContext) window.AudioContext = _Patched;
+        if (window.webkitAudioContext) window.webkitAudioContext = _Patched;
+      }
+      function _resumeAll() {
+        var resumed = false;
+        _allAudioContexts.forEach(function(ctx) {
+          if (ctx && ctx.state === 'suspended') {
+            ctx.resume();
+            resumed = true;
+          }
+        });
+        if (resumed) console.log('[HexaMerge] AudioContext resumed by user gesture');
+        document.removeEventListener('click', _resumeAll);
+        document.removeEventListener('touchstart', _resumeAll);
+        document.removeEventListener('touchend', _resumeAll);
+        document.removeEventListener('keydown', _resumeAll);
+      }
+      document.addEventListener('click', _resumeAll);
+      document.addEventListener('touchstart', _resumeAll);
+      document.addEventListener('touchend', _resumeAll);
+      document.addEventListener('keydown', _resumeAll);
+    })();
+
     // window.onerror 핸들러 등록 (TC-PLAT-035)
     window.onerror = function(message, source, lineno, colno, error) {
       console.error('[HexaMerge] Uncaught error:', message, 'at', source, lineno, colno);

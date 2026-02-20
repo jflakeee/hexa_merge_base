@@ -53,6 +53,12 @@
 병합, 연속병합, 왕관바뀜, 게임 시작, 게임오버, 메뉴버튼
 
 
+@res/KakaoTalk_20260220_*.png 벤치마크 이미지 참고 메뉴 화면 구현
+메뉴(MENU) 화면: 보라색 헤더, 2×2 아이콘 그리드(Rate/Favorite/Theme/Leaderboard), RESTART/CONTINUE 버튼 ✅
+HOW TO PLAY 화면: 보라색 헤더, 3단계 튜토리얼, 머지 예시(4+4+4=32), GOT IT 버튼 ✅
+리더보드 화면: 보라색 헤더, 순위/점수/날짜 표시, CLOSE 버튼, 게임오버시 자동 등록 ✅
+다크/라이트 테마 토글: 달/해 아이콘, 배경색 전환, PlayerPrefs 저장 ✅
+
 git test url check
 local test url http://localhost/test_/hexa_merge_basic/Build/WebGL/
 원격 깃 빌드 테스트 not localhost
