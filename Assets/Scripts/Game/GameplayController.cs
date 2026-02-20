@@ -21,6 +21,7 @@ namespace HexaMerge.Game
 
         private GameManager gm;
         private bool isAnimating;
+        private HexCoord? lastCrownCoord;
 
         private void Start()
         {
@@ -170,11 +171,15 @@ namespace HexaMerge.Game
                 while (!punchDone) yield return null;
             }
 
-            // SFX
+            // SFX: 머지 사운드 + 연속병합 콤보
             if (AudioManager.Instance != null)
             {
                 SFXType sfx = AudioManager.GetMergeSFXType(result.ResultValue);
                 AudioManager.Instance.PlaySFX(sfx);
+
+                // 깊이 그룹이 2개 이상이면 연속병합 콤보 사운드
+                if (result.DepthGroups != null && result.DepthGroups.Count > 1)
+                    AudioManager.Instance.PlaySFX(SFXType.ChainCombo);
             }
 
             // 리필 파티클: 빈 셀 위치에 컬러 파티클 흩뿌리기
@@ -207,6 +212,10 @@ namespace HexaMerge.Game
 
             // 보드 갱신 (리필)
             RefreshBoard();
+
+            // 왕관 변경 감지
+            CheckCrownChange();
+
             isAnimating = false;
         }
 
@@ -250,7 +259,10 @@ namespace HexaMerge.Game
             switch (state)
             {
                 case GameState.Playing:
+                    if (AudioManager.Instance != null)
+                        AudioManager.Instance.PlaySFX(SFXType.GameStart);
                     RefreshBoard();
+                    UpdateCrownTracking();
                     break;
 
                 case GameState.GameOver:
@@ -261,6 +273,29 @@ namespace HexaMerge.Game
                             boardRenderer.GetComponent<RectTransform>());
                     break;
             }
+        }
+
+        private void UpdateCrownTracking()
+        {
+            var highest = gm.Grid.GetHighestValueCell();
+            lastCrownCoord = (highest != null && !highest.IsEmpty)
+                ? (HexCoord?)highest.Coord : null;
+        }
+
+        private void CheckCrownChange()
+        {
+            var highest = gm.Grid.GetHighestValueCell();
+            HexCoord? newCrown = (highest != null && !highest.IsEmpty)
+                ? (HexCoord?)highest.Coord : null;
+
+            if (lastCrownCoord.HasValue && newCrown.HasValue
+                && !lastCrownCoord.Value.Equals(newCrown.Value))
+            {
+                if (AudioManager.Instance != null)
+                    AudioManager.Instance.PlaySFX(SFXType.CrownChange);
+            }
+
+            lastCrownCoord = newCrown;
         }
 
         private void RefreshBoard()
