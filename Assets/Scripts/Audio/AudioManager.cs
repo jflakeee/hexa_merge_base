@@ -104,7 +104,7 @@ namespace HexaMerge.Audio
             }
         }
 
-        public static SFXType GetMergeSFXType(int resultValue)
+        public static SFXType GetMergeSFXType(double resultValue)
         {
             if (resultValue <= 64) return SFXType.MergeBasic;
             if (resultValue <= 512) return SFXType.MergeMid;

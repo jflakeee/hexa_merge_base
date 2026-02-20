@@ -7,7 +7,7 @@ namespace HexaMerge.Game
     [System.Serializable]
     public class GameSaveData
     {
-        public int score;
+        public double score;
         public List<CellSaveData> cells = new List<CellSaveData>();
     }
 
@@ -16,14 +16,14 @@ namespace HexaMerge.Game
     {
         public int q;
         public int r;
-        public int value;
+        public double value;
     }
 
     public static class SaveSystem
     {
         private const string SAVE_KEY = "GameSave";
 
-        public static void Save(HexGrid grid, int score)
+        public static void Save(HexGrid grid, double score)
         {
             var data = new GameSaveData { score = score };
 

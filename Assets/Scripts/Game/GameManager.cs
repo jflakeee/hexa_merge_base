@@ -72,7 +72,7 @@ namespace HexaMerge.Game
             if (State != GameState.Playing) return;
 
             // 머지 전 최고값 기록 (32배 소멸 규칙 판정용)
-            int previousMax = GetHighestValue();
+            double previousMax = GetHighestValue();
 
             MergeResult result = MergeSystem.TryMerge(coord);
             if (!result.Success) return;
@@ -80,7 +80,7 @@ namespace HexaMerge.Game
             Score.AddScore(result.ScoreGained);
             OnMergePerformed?.Invoke(result);
 
-            // 32배 소멸 규칙: 새 최대값 블럭 생성 시, 32배 작은 블럭 일괄 소멸
+            // 128배 소멸 규칙: 새 최대값 블럭 생성 시, 128배 작은 블럭 일괄 소멸
             if (result.ResultValue > previousMax)
             {
                 DestroySmallBlocks(result.ResultValue);
@@ -99,7 +99,7 @@ namespace HexaMerge.Game
             if (emptyCells.Count == 0) return;
 
             int index = UnityEngine.Random.Range(0, emptyCells.Count);
-            int value = TileHelper.GetRandomNewTileValue();
+            double value = TileHelper.GetRandomNewTileValue();
             emptyCells[index].SetValue(value);
         }
 
@@ -126,20 +126,20 @@ namespace HexaMerge.Game
 
         public void FillAllEmptyCells(bool useInitialWeights = false)
         {
-            int minDisplayed = GetMinDisplayedValue();
+            double minDisplayed = GetMinDisplayedValue();
             List<HexCell> emptyCells = Grid.GetEmptyCells();
             for (int i = 0; i < emptyCells.Count; i++)
             {
-                int value = useInitialWeights
+                double value = useInitialWeights
                     ? TileHelper.GetRandomInitialTileValue()
                     : TileHelper.GetRandomRefillValue(minDisplayed);
                 emptyCells[i].SetValue(value);
             }
         }
 
-        private int GetHighestValue()
+        private double GetHighestValue()
         {
-            int max = 0;
+            double max = 0;
             foreach (var coord in Grid.AllCoords)
             {
                 var cell = Grid.GetCell(coord);
@@ -149,21 +149,21 @@ namespace HexaMerge.Game
             return max;
         }
 
-        private int GetMinDisplayedValue()
+        private double GetMinDisplayedValue()
         {
-            int min = int.MaxValue;
+            double min = double.MaxValue;
             foreach (var coord in Grid.AllCoords)
             {
                 var cell = Grid.GetCell(coord);
                 if (cell != null && !cell.IsEmpty && cell.TileValue < min)
                     min = cell.TileValue;
             }
-            return min == int.MaxValue ? 2 : min;
+            return min >= double.MaxValue ? 2 : min;
         }
 
-        private void DestroySmallBlocks(int maxValue)
+        private void DestroySmallBlocks(double maxValue)
         {
-            int threshold = maxValue / 32;
+            double threshold = maxValue / 128;
             if (threshold < TileHelper.MinValue) return;
 
             int destroyed = 0;
@@ -178,13 +178,13 @@ namespace HexaMerge.Game
             }
 
             if (destroyed > 0)
-                Debug.Log(string.Format("[GameManager] 32x rule: destroyed {0} blocks <= {1}", destroyed, threshold));
+                Debug.Log(string.Format("[GameManager] 128x rule: destroyed {0} blocks <= {1}", destroyed, threshold));
         }
 
         private void UpdateCrowns()
         {
             List<HexCell> allCells = Grid.GetAllCells();
-            int highestValue = 0;
+            double highestValue = 0;
             for (int i = 0; i < allCells.Count; i++)
             {
                 if (allCells[i].TileValue > highestValue)

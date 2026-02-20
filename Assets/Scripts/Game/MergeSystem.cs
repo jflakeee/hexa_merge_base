@@ -9,13 +9,14 @@ namespace HexaMerge.Game
     {
         public bool Success;
         public HexCoord MergeTargetCoord;
-        public int ResultValue;
-        public int BaseValue;
+        public double ResultValue;
+        public double BaseValue;
         public int MergedCount;
-        public int ScoreGained;
+        public double ScoreGained;
         public List<HexCoord> MergedCoords;
-        public List<int> StepValues;
+        public List<double> StepValues;
         public List<List<HexCoord>> DepthGroups;
+        public Dictionary<HexCoord, HexCoord> ParentMap; // child → BFS parent
     }
 
     public class MergeSystem
@@ -33,7 +34,7 @@ namespace HexaMerge.Game
             HexCell startCell = grid.GetCell(startCoord);
             if (startCell == null || startCell.IsEmpty) return result;
 
-            int targetValue = startCell.TileValue;
+            double targetValue = startCell.TileValue;
             var visited = new HashSet<HexCoord>();
             var queue = new Queue<HexCoord>();
 
@@ -75,12 +76,13 @@ namespace HexaMerge.Game
             HexCell tapCell = grid.GetCell(tapCoord);
             if (tapCell == null || tapCell.IsEmpty) return result;
 
-            int baseValue = tapCell.TileValue;
+            double baseValue = tapCell.TileValue;
 
-            // BFS with depth tracking (트리 구조 형태로 거리 계산)
+            // BFS with depth tracking + parent tracking (트리 구조 형태로 거리 계산)
             var visited = new HashSet<HexCoord>();
             var queue = new Queue<HexCoord>();
             var depthMap = new Dictionary<HexCoord, int>();
+            var parentMap = new Dictionary<HexCoord, HexCoord>();
 
             queue.Enqueue(tapCoord);
             visited.Add(tapCoord);
@@ -102,6 +104,7 @@ namespace HexaMerge.Game
 
                     visited.Add(nCoord);
                     depthMap[nCoord] = currentDepth + 1;
+                    parentMap[nCoord] = current;
                     queue.Enqueue(nCoord);
                 }
             }
@@ -126,14 +129,14 @@ namespace HexaMerge.Game
             // 다른 깊이에 있는 블럭만 계산에 포함
             // 동일한 깊이에 있는 블럭은 계산에서 제외 (하나의 단계로 처리)
             int depthLevels = depthGroupsMap.Count;
-            int mergedValue = CalculateMergeValueByDepth(baseValue, depthLevels);
+            double mergedValue = CalculateMergeValueByDepth(baseValue, depthLevels);
 
             // StepValues (깊이 레벨당 1개, 단계별 2배 증가)
-            var stepValues = new List<int>();
-            int stepValue = baseValue;
+            var stepValues = new List<double>();
+            double stepValue = baseValue;
             for (int d = 0; d < depthLevels; d++)
             {
-                stepValue = Mathf.Min(stepValue * 2, TileHelper.MaxValue);
+                stepValue = System.Math.Min(stepValue * 2, TileHelper.MaxValue);
                 stepValues.Add(stepValue);
             }
 
@@ -169,6 +172,7 @@ namespace HexaMerge.Game
             result.MergedCoords = mergedCoords;
             result.StepValues = stepValues;
             result.DepthGroups = depthGroups;
+            result.ParentMap = parentMap;
 
             return result;
         }
@@ -180,16 +184,16 @@ namespace HexaMerge.Game
             return FindConnectedGroup(coord).Count >= 2;
         }
 
-        private int CalculateMergeValueByDepth(int baseValue, int depthLevels)
+        private double CalculateMergeValueByDepth(double baseValue, int depthLevels)
         {
-            long value = (long)baseValue;
+            double value = baseValue;
             for (int i = 0; i < depthLevels; i++)
             {
                 value *= 2;
                 if (value >= TileHelper.MaxValue)
                     return TileHelper.MaxValue;
             }
-            return (int)value;
+            return value;
         }
     }
 }

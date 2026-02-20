@@ -1,5 +1,6 @@
 namespace HexaMerge.UI
 {
+    using HexaMerge.Core;
     using HexaMerge.Game;
     using UnityEngine;
     using UnityEngine.UI;
@@ -47,21 +48,27 @@ namespace HexaMerge.UI
 
             var score = GameManager.Instance.Score;
             if (finalScoreText != null)
-                finalScoreText.text = score.CurrentScore.ToString("N0");
+                finalScoreText.text = TileHelper.FormatValue(score.CurrentScore);
             if (highScoreText != null)
-                highScoreText.text = score.HighScore.ToString("N0");
+                highScoreText.text = TileHelper.FormatValue(score.HighScore);
             if (newRecordLabel != null)
                 newRecordLabel.gameObject.SetActive(score.CurrentScore >= score.HighScore);
 
             if (canvasGroup != null)
+            {
+                canvasGroup.blocksRaycasts = true;
                 StartCoroutine(FadeIn());
+            }
         }
 
         public void Hide()
         {
             panel.SetActive(false);
             if (canvasGroup != null)
+            {
                 canvasGroup.alpha = 0f;
+                canvasGroup.blocksRaycasts = false;
+            }
         }
 
         private System.Collections.IEnumerator FadeIn()

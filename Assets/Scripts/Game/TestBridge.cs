@@ -130,11 +130,11 @@ namespace HexaMerge.Game
                     return "true";
                 case "MainMenu.BestScoreText":
                 {
-                    int highScore = 0;
+                    double highScore = 0;
                     var gm = GameManager.Instance;
                     if (gm != null && gm.Score != null)
                         highScore = gm.Score.HighScore;
-                    return "Best: " + highScore.ToString();
+                    return "Best: " + highScore.ToString("0");
                 }
                 case "MainMenu.ContinueButton.Active":
                     return SaveSystem.HasSave() ? "true" : "false";
@@ -171,7 +171,7 @@ namespace HexaMerge.Game
         {
             var gm = GameManager.Instance;
             if (gm != null)
-                return gm.Score.CurrentScore.ToString();
+                return gm.Score.CurrentScore.ToString("G");
             return "0";
         }
 
@@ -179,7 +179,7 @@ namespace HexaMerge.Game
         {
             var gm = GameManager.Instance;
             if (gm != null)
-                return gm.Score.HighScore.ToString();
+                return gm.Score.HighScore.ToString("G");
             return "0";
         }
 
@@ -219,7 +219,7 @@ namespace HexaMerge.Game
                 var cell = gm.Grid.GetCell(coord);
                 if (!first) json += ",";
                 json += "{\"q\":" + coord.q + ",\"r\":" + coord.r +
-                    ",\"v\":" + cell.TileValue + "}";
+                    ",\"v\":" + cell.TileValue.ToString("G") + "}";
                 first = false;
             }
             json += "]";
@@ -288,10 +288,10 @@ namespace HexaMerge.Game
             var gm = GameManager.Instance;
             if (gm == null || gm.Score == null) return;
 
-            int score;
-            if (!int.TryParse(scoreStr, out score)) return;
+            double score;
+            if (!double.TryParse(scoreStr, out score)) return;
 
-            int diff = score - gm.Score.CurrentScore;
+            double diff = score - gm.Score.CurrentScore;
             if (diff > 0)
             {
                 gm.Score.AddScore(diff);
@@ -311,8 +311,8 @@ namespace HexaMerge.Game
 
         public void SetBestScore(string scoreStr)
         {
-            int score;
-            if (!int.TryParse(scoreStr, out score)) return;
+            double score;
+            if (!double.TryParse(scoreStr, out score)) return;
 
             // ScoreManager 메모리 내 값도 동기화
             var gm = GameManager.Instance;
@@ -322,7 +322,7 @@ namespace HexaMerge.Game
             }
             else
             {
-                PlayerPrefs.SetInt("HighScore", score);
+                PlayerPrefs.SetString("HighScore", score.ToString("R"));
                 PlayerPrefs.Save();
             }
             Debug.Log("[TestBridge] Best score set to: " + score);
@@ -409,7 +409,7 @@ namespace HexaMerge.Game
             if (parts.Length == 3 &&
                 int.TryParse(parts[0], out int q) &&
                 int.TryParse(parts[1], out int r) &&
-                int.TryParse(parts[2], out int value))
+                double.TryParse(parts[2], out double value))
             {
                 var gm = GameManager.Instance;
                 if (gm != null && gm.Grid != null)

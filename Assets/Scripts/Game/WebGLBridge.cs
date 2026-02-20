@@ -96,10 +96,10 @@ namespace HexaMerge.Game
                     SendMessageToJS($"{{\"event\":\"stateChanged\",\"state\":\"{state}\"}}");
 
                 GameManager.Instance.OnMergePerformed += result =>
-                    SendMessageToJS($"{{\"event\":\"merge\",\"value\":{result.ResultValue},\"count\":{result.MergedCount},\"score\":{result.ScoreGained}}}");
+                    SendMessageToJS($"{{\"event\":\"merge\",\"value\":{result.ResultValue.ToString("G")},\"count\":{result.MergedCount},\"score\":{result.ScoreGained.ToString("G")}}}");
 
                 GameManager.Instance.Score.OnScoreChanged += score =>
-                    SendMessageToJS($"{{\"event\":\"scoreChanged\",\"score\":{score}}}");
+                    SendMessageToJS($"{{\"event\":\"scoreChanged\",\"score\":{score.ToString("G")}}}");
             }
         }
 
@@ -168,12 +168,12 @@ namespace HexaMerge.Game
             {
                 var cell = gm.Grid.GetCell(coord);
                 if (!first) cellsJson += ",";
-                cellsJson += $"{{\"q\":{coord.q},\"r\":{coord.r},\"v\":{cell.TileValue}}}";
+                cellsJson += $"{{\"q\":{coord.q},\"r\":{coord.r},\"v\":{cell.TileValue.ToString("G")}}}";
                 first = false;
             }
             cellsJson += "]";
 
-            string json = $"{{\"callbackId\":\"{callbackId}\",\"state\":\"{gm.State}\",\"score\":{gm.Score.CurrentScore},\"highScore\":{gm.Score.HighScore},\"cells\":{cellsJson}}}";
+            string json = $"{{\"callbackId\":\"{callbackId}\",\"state\":\"{gm.State}\",\"score\":{gm.Score.CurrentScore.ToString("G")},\"highScore\":{gm.Score.HighScore.ToString("G")},\"cells\":{cellsJson}}}";
             SendMessageToJS(json);
         }
     }

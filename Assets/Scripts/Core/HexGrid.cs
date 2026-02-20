@@ -72,7 +72,7 @@ namespace HexaMerge.Core
         public HexCell GetHighestValueCell()
         {
             HexCell highest = null;
-            int maxValue = 0;
+            double maxValue = 0;
 
             foreach (var cell in cells.Values)
             {

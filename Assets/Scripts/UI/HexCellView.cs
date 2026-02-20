@@ -68,7 +68,6 @@ namespace HexaMerge.UI
             if (cachedHexSprite != null) return cachedHexSprite;
 
             // flat-top hex: width = 2*r, height = sqrt(3)*r
-            // 텍스처를 헥사곤 비율에 맞춰 생성 (빈틈 없는 타일링을 위해)
             int texW = size;
             int texH = Mathf.RoundToInt(size * Mathf.Sqrt(3f) / 2f);
 
@@ -79,24 +78,39 @@ namespace HexaMerge.UI
 
             float cx = texW * 0.5f;
             float cy = texH * 0.5f;
-            float radiusX = texW * 0.48f;  // 96% scale for gap between tiles
-            float radiusY = texH * 0.48f;
+            float radius = texW * 0.478f;
+            float cornerRadius = texW * 0.08f;
 
-            // flat-top 헥사곤 6개 꼭짓점
-            float[] vx = new float[6];
-            float[] vy = new float[6];
+            // 내부 축소 육각형 (변을 cornerRadius만큼 안쪽으로 이동)
+            // 정육각형 apothem = R * sqrt(3)/2, 새 apothem = apothem - cornerRadius
+            // 새 R = (apothem - cornerRadius) / (sqrt(3)/2)
+            float insetR = radius - cornerRadius * 2f / Mathf.Sqrt(3f);
+
+            float[] ivx = new float[6];
+            float[] ivy = new float[6];
             for (int i = 0; i < 6; i++)
             {
                 float angle = Mathf.Deg2Rad * (60f * i);
-                vx[i] = cx + radiusX * Mathf.Cos(angle);
-                vy[i] = cy + radiusY * Mathf.Sin(angle);
+                ivx[i] = cx + insetR * Mathf.Cos(angle);
+                ivy[i] = cy + insetR * Mathf.Sin(angle);
             }
 
             for (int y = 0; y < texH; y++)
             {
                 for (int x = 0; x < texW; x++)
                 {
-                    pixels[y * texW + x] = PointInHex(x + 0.5f, y + 0.5f, vx, vy) ? white : clear;
+                    float px = x + 0.5f;
+                    float py = y + 0.5f;
+
+                    if (PointInHex(px, py, ivx, ivy))
+                    {
+                        pixels[y * texW + x] = white;
+                    }
+                    else
+                    {
+                        float dist = PointToPolygonDist(px, py, ivx, ivy, 6);
+                        pixels[y * texW + x] = dist <= cornerRadius ? white : clear;
+                    }
                 }
             }
 
@@ -109,7 +123,6 @@ namespace HexaMerge.UI
 
         private static bool PointInHex(float px, float py, float[] vx, float[] vy)
         {
-            // ray-casting point-in-polygon
             bool inside = false;
             for (int i = 0, j = 5; i < 6; j = i++)
             {
@@ -122,7 +135,35 @@ namespace HexaMerge.UI
             return inside;
         }
 
-        public void UpdateView(int value, bool hasCrown)
+        private static float PointToSegmentDist(float px, float py, float ax, float ay, float bx, float by)
+        {
+            float dx = bx - ax;
+            float dy = by - ay;
+            float lenSq = dx * dx + dy * dy;
+            if (lenSq < 0.0001f)
+                return Mathf.Sqrt((px - ax) * (px - ax) + (py - ay) * (py - ay));
+
+            float t = Mathf.Clamp01(((px - ax) * dx + (py - ay) * dy) / lenSq);
+            float closestX = ax + t * dx;
+            float closestY = ay + t * dy;
+            float distX = px - closestX;
+            float distY = py - closestY;
+            return Mathf.Sqrt(distX * distX + distY * distY);
+        }
+
+        private static float PointToPolygonDist(float px, float py, float[] vx, float[] vy, int n)
+        {
+            float minDist = float.MaxValue;
+            for (int i = 0; i < n; i++)
+            {
+                int j = (i + 1) % n;
+                float dist = PointToSegmentDist(px, py, vx[i], vy[i], vx[j], vy[j]);
+                if (dist < minDist) minDist = dist;
+            }
+            return minDist;
+        }
+
+        public void UpdateView(double value, bool hasCrown)
         {
             if (value <= 0)
             {
@@ -135,7 +176,7 @@ namespace HexaMerge.UI
             UpdateText(value);
         }
 
-        private void UpdateColors(int value)
+        private void UpdateColors(double value)
         {
             if (colorConfig != null)
             {
@@ -153,7 +194,7 @@ namespace HexaMerge.UI
             }
         }
 
-        private void UpdateText(int value)
+        private void UpdateText(double value)
         {
             if (valueText == null) return;
 
@@ -162,11 +203,8 @@ namespace HexaMerge.UI
             string display = TileHelper.FormatValue(value);
             int len = display.Length;
             int fontSize;
-            if (len <= 1) fontSize = 36;
-            else if (len <= 2) fontSize = 32;
-            else if (len <= 3) fontSize = 26;
-            else if (len <= 4) fontSize = 22;
-            else fontSize = 18;
+            if (len <= 1) fontSize = 48;
+            else fontSize = 36;
             valueText.fontSize = fontSize;
             valueText.text = display;
         }

@@ -488,6 +488,7 @@ public static class SceneSetup
         SerializedObject soBR = new SerializedObject(boardRenderer);
         soBR.FindProperty("hexCellPrefab").objectReferenceValue  = hexCellPrefab;
         soBR.FindProperty("boardContainer").objectReferenceValue = boardContainer;
+        soBR.FindProperty("hexSpacing").floatValue = 0f;
         soBR.ApplyModifiedPropertiesWithoutUndo();
 
         // ---- GameplayController on Canvas
@@ -575,50 +576,96 @@ public static class SceneSetup
     // ==================================================================
     private static void SetupScreens(RectTransform canvasRT)
     {
-        // ---- GameOverScreen panel
+        // ---- GameOverScreen panel (XUP-style banner: board visible behind)
         DestroyExistingChild("GameOverScreen", canvasRT);
         GameObject goScreen = CreateScreenPanel("GameOverScreen", canvasRT);
         GameOverScreen gos = goScreen.AddComponent<GameOverScreen>();
 
-        // inner panel
+        // Panel: light dim overlay so board remains visible
         GameObject goPanel = CreateUIObject("Panel", goScreen.transform);
         StretchFull(goPanel.GetComponent<RectTransform>());
         Image goPanelImg = goPanel.AddComponent<Image>();
-        goPanelImg.color = new Color(0f, 0f, 0f, 0.85f);
+        goPanelImg.color = new Color(0f, 0f, 0f, 0.3f);
+        goPanelImg.raycastTarget = true;
 
-        Text goTitle = CreateTMPText("Title", goPanel.transform, "GAME OVER", 48f, White, FontStyle.Bold);
-        RectTransform goTitleRT = goTitle.GetComponent<RectTransform>();
-        SetAnchored(goTitleRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(600f, 60f), new Vector2(0f, 200f));
+        // Purple banner: "NO MOVES LEFT!"
+        GameObject purpleBanner = CreateUIObject("PurpleBanner", goPanel.transform);
+        RectTransform purpleBannerRT = purpleBanner.GetComponent<RectTransform>();
+        purpleBannerRT.anchorMin = new Vector2(0.03f, 1f);
+        purpleBannerRT.anchorMax = new Vector2(0.97f, 1f);
+        purpleBannerRT.pivot = new Vector2(0.5f, 1f);
+        purpleBannerRT.sizeDelta = new Vector2(0f, 140f);
+        purpleBannerRT.anchoredPosition = new Vector2(0f, -170f);
+        Image purpleBannerImg = purpleBanner.AddComponent<Image>();
+        purpleBannerImg.color = new Color(0.55f, 0.15f, 0.72f, 0.92f);
 
-        Text goFinalScore = CreateTMPText("FinalScoreText", goPanel.transform, "0", 64f, Pink, FontStyle.Bold);
+        Text goTitle = CreateTMPText("Title", purpleBanner.transform, "NO MOVES LEFT!", 52f, White, FontStyle.Bold);
+        StretchFull(goTitle.GetComponent<RectTransform>());
+
+        // Dark score bar below purple banner
+        GameObject scoreBar = CreateUIObject("ScoreBar", goPanel.transform);
+        RectTransform scoreBarRT = scoreBar.GetComponent<RectTransform>();
+        scoreBarRT.anchorMin = new Vector2(0.03f, 1f);
+        scoreBarRT.anchorMax = new Vector2(0.97f, 1f);
+        scoreBarRT.pivot = new Vector2(0.5f, 1f);
+        scoreBarRT.sizeDelta = new Vector2(0f, 110f);
+        scoreBarRT.anchoredPosition = new Vector2(0f, -310f);
+        Image scoreBarImg = scoreBar.AddComponent<Image>();
+        scoreBarImg.color = new Color(0.1f, 0.1f, 0.12f, 0.95f);
+
+        // SCORE label (top-left of score bar)
+        Text scoreLabel = CreateTMPText("ScoreLabel", scoreBar.transform, "SCORE", 22f, White, FontStyle.Bold);
+        RectTransform scoreLabelRT = scoreLabel.GetComponent<RectTransform>();
+        scoreLabelRT.anchorMin = new Vector2(0f, 0.55f);
+        scoreLabelRT.anchorMax = new Vector2(0.5f, 1f);
+        scoreLabelRT.offsetMin = Vector2.zero;
+        scoreLabelRT.offsetMax = Vector2.zero;
+
+        // Score value (bottom-left of score bar, pink)
+        Text goFinalScore = CreateTMPText("FinalScoreText", scoreBar.transform, "0", 44f, Pink, FontStyle.Bold);
         RectTransform goFSRT = goFinalScore.GetComponent<RectTransform>();
-        SetAnchored(goFSRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(400f, 80f), new Vector2(0f, 100f));
+        goFSRT.anchorMin = new Vector2(0f, 0f);
+        goFSRT.anchorMax = new Vector2(0.5f, 0.6f);
+        goFSRT.offsetMin = Vector2.zero;
+        goFSRT.offsetMax = Vector2.zero;
 
-        Text goHiScore = CreateTMPText("HighScoreText", goPanel.transform, "0", 28f, Grey, FontStyle.Normal);
+        // HI-SCORE label (top-right of score bar)
+        Text hiLabel = CreateTMPText("HiScoreLabel", scoreBar.transform, "HI-SCORE", 22f, Grey, FontStyle.Bold);
+        RectTransform hiLabelRT = hiLabel.GetComponent<RectTransform>();
+        hiLabelRT.anchorMin = new Vector2(0.5f, 0.55f);
+        hiLabelRT.anchorMax = new Vector2(1f, 1f);
+        hiLabelRT.offsetMin = Vector2.zero;
+        hiLabelRT.offsetMax = Vector2.zero;
+
+        // Hi-Score value (bottom-right of score bar, white)
+        Text goHiScore = CreateTMPText("HighScoreText", scoreBar.transform, "0", 44f, White, FontStyle.Bold);
         RectTransform goHSRT = goHiScore.GetComponent<RectTransform>();
-        SetAnchored(goHSRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(300f, 40f), new Vector2(0f, 40f));
+        goHSRT.anchorMin = new Vector2(0.5f, 0f);
+        goHSRT.anchorMax = new Vector2(1f, 0.6f);
+        goHSRT.offsetMin = Vector2.zero;
+        goHSRT.offsetMax = Vector2.zero;
 
+        // New record label (below score bar, gold)
         Text goNewRecord = CreateTMPText("NewRecordLabel", goPanel.transform, "NEW RECORD!", 32f,
                                                      new Color(1f, 0.84f, 0f, 1f), FontStyle.Bold);
         RectTransform goNRRT = goNewRecord.GetComponent<RectTransform>();
-        SetAnchored(goNRRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(400f, 50f), new Vector2(0f, -10f));
+        SetAnchored(goNRRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(400f, 50f), new Vector2(0f, -430f));
 
-        GameObject goRestartBtn = CreateButtonObject("RestartButton", goPanel.transform, new Vector2(300f, 80f));
+        // Restart button (below banner area)
+        GameObject goRestartBtn = CreateButtonObject("RestartButton", goPanel.transform, new Vector2(300f, 70f));
         RectTransform goRestBtnRT = goRestartBtn.GetComponent<RectTransform>();
-        SetAnchored(goRestBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(300f, 80f), new Vector2(0f, -100f));
+        SetAnchored(goRestBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(300f, 70f), new Vector2(0f, -500f));
         goRestartBtn.GetComponent<Image>().color = Pink;
         Text restartLabel = CreateTMPText("Label", goRestartBtn.transform, "RESTART", 28f, White, FontStyle.Bold);
         StretchFull(restartLabel.GetComponent<RectTransform>());
 
-        GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(300f, 80f));
+        // Watch ad button (below restart)
+        GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(300f, 60f));
         RectTransform goAdBtnRT = goWatchAdBtn.GetComponent<RectTransform>();
-        SetAnchored(goAdBtnRT, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f),
-                    new Vector2(300f, 80f), new Vector2(0f, -200f));
+        SetAnchored(goAdBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
+                    new Vector2(300f, 60f), new Vector2(0f, -585f));
         goWatchAdBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
         Text adBtnLabel = CreateTMPText("Label", goWatchAdBtn.transform, "WATCH AD", 24f, White, FontStyle.Normal);
         StretchFull(adBtnLabel.GetComponent<RectTransform>());
@@ -636,7 +683,8 @@ public static class SceneSetup
         soGOS.FindProperty("canvasGroup").objectReferenceValue    = goCG;
         soGOS.ApplyModifiedPropertiesWithoutUndo();
 
-        goScreen.SetActive(false);
+        // GameOverScreen은 Start()에서 이벤트 구독이 필요하므로 루트 GO를 활성 유지
+        // panel 자식만 Hide()로 숨김 (Start()에서 처리)
 
         // ---- PauseScreen panel
         DestroyExistingChild("PauseScreen", canvasRT);
@@ -733,27 +781,25 @@ public static class SceneSetup
 
         SerializedObject soSM = new SerializedObject(sm);
         SerializedProperty screensProp = soSM.FindProperty("screens");
-        screensProp.arraySize = 4;
+        screensProp.arraySize = 3;
 
         // Entry 0 : Pause
         SerializedProperty entry0 = screensProp.GetArrayElementAtIndex(0);
         entry0.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Pause;
         entry0.FindPropertyRelative("screenObject").objectReferenceValue = pauseScreen;
 
-        // Entry 1 : Settings (GameOver 패널을 Settings 슬롯에 등록)
+        // Entry 1 : Shop
         SerializedProperty entry1 = screensProp.GetArrayElementAtIndex(1);
-        entry1.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Settings;
-        entry1.FindPropertyRelative("screenObject").objectReferenceValue = goScreen;
+        entry1.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Shop;
+        entry1.FindPropertyRelative("screenObject").objectReferenceValue = shopScreen;
 
-        // Entry 2 : Shop
+        // Entry 2 : Leaderboard
         SerializedProperty entry2 = screensProp.GetArrayElementAtIndex(2);
-        entry2.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Shop;
-        entry2.FindPropertyRelative("screenObject").objectReferenceValue = shopScreen;
+        entry2.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Leaderboard;
+        entry2.FindPropertyRelative("screenObject").objectReferenceValue = lbScreen;
 
-        // Entry 3 : Leaderboard
-        SerializedProperty entry3 = screensProp.GetArrayElementAtIndex(3);
-        entry3.FindPropertyRelative("type").enumValueIndex = (int)ScreenType.Leaderboard;
-        entry3.FindPropertyRelative("screenObject").objectReferenceValue = lbScreen;
+        // GameOverScreen은 자체 이벤트 관리 (OnStateChanged 구독)이므로 ScreenManager에 등록하지 않음
+        // ScreenManager.HideAll()이 GameOverScreen 루트를 비활성화하면 Start()가 실행되지 않아 이벤트 구독 불가
 
         soSM.FindProperty("initialScreen").enumValueIndex = (int)ScreenType.Gameplay;
         soSM.ApplyModifiedPropertiesWithoutUndo();

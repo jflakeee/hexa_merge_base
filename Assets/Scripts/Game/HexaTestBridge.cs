@@ -147,7 +147,7 @@ namespace HexaMerge.Game
                 if (emptyCells.Count == 0) break;
 
                 int idx = UnityEngine.Random.Range(0, emptyCells.Count);
-                int value = TileHelper.GetRandomNewTileValue();
+                double value = TileHelper.GetRandomNewTileValue();
                 emptyCells[idx].SetValue(value);
                 renderer.RefreshAll(gm.Grid);
 
@@ -247,7 +247,7 @@ namespace HexaMerge.Game
                 var cellB = gm.Grid.GetCell(coordB);
                 if (cellA != null && cellB != null && cellA.TileValue > 0)
                 {
-                    int merged = cellA.TileValue * 2;
+                    double merged = cellA.TileValue * 2;
                     cellA.SetValue(merged);
                     cellB.Clear();
                     gm.Score.AddScore(merged);
@@ -475,15 +475,16 @@ namespace HexaMerge.Game
                 if (!e.Contains("{")) continue;
                 e = e.Substring(e.IndexOf('{') + 1);
 
-                int q = 0, r = 0, v = 0;
+                int q = 0, r = 0;
+                double v = 0;
                 string[] fields = e.Split(',');
                 foreach (string field in fields)
                 {
                     string f = field.Trim().Replace("\"", "");
                     if (f.StartsWith("q:")) int.TryParse(f.Substring(2).Trim(), out q);
                     else if (f.StartsWith("r:")) int.TryParse(f.Substring(2).Trim(), out r);
-                    else if (f.StartsWith("value:")) int.TryParse(f.Substring(6).Trim(), out v);
-                    else if (f.StartsWith("v:")) int.TryParse(f.Substring(2).Trim(), out v);
+                    else if (f.StartsWith("value:")) double.TryParse(f.Substring(6).Trim(), out v);
+                    else if (f.StartsWith("v:")) double.TryParse(f.Substring(2).Trim(), out v);
                 }
 
                 if (v > 0)

@@ -64,17 +64,41 @@ namespace HexaMerge.Core
         // ------------------------------------------------------------
 
         /// <summary>타일 값에 대응하는 배경 색상을 반환한다.</summary>
-        public Color GetColor(int value)
+        public Color GetColor(double value)
         {
             BuildCacheIfNeeded();
-            return _colorCache.TryGetValue(value, out Color c) ? c : emptyColor;
+            // 직접 매칭 (int 범위 내)
+            if (value <= int.MaxValue && value >= int.MinValue)
+            {
+                int intValue = (int)value;
+                if (_colorCache.TryGetValue(intValue, out Color c)) return c;
+            }
+            // 범위 밖 값: 레벨 기반 순환
+            if (entries != null && entries.Length > 0)
+            {
+                int level = TileHelper.GetTileLevel(value);
+                int idx = level % entries.Length;
+                return entries[idx].color;
+            }
+            return emptyColor;
         }
 
         /// <summary>타일 값에 대응하는 텍스트 색상을 반환한다.</summary>
-        public Color GetTextColor(int value)
+        public Color GetTextColor(double value)
         {
             BuildCacheIfNeeded();
-            return _textColorCache.TryGetValue(value, out Color c) ? c : defaultTextColor;
+            if (value <= int.MaxValue && value >= int.MinValue)
+            {
+                int intValue = (int)value;
+                if (_textColorCache.TryGetValue(intValue, out Color c)) return c;
+            }
+            if (entries != null && entries.Length > 0)
+            {
+                int level = TileHelper.GetTileLevel(value);
+                int idx = level % entries.Length;
+                return entries[idx].textColor;
+            }
+            return defaultTextColor;
         }
 
         // ------------------------------------------------------------

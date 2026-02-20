@@ -235,7 +235,7 @@ namespace HexaMerge.UI
                 helpButton.onClick.RemoveListener(OnHelpButtonClicked);
         }
 
-        public void UpdateScore(int score)
+        public void UpdateScore(double score)
         {
             if (scoreText == null) return;
 
@@ -243,7 +243,7 @@ namespace HexaMerge.UI
             scoreText.fontSize = (int)CalculateScoreFontSize(score);
         }
 
-        public void UpdateHighScore(int score)
+        public void UpdateHighScore(double score)
         {
             if (highScoreText == null) return;
 
@@ -270,7 +270,7 @@ namespace HexaMerge.UI
             Debug.Log("[HUDManager] Help button clicked");
         }
 
-        private float CalculateScoreFontSize(int score)
+        private float CalculateScoreFontSize(double score)
         {
             if (score < 1000) return baseScoreFontSize;
             if (score < 10000) return baseScoreFontSize * 0.9f;

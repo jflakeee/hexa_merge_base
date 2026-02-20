@@ -95,14 +95,14 @@ namespace HexaMerge.Game
             var targetView = boardRenderer != null
                 ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
 
-            // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 타겟으로 스며드는 점성 액체 효과
+            // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 BFS 상위 노드로 스며드는 점성 액체 효과
             if (boardRenderer != null && result.DepthGroups != null)
             {
                 Color splatColor = Color.yellow;
                 if (gm.ColorConfig != null)
                     splatColor = gm.ColorConfig.GetColor(result.BaseValue);
 
-                // 타겟 위치 (머지 결과가 놓이는 셀)
+                // 타겟 위치 (머지 결과가 놓이는 셀) — fallback용
                 Vector2 targetPos = Vector2.zero;
                 if (targetView != null)
                     targetPos = targetView.RectTransform.anchoredPosition;
@@ -111,25 +111,28 @@ namespace HexaMerge.Game
                 {
                     var group = result.DepthGroups[g];
 
-                    // 그룹 중심 위치 계산
-                    Vector2 centerPos = Vector2.zero;
-                    int validCount = 0;
+                    // 각 블럭 → BFS 부모 노드로 splat
                     for (int c = 0; c < group.Count; c++)
                     {
-                        var view = boardRenderer.GetCellView(group[c]);
-                        if (view != null)
-                        {
-                            centerPos += view.RectTransform.anchoredPosition;
-                            validCount++;
-                        }
-                    }
-                    if (validCount > 0) centerPos /= validCount;
+                        var sourceView = boardRenderer.GetCellView(group[c]);
+                        if (sourceView == null) continue;
 
-                    // Splat 이펙트 (소스→타겟으로 스며드는 점성 액체)
-                    if (MergeEffect.Instance != null)
-                    {
-                        MergeEffect.Instance.PlaySplatEffect(
-                            centerPos, targetPos, splatColor, group.Count);
+                        Vector2 sourcePos = sourceView.RectTransform.anchoredPosition;
+
+                        // BFS 부모 위치 찾기
+                        Vector2 parentPos = targetPos;
+                        if (result.ParentMap != null && result.ParentMap.ContainsKey(group[c]))
+                        {
+                            var parentView = boardRenderer.GetCellView(result.ParentMap[group[c]]);
+                            if (parentView != null)
+                                parentPos = parentView.RectTransform.anchoredPosition;
+                        }
+
+                        if (MergeEffect.Instance != null)
+                        {
+                            MergeEffect.Instance.PlaySplatEffect(
+                                sourcePos, parentPos, splatColor, 1);
+                        }
                     }
 
                     // 소스 셀 숨기기 (splat이 마스킹)
@@ -153,7 +156,7 @@ namespace HexaMerge.Game
             {
                 targetView.gameObject.SetActive(true);
                 var highestCell = gm.Grid.GetHighestValueCell();
-                int highestValue = highestCell != null ? highestCell.TileValue : 0;
+                double highestValue = highestCell != null ? highestCell.TileValue : 0;
                 bool hasCrown = result.ResultValue == highestValue && highestValue > 0;
                 targetView.UpdateView(result.ResultValue, hasCrown);
             }
@@ -230,13 +233,13 @@ namespace HexaMerge.Game
             RefreshBoard();
         }
 
-        private void OnScoreChanged(int score)
+        private void OnScoreChanged(double score)
         {
             if (hudManager != null)
                 hudManager.UpdateScore(score);
         }
 
-        private void OnHighScoreChanged(int highScore)
+        private void OnHighScoreChanged(double highScore)
         {
             if (hudManager != null)
                 hudManager.UpdateHighScore(highScore);

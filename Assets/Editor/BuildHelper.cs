@@ -34,6 +34,10 @@ namespace HexaMerge.Editor
 
         private static void BuildWebGL(bool isDevelopment)
         {
+            // 빌드 전에 SceneSetup 실행 (씬 직렬화 값이 항상 최신 코드와 일치하도록)
+            SceneSetup.SetupGameScene();
+            Debug.Log("[BuildHelper] SceneSetup 완료 — 씬 재생성됨");
+
             string outputPath = Path.Combine(Directory.GetParent(Application.dataPath).FullName, "Build/WebGL");
 
             if (!Directory.Exists(outputPath))

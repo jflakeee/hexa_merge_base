@@ -6,9 +6,9 @@ namespace HexaMerge.Core
     public class HexCell
     {
         public HexCoord Coord { get; private set; }
-        public int TileValue { get; private set; }
+        public double TileValue { get; private set; }
 
-        public bool IsEmpty => TileValue == 0;
+        public bool IsEmpty => TileValue <= 0;
         public bool HasCrown { get; set; }
 
         public event Action OnValueChanged;
@@ -16,10 +16,10 @@ namespace HexaMerge.Core
         public HexCell(HexCoord coord)
         {
             Coord = coord;
-            TileValue = 0;
+            TileValue = 0.0;
         }
 
-        public void SetValue(int value)
+        public void SetValue(double value)
         {
             if (TileValue == value) return;
             TileValue = value;

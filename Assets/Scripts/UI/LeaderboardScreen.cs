@@ -15,7 +15,7 @@ namespace HexaMerge.UI
         public struct LeaderboardEntry
         {
             public int rank;
-            public int score;
+            public double score;
             public string date;
         }
 
@@ -60,7 +60,7 @@ namespace HexaMerge.UI
         /// 새 점수를 리더보드에 추가합니다.
         /// 자동으로 정렬하고 maxEntries 이상이면 하위 항목을 제거합니다.
         /// </summary>
-        public void AddEntry(int score)
+        public void AddEntry(double score)
         {
             LoadEntries();
 
