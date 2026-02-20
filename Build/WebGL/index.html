@@ -102,25 +102,49 @@
         var _Patched = function() {
           var ctx = new _OrigAC();
           _allAudioContexts.push(ctx);
+          console.log('[HexaMerge] AudioContext created, total: ' + _allAudioContexts.length + ', state: ' + ctx.state);
           return ctx;
         };
         _Patched.prototype = _OrigAC.prototype;
         if (window.AudioContext) window.AudioContext = _Patched;
         if (window.webkitAudioContext) window.webkitAudioContext = _Patched;
       }
-      function _resumeAll() {
-        var resumed = false;
-        _allAudioContexts.forEach(function(ctx) {
-          if (ctx && ctx.state === 'suspended') {
-            ctx.resume();
-            resumed = true;
-          }
-        });
-        if (resumed) console.log('[HexaMerge] AudioContext resumed by user gesture');
+      function _removeListeners() {
         document.removeEventListener('click', _resumeAll);
         document.removeEventListener('touchstart', _resumeAll);
         document.removeEventListener('touchend', _resumeAll);
         document.removeEventListener('keydown', _resumeAll);
+      }
+      function _resumeAll() {
+        // If no AudioContext created yet, keep listeners active
+        if (_allAudioContexts.length === 0) return;
+        var hasSuspended = false;
+        _allAudioContexts.forEach(function(ctx) {
+          if (ctx && ctx.state === 'suspended') {
+            ctx.resume().then(function() {
+              console.log('[HexaMerge] AudioContext resumed successfully, state: ' + ctx.state);
+            });
+            hasSuspended = true;
+          }
+        });
+        if (hasSuspended) {
+          console.log('[HexaMerge] AudioContext resume requested by user gesture');
+          // Check after short delay if all resumed
+          setTimeout(function() {
+            var allRunning = true;
+            _allAudioContexts.forEach(function(ctx) {
+              if (ctx && ctx.state !== 'running') allRunning = false;
+            });
+            if (allRunning) {
+              console.log('[HexaMerge] All AudioContexts running, removing listeners');
+              _removeListeners();
+            }
+          }, 200);
+        } else {
+          // All already running
+          console.log('[HexaMerge] All AudioContexts already running');
+          _removeListeners();
+        }
       }
       document.addEventListener('click', _resumeAll);
       document.addEventListener('touchstart', _resumeAll);
