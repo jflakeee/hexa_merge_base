@@ -176,15 +176,24 @@ namespace HexaMerge.Audio
         }
 
         // ──────────────────────────────────────────────
-        //  왕관 전환 — 크리스탈 동시화음 (C5+E5+G5)
+        //  왕관 전환 — 극적 크리스탈 동시화음 (2옥타브 스프레드)
         // ──────────────────────────────────────────────
         public static AudioClip CreateCrownChangeSound()
         {
-            return CreateClip("SFX_CrownChange", 0.4f, (t, p) =>
+            return CreateClip("SFX_CrownChange", 0.6f, (t, p) =>
             {
-                // C5 + E5 + G5 동시화음
-                float[] chord = new float[] { 523.25f, 659.25f, 783.99f };
-                return CrystalChord(chord, 0.4f, t, p) * 0.6f;
+                // C4+E4+G4+C5+E5+G5+C6 — 2옥타브 메이저 코드 스프레드
+                float c4 = CrystalNote(261.63f, 0.6f, t, p) * 0.5f;
+                float e4 = CrystalNote(329.63f, 0.6f, t, p) * 0.45f;
+                float g4 = CrystalNote(392.00f, 0.6f, t, p) * 0.45f;
+                float c5 = CrystalNote(523.25f, 0.6f, t, p) * 0.6f;
+                float e5 = CrystalNote(659.25f, 0.6f, t, p) * 0.55f;
+                float g5 = CrystalNote(783.99f, 0.6f, t, p) * 0.5f;
+                float c6 = CrystalNote(1046.5f, 0.6f, t, p) * 0.35f;
+                // 밝은 고음 스파클 (초반에만)
+                float sparkle = Sine(1568f, t) * 0.15f * Mathf.Exp(-p * 8f); // G6
+                float sum = (c4 + e4 + g4 + c5 + e5 + g5 + c6 + sparkle) / 4.5f;
+                return sum;
             });
         }
 
