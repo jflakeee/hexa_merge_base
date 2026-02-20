@@ -65,26 +65,23 @@ namespace HexaMerge.UI
         /// </summary>
         public static void AddEntry(double score)
         {
+            Debug.Log("[LeaderboardScreen] AddEntry called with score: " + score);
+
             string json = PlayerPrefs.GetString(LEADERBOARD_KEY, "");
             List<LeaderboardEntry> list = new List<LeaderboardEntry>();
 
             if (!string.IsNullOrEmpty(json))
             {
-                try
-                {
-                    var data = JsonUtility.FromJson<LeaderboardData>(json);
-                    if (data.entries != null)
-                        list.AddRange(data.entries);
-                }
-                catch (Exception) { }
+                LeaderboardData data = JsonUtility.FromJson<LeaderboardData>(json);
+                if (data.entries != null)
+                    list.AddRange(data.entries);
             }
 
-            list.Add(new LeaderboardEntry
-            {
-                rank = 0,
-                score = score,
-                date = DateTime.Now.ToString("yyyy-MM-dd HH:mm")
-            });
+            LeaderboardEntry newEntry = new LeaderboardEntry();
+            newEntry.rank = 0;
+            newEntry.score = score;
+            newEntry.date = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            list.Add(newEntry);
 
             list.Sort((a, b) => b.score.CompareTo(a.score));
 
@@ -93,14 +90,18 @@ namespace HexaMerge.UI
 
             for (int i = 0; i < list.Count; i++)
             {
-                var e = list[i];
+                LeaderboardEntry e = list[i];
                 e.rank = i + 1;
                 list[i] = e;
             }
 
-            var saveData = new LeaderboardData { entries = list };
-            PlayerPrefs.SetString(LEADERBOARD_KEY, JsonUtility.ToJson(saveData));
+            LeaderboardData saveData = new LeaderboardData();
+            saveData.entries = list;
+            string saveJson = JsonUtility.ToJson(saveData);
+            PlayerPrefs.SetString(LEADERBOARD_KEY, saveJson);
             PlayerPrefs.Save();
+
+            Debug.Log("[LeaderboardScreen] Saved " + list.Count + " entries: " + saveJson);
         }
 
         /// <summary>
