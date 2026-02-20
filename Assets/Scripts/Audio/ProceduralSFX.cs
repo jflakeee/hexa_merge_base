@@ -5,236 +5,259 @@ namespace HexaMerge.Audio
 
     /// <summary>
     /// AudioClip.Create로 절차적 SFX를 생성합니다.
-    /// 외부 오디오 에셋 없이 기본 효과음을 제공합니다.
-    /// 사인파 합성 + 하모닉스 + 엔벨로프로 자연스러운 사운드를 만듭니다.
+    /// 피아노 음색 합성: 비조화 배음 + 해머 노이즈 + 지수 감쇠.
     /// </summary>
     public static class ProceduralSFX
     {
         private const int SampleRate = 44100;
+        private const float Inharmonicity = 0.0005f; // 피아노 비조화 계수 B
 
         // ──────────────────────────────────────────────
-        //  타일 탭 사운드 (짧은 클릭/팝)
+        //  피아노 음색 헬퍼
+        // ──────────────────────────────────────────────
+
+        /// <summary>
+        /// 피아노 음색 단일 노트를 합성합니다.
+        /// 8개 배음 + 비조화성 + 해머 노이즈 + 지수 감쇠.
+        /// </summary>
+        private static float PianoNote(float freq, float duration, float t, float p)
+        {
+            // 빠른 어택 (3ms) + 지수 감쇠
+            float attack = 0.003f / duration;
+            float env;
+            if (p < attack)
+                env = p / attack;
+            else
+                env = Mathf.Exp(-(p - attack) * 6f);
+
+            // 배음 합성: 8개 배음, 고차 배음 차등 감쇠
+            float sample = 0f;
+            for (int n = 1; n <= 8; n++)
+            {
+                // 비조화 배음 주파수: f_n = n * f0 * (1 + B * n^2)
+                float fn = n * freq * (1f + Inharmonicity * n * n);
+                float amp = 1f / n; // 기본 진폭: 1/n
+                // 고차 배음이 먼저 감쇠: exp(-n * 4 * p)
+                float harmonicDecay = Mathf.Exp(-n * 4f * p);
+                sample += Sine(fn, t) * amp * harmonicDecay;
+            }
+
+            // 해머 노이즈: 어택 시 짧은 노이즈 버스트 (p < 0.02)
+            float hammer = 0f;
+            if (p < 0.02f)
+            {
+                float hammerEnv = 1f - p / 0.02f;
+                hammer = (Random(t) * 2f - 1f) * 0.3f * hammerEnv;
+            }
+
+            return (sample + hammer) * env;
+        }
+
+        // ──────────────────────────────────────────────
+        //  타일 탭 사운드 — E5 스타카토
         // ──────────────────────────────────────────────
         public static AudioClip CreateTapSound()
         {
-            return CreateClip("SFX_Tap", 0.08f, (t, p) =>
+            return CreateClip("SFX_Tap", 0.1f, (t, p) =>
             {
-                float fundamental = Sine(800f, t);
-                float harmonic = Sine(1600f, t) * 0.3f;
-                float noise = (Random(t) * 2f - 1f) * 0.15f;
-                float env = Envelope(p, 0.01f, 0.4f);
-                return (fundamental + harmonic + noise) * env * 0.8f;
+                return PianoNote(659.25f, 0.1f, t, p) * 0.7f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  머지 사운드 - 레벨별
+        //  머지 사운드 - 레벨별 피아노 노트
         // ──────────────────────────────────────────────
         public static AudioClip CreateMergeBasicSound()
         {
-            return CreateClip("SFX_MergeBasic", 0.15f, (t, p) =>
+            // C4 (261.63Hz)
+            return CreateClip("SFX_MergeBasic", 0.4f, (t, p) =>
             {
-                float f = 400f + p * 50f; // 약간 상승
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.25f;
-                float h3 = Sine(f * 3f, t) * 0.1f;
-                float env = Envelope(p, 0.05f, 0.5f);
-                return (fundamental + h2 + h3) * env * 0.7f;
+                return PianoNote(261.63f, 0.4f, t, p) * 0.75f;
             });
         }
 
         public static AudioClip CreateMergeMidSound()
         {
-            return CreateClip("SFX_MergeMid", 0.2f, (t, p) =>
+            // E4 (329.63Hz)
+            return CreateClip("SFX_MergeMid", 0.4f, (t, p) =>
             {
-                float f = 600f + p * 80f;
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.3f;
-                float h3 = Sine(f * 3f, t) * 0.15f;
-                float h4 = Sine(f * 4f, t) * 0.05f;
-                float env = Envelope(p, 0.05f, 0.45f);
-                return (fundamental + h2 + h3 + h4) * env * 0.7f;
+                return PianoNote(329.63f, 0.4f, t, p) * 0.75f;
             });
         }
 
         public static AudioClip CreateMergeHighSound()
         {
-            return CreateClip("SFX_MergeHigh", 0.25f, (t, p) =>
+            // G4 (392.00Hz)
+            return CreateClip("SFX_MergeHigh", 0.5f, (t, p) =>
             {
-                float f = 800f + p * 120f;
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.3f;
-                float h3 = Sine(f * 3f, t) * 0.2f;
-                float h5 = Sine(f * 5f, t) * 0.08f;
-                float shimmer = Sine(f * 1.01f, t) * 0.2f; // 약간의 디튜닝으로 풍성함
-                float env = Envelope(p, 0.04f, 0.4f);
-                return (fundamental + h2 + h3 + h5 + shimmer) * env * 0.65f;
+                return PianoNote(392.00f, 0.5f, t, p) * 0.7f;
             });
         }
 
         public static AudioClip CreateMergeUltraSound()
         {
-            return CreateClip("SFX_MergeUltra", 0.3f, (t, p) =>
+            // C5 (523.25Hz)
+            return CreateClip("SFX_MergeUltra", 0.5f, (t, p) =>
             {
-                float f = 1000f + p * 150f;
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.35f;
-                float h3 = Sine(f * 3f, t) * 0.2f;
-                float h4 = Sine(f * 4f, t) * 0.1f;
-                float shimmer1 = Sine(f * 1.005f, t) * 0.25f;
-                float shimmer2 = Sine(f * 2.01f, t) * 0.15f;
-                float sparkle = Sine(f * 6f, t) * 0.05f * (1f - p); // 초반에 밝은 스파클
-                float env = Envelope(p, 0.03f, 0.35f);
-                return (fundamental + h2 + h3 + h4 + shimmer1 + shimmer2 + sparkle) * env * 0.55f;
+                return PianoNote(523.25f, 0.5f, t, p) * 0.7f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  연쇄 콤보 사운드 (상승 피치 스윕)
+        //  연쇄 콤보 — 피아노 상승 아르페지오
         // ──────────────────────────────────────────────
         public static AudioClip CreateChainComboSound()
         {
-            return CreateClip("SFX_ChainCombo", 0.3f, (t, p) =>
+            return CreateClip("SFX_ChainCombo", 0.4f, (t, p) =>
             {
-                float f = Mathf.Lerp(500f, 1200f, p * p); // 가속 상승
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.25f;
-                float h3 = Sine(f * 1.5f, t) * 0.15f; // 5도 하모닉
-                float noise = (Random(t + 0.1f) * 2f - 1f) * 0.05f * (1f - p);
-                float env = Envelope(p, 0.02f, 0.3f);
-                return (fundamental + h2 + h3 + noise) * env * 0.7f;
+                // C5→E5→G5 빠른 아르페지오
+                float note;
+                float noteP;
+                if (p < 0.33f)
+                {
+                    note = 523.25f; // C5
+                    noteP = p / 0.33f;
+                }
+                else if (p < 0.66f)
+                {
+                    note = 659.25f; // E5
+                    noteP = (p - 0.33f) / 0.33f;
+                }
+                else
+                {
+                    note = 783.99f; // G5
+                    noteP = (p - 0.66f) / 0.34f;
+                }
+                return PianoNote(note, 0.13f, t, noteP) * 0.65f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  마일스톤 달성 (판파레 느낌)
+        //  마일스톤 — 피아노 4음 아르페지오
         // ──────────────────────────────────────────────
         public static AudioClip CreateMilestoneSound()
         {
             return CreateClip("SFX_Milestone", 0.5f, (t, p) =>
             {
-                // 3단 아르페지오: C5 → E5 → G5 → C6
+                // C5→E5→G5→C6 아르페지오
                 float note;
+                float noteP;
                 if (p < 0.25f)
-                    note = 523.25f; // C5
+                {
+                    note = 523.25f;
+                    noteP = p / 0.25f;
+                }
                 else if (p < 0.5f)
-                    note = 659.25f; // E5
+                {
+                    note = 659.25f;
+                    noteP = (p - 0.25f) / 0.25f;
+                }
                 else if (p < 0.75f)
-                    note = 783.99f; // G5
+                {
+                    note = 783.99f;
+                    noteP = (p - 0.5f) / 0.25f;
+                }
                 else
-                    note = 1046.5f; // C6
-
-                float fundamental = Sine(note, t);
-                float h2 = Sine(note * 2f, t) * 0.3f;
-                float h3 = Sine(note * 3f, t) * 0.15f;
-                float shimmer = Sine(note * 1.003f, t) * 0.2f;
-
-                // 각 노트 내부 엔벨로프
-                float noteProgress = (p % 0.25f) / 0.25f;
-                float noteEnv = Envelope(noteProgress, 0.05f, 0.3f);
-                // 전체 엔벨로프
+                {
+                    note = 1046.5f;
+                    noteP = (p - 0.75f) / 0.25f;
+                }
                 float globalEnv = 1f - p * 0.3f;
-
-                return (fundamental + h2 + h3 + shimmer) * noteEnv * globalEnv * 0.6f;
+                return PianoNote(note, 0.125f, t, noteP) * globalEnv * 0.6f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  왕관 전환 (밝은 벨 사운드)
+        //  왕관 전환 — G5 피아노
         // ──────────────────────────────────────────────
         public static AudioClip CreateCrownChangeSound()
         {
-            return CreateClip("SFX_CrownChange", 0.2f, (t, p) =>
+            // G5 (783.99Hz)
+            return CreateClip("SFX_CrownChange", 0.3f, (t, p) =>
             {
-                // 벨 사운드: 비정수 배음이 특징
-                float f = 1200f;
-                float fundamental = Sine(f, t);
-                float h1 = Sine(f * 2.76f, t) * 0.4f;  // 비정수 배음 (벨 특성)
-                float h2 = Sine(f * 5.4f, t) * 0.15f;   // 고차 비정수 배음
-                float h3 = Sine(f * 0.5f, t) * 0.2f;    // 저음 보강
-                float env = Envelope(p, 0.01f, 0.2f);
-                // 벨은 고주파가 먼저 감쇠
-                float highDecay = Mathf.Exp(-p * 8f);
-                float lowDecay = Mathf.Exp(-p * 3f);
-                return (fundamental * lowDecay + h1 * highDecay + h2 * highDecay + h3 * lowDecay) * env * 0.6f;
+                return PianoNote(783.99f, 0.3f, t, p) * 0.65f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  게임 오버 (하강 톤)
+        //  게임 오버 — E4→C4→A3 하강 피아노
         // ──────────────────────────────────────────────
         public static AudioClip CreateGameOverSound()
         {
             return CreateClip("SFX_GameOver", 0.6f, (t, p) =>
             {
-                float f = Mathf.Lerp(400f, 100f, p); // 선형 하강
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.2f;
-                float h3 = Sine(f * 3f, t) * 0.1f;
-                // 약간의 노이즈로 무거운 느낌
-                float noise = (Random(t + 0.5f) * 2f - 1f) * 0.08f * p;
-                // 비브라토
-                float vibrato = Sine(6f, t) * 5f;
-                float vibFund = Sine(f + vibrato, t) * 0.15f;
-                float env = Envelope(p, 0.05f, 0.6f);
-                return (fundamental + h2 + h3 + noise + vibFund) * env * 0.7f;
+                // E4→C4→A3 하강 아르페지오
+                float note;
+                float noteP;
+                if (p < 0.33f)
+                {
+                    note = 329.63f; // E4
+                    noteP = p / 0.33f;
+                }
+                else if (p < 0.66f)
+                {
+                    note = 261.63f; // C4
+                    noteP = (p - 0.33f) / 0.33f;
+                }
+                else
+                {
+                    note = 220.00f; // A3
+                    noteP = (p - 0.66f) / 0.34f;
+                }
+                float globalEnv = 1f - p * 0.2f;
+                return PianoNote(note, 0.2f, t, noteP) * globalEnv * 0.7f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  게임 시작 (상승 톤)
+        //  게임 시작 — C4→E4→G4 상승 아르페지오
         // ──────────────────────────────────────────────
         public static AudioClip CreateGameStartSound()
         {
-            return CreateClip("SFX_GameStart", 0.4f, (t, p) =>
+            return CreateClip("SFX_GameStart", 0.5f, (t, p) =>
             {
-                float f = Mathf.Lerp(300f, 600f, p * p); // 가속 상승
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.3f;
-                float h3 = Sine(f * 3f, t) * 0.15f;
-                float h5 = Sine(f * 1.5f, t) * 0.1f; // 5도
-                float shimmer = Sine(f * 1.005f, t) * 0.15f;
-                float env = Envelope(p, 0.03f, 0.4f);
-                return (fundamental + h2 + h3 + h5 + shimmer) * env * 0.65f;
+                // C4→E4→G4 상승 아르페지오
+                float note;
+                float noteP;
+                if (p < 0.33f)
+                {
+                    note = 261.63f; // C4
+                    noteP = p / 0.33f;
+                }
+                else if (p < 0.66f)
+                {
+                    note = 329.63f; // E4
+                    noteP = (p - 0.33f) / 0.33f;
+                }
+                else
+                {
+                    note = 392.00f; // G4
+                    noteP = (p - 0.66f) / 0.34f;
+                }
+                float globalEnv = 1f - p * 0.2f;
+                return PianoNote(note, 0.17f, t, noteP) * globalEnv * 0.65f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  버튼 클릭
+        //  버튼 클릭 — C5 스타카토
         // ──────────────────────────────────────────────
         public static AudioClip CreateButtonClickSound()
         {
-            return CreateClip("SFX_ButtonClick", 0.05f, (t, p) =>
+            return CreateClip("SFX_ButtonClick", 0.08f, (t, p) =>
             {
-                float fundamental = Sine(1000f, t);
-                float h2 = Sine(2000f, t) * 0.2f;
-                float click = (Random(t) * 2f - 1f) * 0.3f * (1f - p);
-                float env = Envelope(p, 0.01f, 0.5f);
-                return (fundamental + h2 + click) * env * 0.6f;
+                return PianoNote(523.25f, 0.08f, t, p) * 0.6f;
             });
         }
 
         // ──────────────────────────────────────────────
-        //  타일 드롭 (짧은 바운스)
+        //  타일 드롭 — G3 짧은 피아노
         // ──────────────────────────────────────────────
         public static AudioClip CreateTileDropSound()
         {
-            return CreateClip("SFX_TileDrop", 0.1f, (t, p) =>
+            return CreateClip("SFX_TileDrop", 0.15f, (t, p) =>
             {
-                // 빠르게 하강하는 톤 + 바운스
-                float f = 300f * (1f - p * 0.5f); // 300→150Hz 하강
-                float fundamental = Sine(f, t);
-                float h2 = Sine(f * 2f, t) * 0.2f;
-                // 바운스: 두 번째 작은 임팩트
-                float bounce = 0f;
-                if (p > 0.5f && p < 0.7f)
-                {
-                    float bounceP = (p - 0.5f) / 0.2f;
-                    bounce = Sine(250f, t) * 0.4f * Envelope(bounceP, 0.05f, 0.5f);
-                }
-                float noise = (Random(t + 0.3f) * 2f - 1f) * 0.1f * (1f - p);
-                float env = Envelope(p, 0.01f, 0.3f);
-                return (fundamental + h2 + noise) * env * 0.7f + bounce;
+                return PianoNote(196.00f, 0.15f, t, p) * 0.7f;
             });
         }
 
