@@ -162,12 +162,11 @@
 
     // Unity 로더
     var buildUrl = "Build";
-    var cacheBust = "?v=20260221b";
-    var loaderUrl = buildUrl + "/WebGL.loader.js" + cacheBust;
+    var loaderUrl = buildUrl + "/WebGL.loader.js";
     var config = {
-      dataUrl: buildUrl + "/WebGL.data" + cacheBust,
-      frameworkUrl: buildUrl + "/WebGL.framework.js" + cacheBust,
-      codeUrl: buildUrl + "/WebGL.wasm" + cacheBust,
+      dataUrl: buildUrl + "/WebGL.data",
+      frameworkUrl: buildUrl + "/WebGL.framework.js",
+      codeUrl: buildUrl + "/WebGL.wasm",
       streamingAssetsUrl: "StreamingAssets",
       companyName: "HexaMerge",
       productName: "Hexa Merge",
