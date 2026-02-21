@@ -98,6 +98,7 @@ namespace HexaMerge.Game
                 ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
 
             AudioSource prevMergeSrc = null;
+            int depthGroupCount = 0;
 
             // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 BFS 상위 노드로 스며드는 점성 액체 효과
             if (boardRenderer != null && result.DepthGroups != null)
@@ -114,6 +115,7 @@ namespace HexaMerge.Game
                 SFXType mergeSfx = AudioManager.GetMergeSFXType(result.ResultValue);
 
                 int groupCount = result.DepthGroups.Count;
+                depthGroupCount = groupCount;
                 for (int g = 0; g < groupCount; g++)
                 {
                     var group = result.DepthGroups[g];
@@ -176,7 +178,10 @@ namespace HexaMerge.Game
                 targetView.UpdateView(result.ResultValue, hasCrown);
 
                 if (AudioManager.Instance != null)
-                    AudioManager.Instance.PlaySFXExclusive(SFXType.NumberUp, 1.0f, ref prevMergeSrc);
+                {
+                    float numberUpPitch = 1.0f + depthGroupCount * 0.15f;
+                    AudioManager.Instance.PlaySFXExclusive(SFXType.NumberUp, numberUpPitch, ref prevMergeSrc);
+                }
             }
 
             // 타겟 스케일 펀치
@@ -226,8 +231,8 @@ namespace HexaMerge.Game
             // 보드 갱신 (리필)
             RefreshBoard();
 
-            // 왕관 변경 감지
-            CheckCrownChange();
+            // 왕관 변경 감지 (연속 병합 다음 피치로, PlaySFXExclusive 체인)
+            CheckCrownChange(depthGroupCount, prevMergeSrc);
 
             isAnimating = false;
         }
@@ -304,7 +309,7 @@ namespace HexaMerge.Game
                 ? (HexCoord?)highest.Coord : null;
         }
 
-        private void CheckCrownChange()
+        private void CheckCrownChange(int depthGroupCount, AudioSource prevMergeSrc)
         {
             var highest = gm.Grid.GetHighestValueCell();
             HexCoord? newCrown = (highest != null && !highest.IsEmpty)
@@ -314,7 +319,12 @@ namespace HexaMerge.Game
                 && !lastCrownCoord.Value.Equals(newCrown.Value))
             {
                 if (AudioManager.Instance != null)
-                    AudioManager.Instance.PlaySFX(SFXType.CrownChange);
+                {
+                    // 연속 병합 체인의 다음 피치: NumberUp(depthGroupCount) 다음 단계
+                    float crownPitch = 1.0f + (depthGroupCount + 1) * 0.15f;
+                    AudioSource src = prevMergeSrc;
+                    AudioManager.Instance.PlaySFXExclusive(SFXType.CrownChange, crownPitch, ref src);
+                }
             }
 
             lastCrownCoord = newCrown;
