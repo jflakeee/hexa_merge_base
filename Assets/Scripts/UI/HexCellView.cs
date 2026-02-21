@@ -11,10 +11,12 @@ namespace HexaMerge.UI
         [SerializeField] private Image hexBackground;
         [SerializeField] private Text valueText;
         [SerializeField] private GameObject crownIcon;
+        [SerializeField] private Image highlightOverlay;
         [SerializeField] private Button button;
         private TileColorConfig colorConfig;
 
         private static Sprite cachedHexSprite;
+        private static Sprite cachedHighlightSprite;
 
         public HexCoord Coord { get; private set; }
         public RectTransform RectTransform => (RectTransform)transform;
@@ -47,6 +49,32 @@ namespace HexaMerge.UI
                 hexBackground.alphaHitTestMinimumThreshold = 0.5f;
             }
 
+            // 하이라이트 오버레이 생성 (런타임 동적 생성)
+            if (highlightOverlay == null)
+            {
+                GameObject hlObj = new GameObject("HighlightOverlay");
+                hlObj.transform.SetParent(transform, false);
+                RectTransform hlRT = hlObj.AddComponent<RectTransform>();
+                hlRT.anchorMin = Vector2.zero;
+                hlRT.anchorMax = Vector2.one;
+                hlRT.offsetMin = Vector2.zero;
+                hlRT.offsetMax = Vector2.zero;
+
+                highlightOverlay = hlObj.AddComponent<Image>();
+                highlightOverlay.raycastTarget = false;
+
+                // Ensure sibling order: hexBackground(0) → HighlightOverlay(1) → valueText(2) → crown(3)
+                hlObj.transform.SetSiblingIndex(1);
+            }
+
+            // 하이라이트 스프라이트 적용 (프리팹에서는 sprite=null이므로 항상 설정)
+            if (highlightOverlay != null && highlightOverlay.sprite == null)
+            {
+                highlightOverlay.sprite = GetOrCreateHighlightSprite();
+                highlightOverlay.preserveAspect = false;
+                highlightOverlay.color = new Color(1f, 1f, 1f, 0.7f);
+            }
+
             // Ensure valueText renders on top of background
             if (valueText != null)
             {
@@ -73,7 +101,6 @@ namespace HexaMerge.UI
 
             Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
             Color32[] pixels = new Color32[texW * texH];
-            Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
 
             float cx = texW * 0.5f;
@@ -95,6 +122,11 @@ namespace HexaMerge.UI
                 ivy[i] = cy + insetR * Mathf.Sin(angle);
             }
 
+            // 비대칭 조명: 좌상단 빛 방향
+            float lightDirX = -0.707f;
+            float lightDirY = 0.707f;
+            float rimWidth = radius * 0.22f;
+
             for (int y = 0; y < texH; y++)
             {
                 for (int x = 0; x < texW; x++)
@@ -102,15 +134,37 @@ namespace HexaMerge.UI
                     float px = x + 0.5f;
                     float py = y + 0.5f;
 
-                    if (PointInHex(px, py, ivx, ivy))
-                    {
-                        pixels[y * texW + x] = white;
-                    }
-                    else
+                    bool inside = PointInHex(px, py, ivx, ivy);
+                    if (!inside)
                     {
                         float dist = PointToPolygonDist(px, py, ivx, ivy, 6);
-                        pixels[y * texW + x] = dist <= cornerRadius ? white : clear;
+                        if (dist > cornerRadius)
+                        {
+                            pixels[y * texW + x] = clear;
+                            continue;
+                        }
                     }
+
+                    // 비대칭 유리 블럭: 좌상단 밝은 반사 → 우하단 미세 그림자
+                    float edgeDist = PointToPolygonDist(px, py, ivx, ivy, 6);
+                    float et = Mathf.Clamp01(edgeDist / rimWidth);
+                    float smooth = et * et * (3f - 2f * et);
+                    float rim = 1f - smooth; // 1=가장자리, 0=내부
+
+                    // 빛 방향 팩터: 좌상단(+1) ~ 우하단(-1)
+                    float npx = (px - cx) / radius;
+                    float npy = (py - cy) / radius;
+                    float lightFactor = npx * lightDirX + npy * lightDirY;
+
+                    float lightSide = Mathf.Clamp01(lightFactor + 0.2f);
+                    float shadowSide = Mathf.Clamp01(-lightFactor - 0.2f);
+                    float brightness = 1.0f
+                        + rim * lightSide * 0.35f
+                        - rim * shadowSide * 0.08f;
+
+                    brightness = Mathf.Clamp(brightness, 0.85f, 1.5f);
+                    byte b = (byte)Mathf.Min(brightness * 255f, 255f);
+                    pixels[y * texW + x] = new Color32(b, b, b, 255);
                 }
             }
 
@@ -119,6 +173,75 @@ namespace HexaMerge.UI
 
             cachedHexSprite = Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), 100f);
             return cachedHexSprite;
+        }
+
+        private static Sprite GetOrCreateHighlightSprite()
+        {
+            if (cachedHighlightSprite != null) return cachedHighlightSprite;
+
+            int texW = 128;
+            int texH = Mathf.RoundToInt(128 * Mathf.Sqrt(3f) / 2f); // ~111
+            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            Color32[] pixels = new Color32[texW * texH];
+            Color32 clear = new Color32(0, 0, 0, 0);
+
+            float cx = texW * 0.5f;
+            float cy = texH * 0.5f;
+            float radius = texW * 0.478f;
+            float cornerR = texW * 0.08f;
+            float insetR = radius - cornerR * 2f / Mathf.Sqrt(3f);
+
+            float[] hvx = new float[6];
+            float[] hvy = new float[6];
+            for (int vi = 0; vi < 6; vi++)
+            {
+                float va = Mathf.Deg2Rad * (60f * vi);
+                hvx[vi] = cx + insetR * Mathf.Cos(va);
+                hvy[vi] = cy + insetR * Mathf.Sin(va);
+            }
+
+            for (int i = 0; i < pixels.Length; i++) pixels[i] = clear;
+
+            for (int y = 0; y < texH; y++)
+            {
+                for (int x = 0; x < texW; x++)
+                {
+                    float px = x + 0.5f;
+                    float py = y + 0.5f;
+
+                    // 육각형 경계 체크 (메인 스프라이트와 동일)
+                    bool inHex = PointInHex(px, py, hvx, hvy);
+                    if (!inHex && PointToPolygonDist(px, py, hvx, hvy, 6) > cornerR)
+                        continue;
+
+                    float alpha = 0f;
+
+                    // 좌상단 타원형 글래스 하이라이트 (비대칭 조명 방향)
+                    float normX = (px - cx) / radius;
+                    float normY = (py - cy) / radius;
+                    float hlCX = -0.12f; // 좌측으로 이동
+                    float hlCY = 0.3f;   // 상단 위치
+                    float ellipseX = (normX - hlCX) * 1.2f;
+                    float ellipseY = (normY - hlCY) * 2.5f;
+                    float ellipseDist = ellipseX * ellipseX + ellipseY * ellipseY;
+                    if (ellipseDist < 1f && normY > 0f)
+                    {
+                        float t = 1f - ellipseDist;
+                        alpha = t * t * 0.35f;
+                    }
+
+                    if (alpha > 0.005f)
+                    {
+                        byte a = (byte)(Mathf.Clamp01(alpha) * 255f);
+                        pixels[y * texW + x] = new Color32(255, 255, 255, a);
+                    }
+                }
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply();
+            cachedHighlightSprite = Sprite.Create(tex, new Rect(0, 0, texW, texH), new Vector2(0.5f, 0.5f), 100f);
+            return cachedHighlightSprite;
         }
 
         private static bool PointInHex(float px, float py, float[] vx, float[] vy)
@@ -170,6 +293,9 @@ namespace HexaMerge.UI
                 ShowEmpty();
                 return;
             }
+
+            if (highlightOverlay != null)
+                highlightOverlay.gameObject.SetActive(true);
 
             UpdateColors(value);
             UpdateCrown(hasCrown);
@@ -309,6 +435,9 @@ namespace HexaMerge.UI
         {
             if (hexBackground != null)
                 hexBackground.color = Color.clear;
+
+            if (highlightOverlay != null)
+                highlightOverlay.gameObject.SetActive(false);
 
             if (valueText != null)
             {

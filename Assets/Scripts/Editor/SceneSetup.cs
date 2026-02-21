@@ -314,6 +314,16 @@ public static class SceneSetup
         Button btn = cellGO.AddComponent<Button>();
         btn.targetGraphic = bgImage;
 
+        // Child: HighlightOverlay (renders on top of hexBackground, below text)
+        GameObject highlightGO = new GameObject("HighlightOverlay");
+        highlightGO.transform.SetParent(cellGO.transform, false);
+        RectTransform hlRT = highlightGO.AddComponent<RectTransform>();
+        StretchFull(hlRT);
+        Image hlImage = highlightGO.AddComponent<Image>();
+        hlImage.color = new Color(1f, 1f, 1f, 0.7f);
+        hlImage.sprite = null; // will be set at runtime by HexCellView
+        hlImage.raycastTarget = false;
+
         // Child: ValueText
         GameObject valueTxtGO = new GameObject("ValueText");
         valueTxtGO.transform.SetParent(cellGO.transform, false);
@@ -366,10 +376,11 @@ public static class SceneSetup
         // HexCellView component + field wiring
         HexCellView cellView = cellGO.AddComponent<HexCellView>();
         SerializedObject soCellView = new SerializedObject(cellView);
-        soCellView.FindProperty("hexBackground").objectReferenceValue = bgImage;
-        soCellView.FindProperty("valueText").objectReferenceValue     = valTMP;
-        soCellView.FindProperty("crownIcon").objectReferenceValue     = crownGO;
-        soCellView.FindProperty("button").objectReferenceValue        = btn;
+        soCellView.FindProperty("hexBackground").objectReferenceValue    = bgImage;
+        soCellView.FindProperty("valueText").objectReferenceValue      = valTMP;
+        soCellView.FindProperty("crownIcon").objectReferenceValue      = crownGO;
+        soCellView.FindProperty("highlightOverlay").objectReferenceValue = hlImage;
+        soCellView.FindProperty("button").objectReferenceValue         = btn;
         soCellView.ApplyModifiedPropertiesWithoutUndo();
 
         // Save as prefab

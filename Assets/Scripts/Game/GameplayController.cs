@@ -21,6 +21,7 @@ namespace HexaMerge.Game
 
         private GameManager gm;
         private bool isAnimating;
+        private bool isFirstGameStart = true;
         private HexCoord? lastCrownCoord;
 
         private void Start()
@@ -96,6 +97,8 @@ namespace HexaMerge.Game
             var targetView = boardRenderer != null
                 ? boardRenderer.GetCellView(result.MergeTargetCoord) : null;
 
+            AudioSource prevMergeSrc = null;
+
             // 깊이별 순차 splat: 가장 깊은(먼) 블럭부터 BFS 상위 노드로 스며드는 점성 액체 효과
             if (boardRenderer != null && result.DepthGroups != null)
             {
@@ -110,7 +113,8 @@ namespace HexaMerge.Game
 
                 SFXType mergeSfx = AudioManager.GetMergeSFXType(result.ResultValue);
 
-                for (int g = 0; g < result.DepthGroups.Count; g++)
+                int groupCount = result.DepthGroups.Count;
+                for (int g = 0; g < groupCount; g++)
                 {
                     var group = result.DepthGroups[g];
 
@@ -138,11 +142,11 @@ namespace HexaMerge.Game
                         }
                     }
 
-                    // 단계별 피치 상승 사운드
+                    // 단계별 피치 상승 사운드: 이전 사운드 중단 후 새 피치로 재생 (겹침 방지)
                     if (AudioManager.Instance != null)
                     {
                         float pitch = 1.0f + g * 0.15f;
-                        AudioManager.Instance.PlaySFX(mergeSfx, pitch);
+                        AudioManager.Instance.PlaySFXExclusive(mergeSfx, pitch, ref prevMergeSrc);
                     }
 
                     // 소스 셀 숨기기 (splat이 마스킹)
@@ -153,15 +157,16 @@ namespace HexaMerge.Game
                             view.gameObject.SetActive(false);
                     }
 
-                    // 다음 깊이 그룹까지 대기 (벤치마크: ~0.17초)
-                    yield return new WaitForSeconds(0.17f);
+                    // 다음 깊이 그룹까지 대기 (마지막 그룹은 대기하지 않음)
+                    if (g < groupCount - 1)
+                        yield return new WaitForSeconds(0.17f);
                 }
             }
 
-            // splat 페이드 대기
-            yield return new WaitForSeconds(0.15f);
+            // 연속병합과 동일한 리듬으로 숫자증가 재생 (0.17초 간격)
+            yield return new WaitForSeconds(0.17f);
 
-            // 타겟에 최종값 표시 + 숫자증가 사운드
+            // 타겟에 최종값 표시 + 숫자증가 사운드 (이전 머지 사운드 중단 후 재생)
             if (targetView != null)
             {
                 targetView.gameObject.SetActive(true);
@@ -171,7 +176,7 @@ namespace HexaMerge.Game
                 targetView.UpdateView(result.ResultValue, hasCrown);
 
                 if (AudioManager.Instance != null)
-                    AudioManager.Instance.PlaySFX(SFXType.NumberUp);
+                    AudioManager.Instance.PlaySFXExclusive(SFXType.NumberUp, 1.0f, ref prevMergeSrc);
             }
 
             // 타겟 스케일 펀치
@@ -267,8 +272,15 @@ namespace HexaMerge.Game
             switch (state)
             {
                 case GameState.Playing:
-                    if (AudioManager.Instance != null)
+                    // 초기 로드 시 GameStart 스킵 (WebGL AudioContext Suspended → 첫 클릭 시 머지 사운드와 겹침)
+                    if (isFirstGameStart)
+                    {
+                        isFirstGameStart = false;
+                    }
+                    else if (AudioManager.Instance != null)
+                    {
                         AudioManager.Instance.PlaySFX(SFXType.GameStart);
+                    }
                     RefreshBoard();
                     UpdateCrownTracking();
                     break;

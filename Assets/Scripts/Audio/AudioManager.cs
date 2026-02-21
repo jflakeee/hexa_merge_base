@@ -111,6 +111,40 @@ namespace HexaMerge.Audio
             }
         }
 
+        /// <summary>
+        /// 이전 사운드를 중단하고 새 사운드 재생 (연속 병합 피치 상승용).
+        /// prevSource를 ref로 전달하여 이전 재생 소스를 추적합니다.
+        /// </summary>
+        public void PlaySFXExclusive(SFXType type, float pitch, ref AudioSource prevSource)
+        {
+            if (isMuted) return;
+
+            if (!sfxLookup.TryGetValue(type, out SFXEntry entry)) return;
+            if (entry.clip == null) return;
+
+            // 이전 사운드 중단
+            if (prevSource != null && prevSource.isPlaying)
+                prevSource.Stop();
+
+            AudioSource source = GetAvailableSource();
+            if (source == null) return;
+
+            source.clip = entry.clip;
+            source.volume = entry.volume * masterVolume;
+            source.pitch = pitch;
+            source.Play();
+
+            prevSource = source;
+
+            string sfxName = type.ToString();
+            lastPlayedSFX = sfxName;
+            recentSFXHistory.Add(sfxName);
+            if (recentSFXHistory.Count > 10)
+            {
+                recentSFXHistory.RemoveAt(0);
+            }
+        }
+
         public static SFXType GetMergeSFXType(double resultValue)
         {
             if (resultValue <= 64) return SFXType.MergeBasic;
