@@ -176,13 +176,13 @@ namespace HexaMerge.Audio
         }
 
         // ──────────────────────────────────────────────
-        //  왕관 전환 — 빠른 3도 상승 글리산도 (연속 병합 체인용)
+        //  왕관 전환 — 7도 화음 상승 글리산도 (연속 병합 체인용)
         // ──────────────────────────────────────────────
         public static AudioClip CreateCrownChangeSound()
         {
-            float dur = 0.3f;
-            // 빠른 3도 상승: C5→E5→G5 (각 0.1초)
-            float[] notes = new float[] { 523.25f, 659.25f, 783.99f };
+            float dur = 0.35f;
+            // 7도 화음 상승: C5→E5→G5→B5 (Cmaj7)
+            float[] notes = new float[] { 523.25f, 659.25f, 783.99f, 987.77f };
             int count = notes.Length;
             float noteLen = dur / count;
 
