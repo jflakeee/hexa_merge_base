@@ -52,50 +52,46 @@ namespace HexaMerge.Animation
             int size = 256;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
             Color32[] pixels = new Color32[size * size];
-            Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
 
             float cx = size * 0.5f;
             float cy = size * 0.5f;
-            float baseRadius = size * 0.22f;
+            float baseRadius = size * 0.26f;
+            float feather = 4f;
 
-            // Blob edge noise
-            int bumps = 5;
-            float[] bumpPhase = new float[bumps];
-            float[] bumpAmp = new float[bumps];
+            // Smooth rounded bumps (no sharp tendrils)
+            int bumpCount = 4;
+            float[] bumpAngle = new float[bumpCount];
+            float[] bumpRadius = new float[bumpCount];
+            float[] bumpCx = new float[bumpCount];
+            float[] bumpCy = new float[bumpCount];
 
             Random.State oldState = Random.state;
             Random.InitState(42);
-            for (int i = 0; i < bumps; i++)
+            for (int i = 0; i < bumpCount; i++)
             {
-                bumpPhase[i] = Random.Range(0f, Mathf.PI * 2f);
-                bumpAmp[i] = Random.Range(0.1f, 0.2f);
+                float a = (360f / bumpCount) * i + Random.Range(-20f, 20f);
+                // Bias bumps away from bottom (gravity drips go there)
+                if (a > 230f && a < 310f) a += 60f;
+                bumpAngle[i] = a * Mathf.Deg2Rad;
+                bumpRadius[i] = baseRadius * Random.Range(0.15f, 0.25f);
+                bumpCx[i] = cx + Mathf.Cos(bumpAngle[i]) * (baseRadius * 0.85f);
+                bumpCy[i] = cy + Mathf.Sin(bumpAngle[i]) * (baseRadius * 0.85f);
             }
 
-            // Dripping tendrils (paint splash fingers)
-            int tendrilCount = 6;
-            float[] tendrilAngle = new float[tendrilCount];
-            float[] tendrilLen = new float[tendrilCount];
-            float[] tendrilWidth = new float[tendrilCount];
-            for (int i = 0; i < tendrilCount; i++)
+            // Gravity drips (downward rounded sausage shapes)
+            int dripCount = 3;
+            float[] dripCx = new float[dripCount];
+            float[] dripLen = new float[dripCount];
+            float[] dripWidth = new float[dripCount];
+            float[] dripCapR = new float[dripCount];
+            for (int i = 0; i < dripCount; i++)
             {
-                tendrilAngle[i] = (360f / tendrilCount) * i + Random.Range(-25f, 25f);
-                tendrilLen[i] = Random.Range(0.15f, 0.28f) * size;
-                tendrilWidth[i] = Random.Range(0.04f, 0.08f) * size;
-            }
-
-            // Scattered droplets
-            int dropCount = 12;
-            float[] dropX = new float[dropCount];
-            float[] dropY = new float[dropCount];
-            float[] dropR = new float[dropCount];
-            for (int i = 0; i < dropCount; i++)
-            {
-                float a = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-                float d = Random.Range(0.32f, 0.44f) * size;
-                dropX[i] = cx + Mathf.Cos(a) * d;
-                dropY[i] = cy + Mathf.Sin(a) * d;
-                dropR[i] = Random.Range(3f, 7f);
+                float angle = Random.Range(250f, 290f) * Mathf.Deg2Rad;
+                dripCx[i] = cx + Mathf.Cos(angle) * baseRadius * 0.5f;
+                dripLen[i] = baseRadius * Random.Range(0.3f, 0.5f);
+                dripWidth[i] = baseRadius * Random.Range(0.08f, 0.12f);
+                dripCapR[i] = dripWidth[i] * 1.3f;
             }
             Random.state = oldState;
 
@@ -106,87 +102,83 @@ namespace HexaMerge.Animation
                     float dx = x - cx;
                     float dy = y - cy;
                     float dist = Mathf.Sqrt(dx * dx + dy * dy);
-                    float angle = Mathf.Atan2(dy, dx);
 
-                    // 1. Irregular blob center
-                    float blobR = baseRadius;
-                    for (int b = 0; b < bumps; b++)
+                    // Gravity squash: slightly flatter on top, rounder on bottom
+                    float vertBias = 1f + dy / (size * 0.5f) * 0.08f;
+                    float adjustedDist = dist / Mathf.Max(vertBias, 0.8f);
+
+                    // 1. Central blob with soft feathered edge
+                    float blobEdge = baseRadius - adjustedDist;
+                    float alpha = 0f;
+
+                    if (blobEdge > feather)
                     {
-                        blobR += baseRadius * bumpAmp[b] * Mathf.Sin(angle * (b + 1) + bumpPhase[b]);
+                        alpha = 1f;
+                    }
+                    else if (blobEdge > -feather)
+                    {
+                        alpha = Mathf.Clamp01((blobEdge + feather) / (feather * 2f));
+                        alpha = alpha * alpha * (3f - 2f * alpha); // smoothstep
                     }
 
-                    float edge = blobR - dist;
-                    if (edge > 1f)
+                    // 2. Rounded bumps (metaball-like addition)
+                    for (int b = 0; b < bumpCount; b++)
                     {
-                        pixels[y * size + x] = white;
-                        continue;
+                        float bdx = x - bumpCx[b];
+                        float bdy = y - bumpCy[b];
+                        float bDist = Mathf.Sqrt(bdx * bdx + bdy * bdy);
+                        float bEdge = bumpRadius[b] - bDist;
+
+                        if (bEdge > -feather)
+                        {
+                            float bAlpha = Mathf.Clamp01((bEdge + feather) / (feather * 2f));
+                            bAlpha = bAlpha * bAlpha * (3f - 2f * bAlpha);
+                            alpha = Mathf.Max(alpha, bAlpha);
+                        }
                     }
-                    if (edge > -0.5f)
+
+                    // 3. Gravity drips (rounded sausages hanging downward)
+                    for (int d = 0; d < dripCount; d++)
                     {
-                        byte al = (byte)(Mathf.Clamp01((edge + 0.5f) / 1.5f) * 255);
+                        float dripStartY = cy + baseRadius * 0.6f;
+                        float dripEndY = dripStartY + dripLen[d];
+                        float dripCapCY = dripEndY;
+
+                        // Sausage body: vertical rect with rounded width
+                        if (y >= dripStartY && y <= dripEndY)
+                        {
+                            float perpDist = Mathf.Abs(x - dripCx[d]);
+                            float dEdge = dripWidth[d] - perpDist;
+                            if (dEdge > -feather)
+                            {
+                                float dAlpha = Mathf.Clamp01((dEdge + feather) / (feather * 2f));
+                                dAlpha = dAlpha * dAlpha * (3f - 2f * dAlpha);
+                                alpha = Mathf.Max(alpha, dAlpha);
+                            }
+                        }
+
+                        // Rounded cap at the bottom of drip
+                        float capDx = x - dripCx[d];
+                        float capDy = y - dripCapCY;
+                        float capDist = Mathf.Sqrt(capDx * capDx + capDy * capDy);
+                        float capEdge = dripCapR[d] - capDist;
+                        if (capEdge > -feather)
+                        {
+                            float cAlpha = Mathf.Clamp01((capEdge + feather) / (feather * 2f));
+                            cAlpha = cAlpha * cAlpha * (3f - 2f * cAlpha);
+                            alpha = Mathf.Max(alpha, cAlpha);
+                        }
+                    }
+
+                    if (alpha > 0.003f)
+                    {
+                        byte al = (byte)(Mathf.Clamp01(alpha) * 255);
                         pixels[y * size + x] = new Color32(255, 255, 255, al);
-                        continue;
                     }
-
-                    // 2. Dripping tendrils
-                    bool drawn = false;
-                    for (int t = 0; t < tendrilCount; t++)
+                    else
                     {
-                        float tRad = tendrilAngle[t] * Mathf.Deg2Rad;
-                        float tdx = Mathf.Cos(tRad);
-                        float tdy = Mathf.Sin(tRad);
-
-                        float proj = dx * tdx + dy * tdy;
-                        if (proj < baseRadius * 0.6f) continue;
-                        float endDist = baseRadius + tendrilLen[t];
-                        if (proj > endDist) continue;
-
-                        float perp = Mathf.Abs(dx * (-tdy) + dy * tdx);
-                        float progress = (proj - baseRadius * 0.6f) / (endDist - baseRadius * 0.6f);
-                        float taper = 1f - progress * progress;
-                        float curW = tendrilWidth[t] * taper;
-
-                        float tEdge = curW - perp;
-                        if (tEdge > 1f)
-                        {
-                            pixels[y * size + x] = white;
-                            drawn = true;
-                            break;
-                        }
-                        if (tEdge > -0.5f)
-                        {
-                            byte al = (byte)(Mathf.Clamp01((tEdge + 0.5f) / 1.5f) * 255);
-                            pixels[y * size + x] = new Color32(255, 255, 255, al);
-                            drawn = true;
-                            break;
-                        }
+                        pixels[y * size + x] = clear;
                     }
-                    if (drawn) continue;
-
-                    // 3. Scattered droplets
-                    for (int dd = 0; dd < dropCount; dd++)
-                    {
-                        float ddx = x - dropX[dd];
-                        float ddy = y - dropY[dd];
-                        float dDist = Mathf.Sqrt(ddx * ddx + ddy * ddy);
-                        float dEdge = dropR[dd] - dDist;
-                        if (dEdge > 0.5f)
-                        {
-                            pixels[y * size + x] = new Color32(255, 255, 255, 200);
-                            drawn = true;
-                            break;
-                        }
-                        if (dEdge > -0.5f)
-                        {
-                            byte al = (byte)(Mathf.Clamp01(dEdge + 0.5f) * 200);
-                            pixels[y * size + x] = new Color32(255, 255, 255, al);
-                            drawn = true;
-                            break;
-                        }
-                    }
-                    if (drawn) continue;
-
-                    pixels[y * size + x] = clear;
                 }
             }
 
@@ -330,22 +322,24 @@ namespace HexaMerge.Animation
             GameObject splash = GetFromPool();
             if (splash == null) return;
             // 블럭 크기(~160px)보다 크지 않게 제한 (풀 오브젝트 200px 기준)
-            float splatScale = Mathf.Clamp(mergedCount * 0.15f + 0.5f, 0.5f, 0.8f);
+            float splatScale = Mathf.Clamp(mergedCount * 0.15f + 0.5f, 0.5f, 1.2f);
             StartCoroutine(SplatCoroutine(splash, sourcePosition, targetPosition, color, splatScale));
 
-            // 드리핑 파티클: 소스→타겟 방향으로 2~3개 작은 물방울 산란
-            Vector2 dir = (targetPosition - sourcePosition);
-            float dist = dir.magnitude;
-            if (dist > 0.1f) dir /= dist;
+            // 드리핑 파티클: 중력 방향(아래) 바이어스 + 소스→타겟 블렌드
+            Vector2 flowDir = (targetPosition - sourcePosition);
+            float dist = flowDir.magnitude;
+            if (dist > 0.1f) flowDir /= dist;
+            Vector2 gravityDir = Vector2.down;
+            Vector2 baseDir = Vector2.Lerp(flowDir, gravityDir, 0.7f).normalized;
             int dripCount = Random.Range(2, 4);
             for (int i = 0; i < dripCount; i++)
             {
                 GameObject drip = GetFromPool();
                 if (drip == null) continue;
-                float spread = Random.Range(-40f, 40f) * Mathf.Deg2Rad;
+                float spread = Random.Range(-25f, 25f) * Mathf.Deg2Rad;
                 Vector2 dripDir = new Vector2(
-                    dir.x * Mathf.Cos(spread) - dir.y * Mathf.Sin(spread),
-                    dir.x * Mathf.Sin(spread) + dir.y * Mathf.Cos(spread));
+                    baseDir.x * Mathf.Cos(spread) - baseDir.y * Mathf.Sin(spread),
+                    baseDir.x * Mathf.Sin(spread) + baseDir.y * Mathf.Cos(spread));
                 StartCoroutine(DripCoroutine(drip, sourcePosition, dripDir, color));
             }
         }
@@ -357,7 +351,7 @@ namespace HexaMerge.Animation
             RectTransform rt = drip.GetComponent<RectTransform>();
             Image img = drip.GetComponent<Image>();
 
-            float dripSize = Random.Range(16f, 30f);
+            float dripSize = Random.Range(24f, 40f);
             rt.anchoredPosition = startPos;
             rt.sizeDelta = Vector2.one * dripSize;
             rt.localScale = Vector3.one;
@@ -367,8 +361,8 @@ namespace HexaMerge.Animation
             dripColor.a = 0.8f;
             if (img != null) img.color = dripColor;
 
-            float speed = Random.Range(100f, 180f);
-            float duration = Random.Range(0.2f, 0.35f);
+            float speed = Random.Range(60f, 120f);
+            float duration = Random.Range(0.25f, 0.4f);
             float elapsed = 0f;
 
             while (elapsed < duration)
@@ -418,8 +412,8 @@ namespace HexaMerge.Animation
             Vector2 flowDir = targetPos - sourcePos;
             float flowAngle = Mathf.Atan2(flowDir.y, flowDir.x) * Mathf.Rad2Deg;
 
-            // Phase 1: 소스 위치에 출현 (0.07s) — 빠른 splash 등장
-            float expandDur = 0.07f;
+            // Phase 1: 소스 위치에 출현 (0.10s) — 점성 꿀 등장
+            float expandDur = 0.10f;
             float elapsed = 0f;
             while (elapsed < expandDur)
             {
@@ -431,8 +425,8 @@ namespace HexaMerge.Animation
                 yield return null;
             }
 
-            // Phase 2: 타겟으로 흘러가기 (0.18s) — 점성 액체 + 스쿼시 + 회전
-            float flowDur = 0.18f;
+            // Phase 2: 타겟으로 흘러가기 (0.22s) — 점성 꿀 + 스쿼시 + 회전
+            float flowDur = 0.22f;
             elapsed = 0f;
             while (elapsed < flowDur)
             {
@@ -443,8 +437,8 @@ namespace HexaMerge.Animation
                 float moveT = t < 0.5f ? 2f * t * t : 1f - 0.5f * (2f - 2f * t) * (2f - 2f * t);
                 rt.anchoredPosition = Vector2.Lerp(sourcePos, targetPos, moveT);
 
-                // 스쿼시/스트레치: 이동 방향으로 눌린 형태
-                float squash = 1f + 0.3f * Mathf.Sin(t * Mathf.PI);
+                // 스쿼시/스트레치: 부드러운 점성 변형
+                float squash = 1f + 0.15f * Mathf.Sin(t * Mathf.PI);
                 float stretch = 1f / squash;
                 float baseScale = Mathf.Lerp(maxScale, maxScale * 0.45f, t);
 
@@ -461,8 +455,8 @@ namespace HexaMerge.Animation
                 yield return null;
             }
 
-            // Phase 3: 타겟에서 흡수 (0.09s) — 스며들어 사라짐
-            float absorbDur = 0.09f;
+            // Phase 3: 타겟에서 흡수 (0.12s) — 점성 꿀 스며들어 사라짐
+            float absorbDur = 0.12f;
             elapsed = 0f;
             Vector3 endScale = rt.localScale;
             Quaternion endRot = rt.localRotation;
