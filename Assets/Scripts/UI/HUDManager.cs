@@ -94,8 +94,8 @@ namespace HexaMerge.UI
                 GameObject iconObj = new GameObject("ProceduralIcon");
                 iconObj.transform.SetParent(btn.transform, false);
                 RectTransform iconRT = iconObj.AddComponent<RectTransform>();
-                iconRT.anchorMin = new Vector2(0.2f, 0.2f);
-                iconRT.anchorMax = new Vector2(0.8f, 0.8f);
+                iconRT.anchorMin = new Vector2(0.1f, 0.1f);
+                iconRT.anchorMax = new Vector2(0.9f, 0.9f);
                 iconRT.offsetMin = Vector2.zero;
                 iconRT.offsetMax = Vector2.zero;
 
@@ -105,7 +105,15 @@ namespace HexaMerge.UI
                 iconImg.color = Color.white;
 
                 if (iconType == "sound")
-                    iconImg.sprite = GetOrCreateSpeakerSprite();
+                {
+                    iconImg.sprite = GetOrCreateSpeakerOnSprite();
+                    soundIcon = iconImg;
+                    soundOnSprite = GetOrCreateSpeakerOnSprite();
+                    soundOffSprite = GetOrCreateSpeakerOffSprite();
+                    // Apply initial mute state
+                    if (AudioManager.Instance != null && AudioManager.Instance.IsMuted)
+                        iconImg.sprite = soundOffSprite;
+                }
                 else if (iconType == "menu")
                     iconImg.sprite = GetOrCreateMenuSprite();
             }
@@ -160,50 +168,131 @@ namespace HexaMerge.UI
             return cachedHexButtonSprite;
         }
 
-        private static Sprite cachedSpeakerSprite;
+        private static Sprite cachedSpeakerOnSprite;
+        private static Sprite cachedSpeakerOffSprite;
         private static Sprite cachedMenuSprite;
 
-        private static Sprite GetOrCreateSpeakerSprite()
+        private static void DrawSpeakerBase(Color32[] px, int s, Color32 white)
         {
-            if (cachedSpeakerSprite != null) return cachedSpeakerSprite;
+            float cx = s * 0.5f;
+            float cy = s * 0.5f;
 
-            int s = 32;
+            // Speaker body (rounded rectangle, left side)
+            float bodyL = s * 0.08f;
+            float bodyR = s * 0.28f;
+            float bodyT = cy + s * 0.14f;
+            float bodyB = cy - s * 0.14f;
+            for (int y = 0; y < s; y++)
+                for (int x = 0; x < s; x++)
+                    if (x >= bodyL && x <= bodyR && y >= bodyB && y <= bodyT)
+                        px[y * s + x] = white;
+
+            // Speaker cone (trapezoid pointing right)
+            float coneL = bodyR;
+            float coneR = s * 0.52f;
+            float coneNarrowH = s * 0.14f;
+            float coneWideH = s * 0.34f;
+            for (int y = 0; y < s; y++)
+            {
+                for (int x = (int)coneL; x <= (int)coneR && x < s; x++)
+                {
+                    float t = (x - coneL) / (coneR - coneL);
+                    float halfH = Mathf.Lerp(coneNarrowH, coneWideH, t);
+                    if (y >= cy - halfH && y <= cy + halfH)
+                        px[y * s + x] = white;
+                }
+            }
+        }
+
+        private static void DrawArc(Color32[] px, int s, Color32 white,
+            float arcCx, float cy, float radius, float thickness, float maxAngle)
+        {
+            for (int y = 0; y < s; y++)
+            {
+                for (int x = 0; x < s; x++)
+                {
+                    float dx = x - arcCx;
+                    float dy = y - cy;
+                    float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (Mathf.Abs(dist - radius) <= thickness)
+                    {
+                        float angle = Mathf.Atan2(Mathf.Abs(dy), dx);
+                        if (angle <= maxAngle)
+                            px[y * s + x] = white;
+                    }
+                }
+            }
+        }
+
+        private static Sprite GetOrCreateSpeakerOnSprite()
+        {
+            if (cachedSpeakerOnSprite != null) return cachedSpeakerOnSprite;
+
+            int s = 64;
             Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
             Color32[] px = new Color32[s * s];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
             for (int i = 0; i < px.Length; i++) px[i] = clear;
 
-            // Speaker body (left rectangle)
-            for (int y = 10; y < 22; y++)
-                for (int x = 4; x < 12; x++)
-                    px[y * s + x] = white;
+            DrawSpeakerBase(px, s, white);
 
-            // Speaker cone (triangle pointing right)
-            for (int y = 4; y < 28; y++)
-            {
-                float t = Mathf.Abs(y - 16f) / 12f;
-                int xEnd = Mathf.RoundToInt(Mathf.Lerp(22f, 12f, t));
-                for (int x = 12; x < xEnd; x++)
-                    px[y * s + x] = white;
-            }
+            float cy = s * 0.5f;
+            float arcX = s * 0.52f;
+            // Inner arc
+            DrawArc(px, s, white, arcX, cy, s * 0.16f, 1.8f, Mathf.PI * 0.35f);
+            // Outer arc
+            DrawArc(px, s, white, arcX, cy, s * 0.28f, 1.8f, Mathf.PI * 0.35f);
 
-            // Sound waves (two arcs on right side)
-            for (int y = 6; y < 26; y++)
+            tex.SetPixels32(px);
+            tex.Apply();
+            cachedSpeakerOnSprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
+            return cachedSpeakerOnSprite;
+        }
+
+        private static Sprite GetOrCreateSpeakerOffSprite()
+        {
+            if (cachedSpeakerOffSprite != null) return cachedSpeakerOffSprite;
+
+            int s = 64;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            Color32[] px = new Color32[s * s];
+            Color32 white = new Color32(255, 255, 255, 255);
+            Color32 clear = new Color32(0, 0, 0, 0);
+            for (int i = 0; i < px.Length; i++) px[i] = clear;
+
+            DrawSpeakerBase(px, s, white);
+
+            // X mark on the right side
+            float xCen = s * 0.72f;
+            float yCen = s * 0.5f;
+            float xLen = s * 0.15f;
+            float thick = 2.5f;
+            for (int y = 0; y < s; y++)
             {
-                float dy = (y - 16f) / 10f;
-                // First arc
-                int ax1 = Mathf.RoundToInt(24f + 2f * (1f - dy * dy));
-                if (ax1 >= 0 && ax1 < s) px[y * s + ax1] = white;
-                // Second arc
-                int ax2 = Mathf.RoundToInt(27f + 2f * (1f - dy * dy));
-                if (ax2 >= 0 && ax2 < s) px[y * s + ax2] = white;
+                for (int x = 0; x < s; x++)
+                {
+                    float dx = x - xCen;
+                    float dy = y - yCen;
+                    // Diagonal 1
+                    float d1 = Mathf.Abs(dx - dy) / 1.414f;
+                    // Diagonal 2
+                    float d2 = Mathf.Abs(dx + dy) / 1.414f;
+                    if ((d1 <= thick || d2 <= thick) &&
+                        Mathf.Abs(dx) <= xLen && Mathf.Abs(dy) <= xLen)
+                        px[y * s + x] = white;
+                }
             }
 
             tex.SetPixels32(px);
             tex.Apply();
-            cachedSpeakerSprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
-            return cachedSpeakerSprite;
+            cachedSpeakerOffSprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
+            return cachedSpeakerOffSprite;
+        }
+
+        private static Sprite GetOrCreateSpeakerSprite()
+        {
+            return GetOrCreateSpeakerOnSprite();
         }
 
         private static Sprite GetOrCreateMenuSprite()
