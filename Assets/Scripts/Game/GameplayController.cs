@@ -161,12 +161,12 @@ namespace HexaMerge.Game
 
                     // 다음 깊이 그룹까지 대기 (마지막 그룹은 대기하지 않음)
                     if (g < groupCount - 1)
-                        yield return new WaitForSeconds(0.17f);
+                        yield return new WaitForSeconds(0.15f);
                 }
             }
 
-            // 연속병합과 동일한 리듬으로 숫자증가 재생 (0.17초 간격)
-            yield return new WaitForSeconds(0.17f);
+            // 연속병합과 동일한 리듬으로 숫자증가 재생 (0.14초 간격)
+            yield return new WaitForSeconds(0.14f);
 
             // 타겟에 최종값 표시 + 숫자증가 사운드 (이전 머지 사운드 중단 후 재생)
             if (targetView != null)

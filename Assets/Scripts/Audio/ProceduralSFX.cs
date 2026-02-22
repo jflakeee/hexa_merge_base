@@ -29,6 +29,16 @@ namespace HexaMerge.Audio
             else
                 env = Mathf.Exp(-(p - attack) * 3.5f);
 
+            // 노이즈 트랜지언트: 첫 3%에 밴드패스 노이즈 버스트 (어택감)
+            float transient = 0f;
+            float transWidth = 0.03f;
+            if (p < transWidth)
+            {
+                float n = Mathf.Sin(t * 78345.6789f + t * t * 29876.5f) * 43758.5453f;
+                n = n - Mathf.Floor(n);
+                transient = (n * 2f - 1f) * (1f - p / transWidth) * 0.35f;
+            }
+
             // 크리스탈 비정수 배음: 유리/금속 특유의 배음비
             float f1 = Sine(freq, t);                          // 기본음
             float f2 = Sine(freq * 2.76f, t) * 0.35f;         // 비정수 배음 1
@@ -43,7 +53,10 @@ namespace HexaMerge.Audio
             // 쉬머링: 근접 주파수 비트로 맑은 울림
             float shimmer = Sine(freq * 1.003f, t) * 0.2f * Mathf.Exp(-p * 4f);
 
-            float sample = f1 + f2 * d2 + f3 * d3 + f4 * d4 + shimmer;
+            // 서브톤: 기본음 1옥타브 아래 (머지에서 무게감)
+            float sub = Sine(freq * 0.5f, t) * 0.12f * Mathf.Exp(-p * 6f);
+
+            float sample = f1 + f2 * d2 + f3 * d3 + f4 * d4 + shimmer + sub + transient;
             return sample * env;
         }
 
@@ -66,9 +79,9 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateTapSound()
         {
-            return CreateClip("SFX_Tap", 0.1f, (t, p) =>
+            return CreateClip("SFX_Tap", 0.07f, (t, p) =>
             {
-                return CrystalNote(659.25f, 0.1f, t, p) * 0.7f;
+                return CrystalNote(659.25f, 0.07f, t, p) * 0.5f;
             });
         }
 
@@ -78,36 +91,36 @@ namespace HexaMerge.Audio
         public static AudioClip CreateMergeBasicSound()
         {
             // C5 (523.25Hz)
-            return CreateClip("SFX_MergeBasic", 0.4f, (t, p) =>
+            return CreateClip("SFX_MergeBasic", 0.20f, (t, p) =>
             {
-                return CrystalNote(523.25f, 0.4f, t, p) * 0.7f;
+                return CrystalNote(523.25f, 0.20f, t, p) * 0.8f;
             });
         }
 
         public static AudioClip CreateMergeMidSound()
         {
             // E5 (659.25Hz)
-            return CreateClip("SFX_MergeMid", 0.4f, (t, p) =>
+            return CreateClip("SFX_MergeMid", 0.20f, (t, p) =>
             {
-                return CrystalNote(659.25f, 0.4f, t, p) * 0.7f;
+                return CrystalNote(659.25f, 0.20f, t, p) * 0.8f;
             });
         }
 
         public static AudioClip CreateMergeHighSound()
         {
             // G5 (783.99Hz)
-            return CreateClip("SFX_MergeHigh", 0.5f, (t, p) =>
+            return CreateClip("SFX_MergeHigh", 0.25f, (t, p) =>
             {
-                return CrystalNote(783.99f, 0.5f, t, p) * 0.65f;
+                return CrystalNote(783.99f, 0.25f, t, p) * 0.85f;
             });
         }
 
         public static AudioClip CreateMergeUltraSound()
         {
             // C6 (1046.5Hz)
-            return CreateClip("SFX_MergeUltra", 0.5f, (t, p) =>
+            return CreateClip("SFX_MergeUltra", 0.25f, (t, p) =>
             {
-                return CrystalNote(1046.5f, 0.5f, t, p) * 0.6f;
+                return CrystalNote(1046.5f, 0.25f, t, p) * 0.9f;
             });
         }
 
@@ -116,7 +129,7 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateChainComboSound()
         {
-            return CreateClip("SFX_ChainCombo", 0.4f, (t, p) =>
+            return CreateClip("SFX_ChainCombo", 0.25f, (t, p) =>
             {
                 // C5→E5→G5 빠른 아르페지오
                 float note;
@@ -136,7 +149,7 @@ namespace HexaMerge.Audio
                     note = 783.99f; // G5
                     noteP = (p - 0.66f) / 0.34f;
                 }
-                return CrystalNote(note, 0.13f, t, noteP) * 0.6f;
+                return CrystalNote(note, 0.083f, t, noteP) * 0.7f;
             });
         }
 
@@ -145,7 +158,7 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateMilestoneSound()
         {
-            return CreateClip("SFX_Milestone", 0.5f, (t, p) =>
+            return CreateClip("SFX_Milestone", 0.35f, (t, p) =>
             {
                 // C5→E5→G5→C6 아르페지오
                 float note;
@@ -171,7 +184,7 @@ namespace HexaMerge.Audio
                     noteP = (p - 0.75f) / 0.25f;
                 }
                 float globalEnv = 1f - p * 0.3f;
-                return CrystalNote(note, 0.125f, t, noteP) * globalEnv * 0.55f;
+                return CrystalNote(note, 0.0875f, t, noteP) * globalEnv * 0.75f;
             });
         }
 
@@ -180,7 +193,7 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateCrownChangeSound()
         {
-            float dur = 0.35f;
+            float dur = 0.20f;
             // 7도 화음 상승: C5→E5→G5→B5 (Cmaj7)
             float[] notes = new float[] { 523.25f, 659.25f, 783.99f, 987.77f };
             int count = notes.Length;
@@ -191,7 +204,7 @@ namespace HexaMerge.Audio
                 int idx = Mathf.Min((int)(p * count), count - 1);
                 float noteP = (p - idx * (1f / count)) / (1f / count);
                 float globalEnv = 1f - p * 0.2f;
-                return CrystalNote(notes[idx], noteLen, t, noteP) * globalEnv * 0.65f;
+                return CrystalNote(notes[idx], noteLen, t, noteP) * globalEnv * 0.85f;
             });
         }
 
@@ -200,28 +213,33 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateGameOverSound()
         {
-            return CreateClip("SFX_GameOver", 0.6f, (t, p) =>
+            return CreateClip("SFX_GameOver", 1.2f, (t, p) =>
             {
-                // E4→C4→A3 하강 아르페지오
-                float note;
-                float noteP;
-                if (p < 0.33f)
+                // 3단계 하강 글리산도: 강한 어택 → 하향 글리산도 → 저주파 잔향
+                float sample = 0f;
+
+                if (p < 0.2f)
                 {
-                    note = 659.25f; // E5
-                    noteP = p / 0.33f;
+                    float ap = p / 0.2f;
+                    float freq = Mathf.Lerp(659.25f, 523.25f, ap);
+                    sample = CrystalNote(freq, 0.24f, t, ap);
                 }
-                else if (p < 0.66f)
+                else if (p < 0.6f)
                 {
-                    note = 523.25f; // C5
-                    noteP = (p - 0.33f) / 0.33f;
+                    float gp = (p - 0.2f) / 0.4f;
+                    float freq = Mathf.Lerp(523.25f, 261.63f, gp * gp);
+                    float env = Mathf.Exp(-gp * 1.2f);
+                    sample = CrystalNote(freq, 0.48f, t, gp) * env;
                 }
                 else
                 {
-                    note = 440.00f; // A4
-                    noteP = (p - 0.66f) / 0.34f;
+                    float rp = (p - 0.6f) / 0.4f;
+                    float freq = Mathf.Lerp(261.63f, 130.81f, rp);
+                    float env = Mathf.Exp(-rp * 2.5f);
+                    sample = CrystalNote(freq, 0.48f, t, rp) * env * 0.5f;
                 }
-                float globalEnv = 1f - p * 0.2f;
-                return CrystalNote(note, 0.2f, t, noteP) * globalEnv * 0.65f;
+
+                return sample * 1.0f;
             });
         }
 
@@ -230,7 +248,7 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateGameStartSound()
         {
-            return CreateClip("SFX_GameStart", 0.5f, (t, p) =>
+            return CreateClip("SFX_GameStart", 0.30f, (t, p) =>
             {
                 // C5→E5→G5 상승 아르페지오
                 float note;
@@ -251,7 +269,7 @@ namespace HexaMerge.Audio
                     noteP = (p - 0.66f) / 0.34f;
                 }
                 float globalEnv = 1f - p * 0.2f;
-                return CrystalNote(note, 0.17f, t, noteP) * globalEnv * 0.6f;
+                return CrystalNote(note, 0.1f, t, noteP) * globalEnv * 0.35f;
             });
         }
 
@@ -260,9 +278,9 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateButtonClickSound()
         {
-            return CreateClip("SFX_ButtonClick", 0.08f, (t, p) =>
+            return CreateClip("SFX_ButtonClick", 0.06f, (t, p) =>
             {
-                return CrystalNote(1046.5f, 0.08f, t, p) * 0.55f;
+                return CrystalNote(1046.5f, 0.06f, t, p) * 0.45f;
             });
         }
 
@@ -271,9 +289,9 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateTileDropSound()
         {
-            return CreateClip("SFX_TileDrop", 0.15f, (t, p) =>
+            return CreateClip("SFX_TileDrop", 0.10f, (t, p) =>
             {
-                return CrystalNote(392.00f, 0.15f, t, p) * 0.65f;
+                return CrystalNote(392.00f, 0.10f, t, p) * 0.55f;
             });
         }
 
@@ -282,11 +300,11 @@ namespace HexaMerge.Audio
         // ──────────────────────────────────────────────
         public static AudioClip CreateNumberUpSound()
         {
-            return CreateClip("SFX_NumberUp", 0.25f, (t, p) =>
+            return CreateClip("SFX_NumberUp", 0.15f, (t, p) =>
             {
                 // 빠른 상승 글리산도: C5→C6
                 float freq = Mathf.Lerp(523.25f, 1046.5f, p * p);
-                return CrystalNote(freq, 0.25f, t, p) * 0.6f;
+                return CrystalNote(freq, 0.15f, t, p) * 0.7f;
             });
         }
 
