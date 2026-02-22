@@ -368,8 +368,8 @@ namespace HexaMerge.UI
             rt.anchorMin = new Vector2(0.5f, 0.5f);
             rt.anchorMax = new Vector2(0.5f, 0.5f);
             rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.anchoredPosition = new Vector2(0f, 24f);
-            rt.sizeDelta = new Vector2(28f, 20f);
+            rt.anchoredPosition = new Vector2(0f, 28f);
+            rt.sizeDelta = new Vector2(32f, 24f);
 
             crownImage = crownObj.AddComponent<Image>();
             crownImage.sprite = GetOrCreateCrownSprite();
@@ -384,45 +384,77 @@ namespace HexaMerge.UI
         {
             if (cachedCrownSprite != null) return cachedCrownSprite;
 
-            int w = 56, h = 40;
+            int w = 80, h = 60;
             Texture2D tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
             Color32[] px = new Color32[w * h];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
-
             for (int i = 0; i < px.Length; i++) px[i] = clear;
 
-            // Draw crown shape: base rect + 3 triangular points
-            // Base: bottom 60% is a rectangle
-            int baseTop = h * 2 / 5; // y=16
-            for (int y = 0; y < baseTop; y++)
-                for (int x = 4; x < w - 4; x++)
-                    px[y * w + x] = white;
+            // 5-peak crown: base band + zigzag outline + circle tips
+            int pad = 3;
+            int bandH = 13;
+            float valleyH = h * 0.40f;
+            float[] pkX = { w * 0.10f, w * 0.30f, w * 0.50f, w * 0.70f, w * 0.90f };
+            float[] pkY = { h * 0.78f, h * 0.87f, h * 0.95f, h * 0.87f, h * 0.78f };
+            float tipR = 3.2f;
 
-            // Three triangular peaks
-            int peakH = h - baseTop; // 24px for peaks
-            float[] peakCenters = new float[] { w * 0.18f, w * 0.5f, w * 0.82f };
-            float peakHalfW = w * 0.22f;
-
-            for (int y = baseTop; y < h; y++)
+            // Column-fill: for each x, compute crown outline height then fill below
+            for (int x = pad; x < w - pad; x++)
             {
-                float progress = (float)(y - baseTop) / peakH; // 0 at base, 1 at tip
-                float halfWidth = peakHalfW * (1f - progress);
-                foreach (float cx in peakCenters)
+                float outlineY = (float)bandH;
+                float fx = x;
+
+                if (fx <= pkX[0])
                 {
-                    int xStart = Mathf.Max(0, Mathf.RoundToInt(cx - halfWidth));
-                    int xEnd = Mathf.Min(w - 1, Mathf.RoundToInt(cx + halfWidth));
-                    for (int x = xStart; x <= xEnd; x++)
-                        px[y * w + x] = white;
+                    float t = (fx - pad) / (pkX[0] - pad);
+                    outlineY = Mathf.Lerp(valleyH, pkY[0], t);
                 }
-                // Fill between peaks at lower heights
-                if (progress < 0.5f)
+                else if (fx >= pkX[4])
                 {
-                    int leftEnd = Mathf.RoundToInt(peakCenters[0] + halfWidth);
-                    int rightStart = Mathf.RoundToInt(peakCenters[2] - halfWidth);
-                    for (int x = leftEnd; x <= rightStart; x++)
-                        px[y * w + x] = white;
+                    float t = (fx - pkX[4]) / (w - pad - 1 - pkX[4]);
+                    outlineY = Mathf.Lerp(pkY[4], valleyH, t);
                 }
+                else
+                {
+                    for (int p = 0; p < 4; p++)
+                    {
+                        if (fx < pkX[p] || fx > pkX[p + 1]) continue;
+                        float midX = (pkX[p] + pkX[p + 1]) * 0.5f;
+                        if (fx <= midX)
+                        {
+                            float t = (fx - pkX[p]) / (midX - pkX[p]);
+                            outlineY = Mathf.Lerp(pkY[p], valleyH, t);
+                        }
+                        else
+                        {
+                            float t = (fx - midX) / (pkX[p + 1] - midX);
+                            outlineY = Mathf.Lerp(valleyH, pkY[p + 1], t);
+                        }
+                        break;
+                    }
+                }
+
+                int top = Mathf.Min(h, Mathf.RoundToInt(outlineY));
+                for (int y = 0; y < top; y++)
+                    px[y * w + x] = white;
+            }
+
+            // Circle gems at peak tips
+            for (int p = 0; p < 5; p++)
+            {
+                float cx = pkX[p], cy = pkY[p];
+                int minY = Mathf.Max(0, (int)(cy - tipR));
+                int maxYi = Mathf.Min(h - 1, (int)(cy + tipR));
+                int minX = Mathf.Max(0, (int)(cx - tipR));
+                int maxXi = Mathf.Min(w - 1, (int)(cx + tipR));
+                for (int y = minY; y <= maxYi; y++)
+                    for (int x = minX; x <= maxXi; x++)
+                    {
+                        float dx = x - cx, dy = y - cy;
+                        if (dx * dx + dy * dy <= tipR * tipR)
+                            px[y * w + x] = white;
+                    }
             }
 
             tex.SetPixels32(px);
