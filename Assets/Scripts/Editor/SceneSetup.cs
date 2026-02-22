@@ -27,6 +27,17 @@ public static class SceneSetup
     private static readonly Color Black  = Color.black;
     private static readonly Color White  = Color.white;
 
+    // ------------------------------------------------------------------ font
+    private static Font _gameFont;
+    private static Font GetGameFont()
+    {
+        if (_gameFont == null)
+            _gameFont = Resources.Load<Font>("Fonts/NunitoExtraBold");
+        if (_gameFont == null)
+            _gameFont = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        return _gameFont;
+    }
+
     // ------------------------------------------------------------------ entry
     [MenuItem("HexaMerge/Setup Game Scene")]
     public static void SetupGameScene()
@@ -211,10 +222,10 @@ public static class SceneSetup
         Sprite hexBtnSprite = CreateHexButtonSprite(64);
 
         // ---- Sound button (left, pink hexagon)
-        GameObject soundBtn = CreateButtonObject("SoundButton", hudRT, new Vector2(60f, 60f));
+        GameObject soundBtn = CreateButtonObject("SoundButton", hudRT, new Vector2(70f, 70f));
         RectTransform soundBtnRT = soundBtn.GetComponent<RectTransform>();
         SetAnchored(soundBtnRT, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                    new Vector2(60f, 60f), new Vector2(50f, -30f));
+                    new Vector2(70f, 70f), new Vector2(50f, -30f));
         Image soundImg = soundBtn.GetComponent<Image>();
         soundImg.color = Pink;
         soundImg.sprite = hexBtnSprite;
@@ -222,10 +233,10 @@ public static class SceneSetup
         StretchFull(soundLabel.GetComponent<RectTransform>());
 
         // ---- Menu button (right, pink hexagon)
-        GameObject menuBtn = CreateButtonObject("MenuButton", hudRT, new Vector2(60f, 60f));
+        GameObject menuBtn = CreateButtonObject("MenuButton", hudRT, new Vector2(70f, 70f));
         RectTransform menuBtnRT = menuBtn.GetComponent<RectTransform>();
         SetAnchored(menuBtnRT, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                    new Vector2(60f, 60f), new Vector2(-50f, -30f));
+                    new Vector2(70f, 70f), new Vector2(-50f, -30f));
         Image menuImg = menuBtn.GetComponent<Image>();
         menuImg.color = Pink;
         menuImg.sprite = hexBtnSprite;
@@ -233,10 +244,10 @@ public static class SceneSetup
         StretchFull(menuLabel.GetComponent<RectTransform>());
 
         // ---- Help button (right, below menu, pink hexagon)
-        GameObject helpBtn = CreateButtonObject("HelpButton", hudRT, new Vector2(60f, 60f));
+        GameObject helpBtn = CreateButtonObject("HelpButton", hudRT, new Vector2(70f, 70f));
         RectTransform helpBtnRT = helpBtn.GetComponent<RectTransform>();
         SetAnchored(helpBtnRT, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                    new Vector2(60f, 60f), new Vector2(-50f, -100f));
+                    new Vector2(70f, 70f), new Vector2(-50f, -110f));
         Image helpImg = helpBtn.GetComponent<Image>();
         helpImg.color = Pink;
         helpImg.sprite = hexBtnSprite;
@@ -339,7 +350,7 @@ public static class SceneSetup
         valTMP.raycastTarget = false;
         valTMP.horizontalOverflow = HorizontalWrapMode.Overflow;
         valTMP.verticalOverflow = VerticalWrapMode.Overflow;
-        valTMP.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        valTMP.font = GetGameFont();
 
         // Child: CrownIcon (top-center)
         GameObject crownGO = new GameObject("CrownIcon");
@@ -369,7 +380,7 @@ public static class SceneSetup
         crownTxt.raycastTarget = false;
         crownTxt.horizontalOverflow = HorizontalWrapMode.Overflow;
         crownTxt.verticalOverflow = VerticalWrapMode.Overflow;
-        crownTxt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        crownTxt.font = GetGameFont();
 
         crownGO.SetActive(false);
 
@@ -684,19 +695,19 @@ public static class SceneSetup
                     new Vector2(400f, 50f), new Vector2(0f, -430f));
 
         // Restart button (below banner area)
-        GameObject goRestartBtn = CreateButtonObject("RestartButton", goPanel.transform, new Vector2(300f, 70f));
+        GameObject goRestartBtn = CreateButtonObject("RestartButton", goPanel.transform, new Vector2(340f, 75f));
         RectTransform goRestBtnRT = goRestartBtn.GetComponent<RectTransform>();
         SetAnchored(goRestBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(300f, 70f), new Vector2(0f, -500f));
+                    new Vector2(340f, 75f), new Vector2(0f, -500f));
         goRestartBtn.GetComponent<Image>().color = Pink;
         Text restartLabel = CreateTMPText("Label", goRestartBtn.transform, "RESTART", 28f, White, FontStyle.Bold);
         StretchFull(restartLabel.GetComponent<RectTransform>());
 
         // Watch ad button (below restart)
-        GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(300f, 60f));
+        GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(340f, 65f));
         RectTransform goAdBtnRT = goWatchAdBtn.GetComponent<RectTransform>();
         SetAnchored(goAdBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(300f, 60f), new Vector2(0f, -585f));
+                    new Vector2(340f, 65f), new Vector2(0f, -590f));
         goWatchAdBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
         Text adBtnLabel = CreateTMPText("Label", goWatchAdBtn.transform, "WATCH AD", 24f, White, FontStyle.Normal);
         StretchFull(adBtnLabel.GetComponent<RectTransform>());
@@ -740,10 +751,10 @@ public static class SceneSetup
         Text menuTitle = CreateTMPText("Title", menuHeader.transform, "MENU", 40f, White, FontStyle.Bold);
         StretchFull(menuTitle.GetComponent<RectTransform>());
 
-        // 2x2 icon grid container
-        float gridTop = -310f;
-        float iconSize = 110f;
-        float iconGap = 20f;
+        // 2x2 icon grid container (header bottom = -280, icons start below)
+        float gridTop = -360f;
+        float iconSize = 130f;
+        float iconGap = 24f;
         float gridCenterX = 0f;
 
         // Row 1: Rate (star) | Favorite (heart)
@@ -751,17 +762,35 @@ public static class SceneSetup
         RectTransform rateBtnRT = rateBtn.GetComponent<RectTransform>();
         SetAnchored(rateBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
                     new Vector2(iconSize, iconSize), new Vector2(gridCenterX - iconSize/2 - iconGap/2, gridTop));
-        rateBtn.GetComponent<Image>().color = HexColor("#FF9800");
-        Text rateIcon = CreateTMPText("Icon", rateBtn.transform, "*", 40f, White, FontStyle.Bold);
-        StretchFull(rateIcon.GetComponent<RectTransform>());
+        rateBtn.GetComponent<Image>().color = HexColor("#FFB300");
+
+        // Rate icon as Image child (star sprite set at runtime)
+        GameObject rateIconObj = CreateUIObject("Icon", rateBtn.transform);
+        RectTransform rateIconRT = rateIconObj.GetComponent<RectTransform>();
+        rateIconRT.anchorMin = new Vector2(0.2f, 0.2f);
+        rateIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        rateIconRT.offsetMin = Vector2.zero;
+        rateIconRT.offsetMax = Vector2.zero;
+        Image rateIconImg = rateIconObj.AddComponent<Image>();
+        rateIconImg.color = White;
+        rateIconImg.raycastTarget = false;
 
         GameObject favBtn = CreateButtonObject("FavoriteButton", pPanel.transform, new Vector2(iconSize, iconSize));
         RectTransform favBtnRT = favBtn.GetComponent<RectTransform>();
         SetAnchored(favBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
                     new Vector2(iconSize, iconSize), new Vector2(gridCenterX + iconSize/2 + iconGap/2, gridTop));
         favBtn.GetComponent<Image>().color = HexColor("#E91E63");
-        Text favIcon = CreateTMPText("Icon", favBtn.transform, "<3", 36f, White, FontStyle.Bold);
-        StretchFull(favIcon.GetComponent<RectTransform>());
+
+        // Favorite icon as Image child (heart sprite set at runtime)
+        GameObject favIconObj = CreateUIObject("Icon", favBtn.transform);
+        RectTransform favIconRT = favIconObj.GetComponent<RectTransform>();
+        favIconRT.anchorMin = new Vector2(0.2f, 0.2f);
+        favIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        favIconRT.offsetMin = Vector2.zero;
+        favIconRT.offsetMax = Vector2.zero;
+        Image favIconImg = favIconObj.AddComponent<Image>();
+        favIconImg.color = White;
+        favIconImg.raycastTarget = false;
 
         // Row 2: Theme (sun/moon) | Leaderboard (trophy)
         float row2Y = gridTop - iconSize - iconGap;
@@ -769,7 +798,7 @@ public static class SceneSetup
         RectTransform themeBtnRT = themeBtn.GetComponent<RectTransform>();
         SetAnchored(themeBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
                     new Vector2(iconSize, iconSize), new Vector2(gridCenterX - iconSize/2 - iconGap/2, row2Y));
-        themeBtn.GetComponent<Image>().color = HexColor("#1565C0");
+        themeBtn.GetComponent<Image>().color = Purple;
 
         // Theme icon as Image child (procedurally created at runtime by PauseScreen)
         GameObject themeIconObj = CreateUIObject("ThemeIcon", themeBtn.transform);
@@ -786,28 +815,37 @@ public static class SceneSetup
         RectTransform lbBtnRT = lbBtn.GetComponent<RectTransform>();
         SetAnchored(lbBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
                     new Vector2(iconSize, iconSize), new Vector2(gridCenterX + iconSize/2 + iconGap/2, row2Y));
-        lbBtn.GetComponent<Image>().color = HexColor("#4CAF50");
-        Text lbIcon = CreateTMPText("Icon", lbBtn.transform, "#1", 36f, White, FontStyle.Bold);
-        StretchFull(lbIcon.GetComponent<RectTransform>());
+        lbBtn.GetComponent<Image>().color = HexColor("#00ACC1");
+
+        // Leaderboard icon as Image child (trophy sprite set at runtime)
+        GameObject lbIconObj = CreateUIObject("Icon", lbBtn.transform);
+        RectTransform lbIconRT = lbIconObj.GetComponent<RectTransform>();
+        lbIconRT.anchorMin = new Vector2(0.2f, 0.2f);
+        lbIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        lbIconRT.offsetMin = Vector2.zero;
+        lbIconRT.offsetMax = Vector2.zero;
+        Image lbIconImg = lbIconObj.AddComponent<Image>();
+        lbIconImg.color = White;
+        lbIconImg.raycastTarget = false;
 
         // RESTART button (outlined style)
         float btnY = row2Y - iconSize/2 - 60f;
-        GameObject pRestartBtn = CreateButtonObject("RestartButton", pPanel.transform, new Vector2(400f, 70f));
+        GameObject pRestartBtn = CreateButtonObject("RestartButton", pPanel.transform, new Vector2(440f, 80f));
         RectTransform pRestartBtnRT = pRestartBtn.GetComponent<RectTransform>();
         SetAnchored(pRestartBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                    new Vector2(400f, 70f), new Vector2(0f, btnY));
+                    new Vector2(440f, 80f), new Vector2(0f, btnY));
         pRestartBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.35f, 1f);
-        Text pRestartLabel = CreateTMPText("Label", pRestartBtn.transform, "RESTART", 28f, White, FontStyle.Bold);
+        Text pRestartLabel = CreateTMPText("Label", pRestartBtn.transform, "RESTART", 30f, White, FontStyle.Bold);
         StretchFull(pRestartLabel.GetComponent<RectTransform>());
 
         // CONTINUE button (pink)
-        float contY = btnY - 90f;
-        GameObject pContinueBtn = CreateButtonObject("ContinueButton", pPanel.transform, new Vector2(400f, 70f));
+        float contY = btnY - 100f;
+        GameObject pContinueBtn = CreateButtonObject("ContinueButton", pPanel.transform, new Vector2(440f, 80f));
         RectTransform pContinueBtnRT = pContinueBtn.GetComponent<RectTransform>();
         SetAnchored(pContinueBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f),
-                    new Vector2(400f, 70f), new Vector2(0f, contY));
+                    new Vector2(440f, 80f), new Vector2(0f, contY));
         pContinueBtn.GetComponent<Image>().color = Pink;
-        Text pContinueLabel = CreateTMPText("Label", pContinueBtn.transform, "CONTINUE", 28f, White, FontStyle.Bold);
+        Text pContinueLabel = CreateTMPText("Label", pContinueBtn.transform, "CONTINUE", 30f, White, FontStyle.Bold);
         StretchFull(pContinueLabel.GetComponent<RectTransform>());
 
         // Wire PauseScreen
@@ -818,7 +856,10 @@ public static class SceneSetup
         soPS.FindProperty("favoriteButton").objectReferenceValue     = favBtn.GetComponent<Button>();
         soPS.FindProperty("themeButton").objectReferenceValue        = themeBtn.GetComponent<Button>();
         soPS.FindProperty("leaderboardButton").objectReferenceValue  = lbBtn.GetComponent<Button>();
-        soPS.FindProperty("themeButtonImage").objectReferenceValue   = themeIconImg;
+        soPS.FindProperty("themeButtonImage").objectReferenceValue      = themeIconImg;
+        soPS.FindProperty("rateIconImage").objectReferenceValue        = rateIconImg;
+        soPS.FindProperty("favoriteIconImage").objectReferenceValue    = favIconImg;
+        soPS.FindProperty("leaderboardIconImage").objectReferenceValue = lbIconImg;
         soPS.ApplyModifiedPropertiesWithoutUndo();
 
         pauseScreen.SetActive(false);
@@ -1110,7 +1151,7 @@ public static class SceneSetup
         txt.raycastTarget = false;
         txt.horizontalOverflow = HorizontalWrapMode.Overflow;
         txt.verticalOverflow = VerticalWrapMode.Overflow;
-        txt.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        txt.font = GetGameFont();
         return txt;
     }
 

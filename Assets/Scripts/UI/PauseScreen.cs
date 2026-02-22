@@ -14,9 +14,18 @@ namespace HexaMerge.UI
         [SerializeField] private Button themeButton;
         [SerializeField] private Button leaderboardButton;
         [SerializeField] private Image themeButtonImage;
+        [SerializeField] private Image rateIconImage;
+        [SerializeField] private Image favoriteIconImage;
+        [SerializeField] private Image leaderboardIconImage;
 
         private static Sprite cachedSunSprite;
         private static Sprite cachedMoonSprite;
+        private static Sprite cachedStarSprite;
+        private static Sprite cachedFilledHeartSprite;
+        private static Sprite cachedEmptyHeartSprite;
+        private static Sprite cachedTrophySprite;
+
+        private bool isFavorited;
 
         private void OnEnable()
         {
@@ -33,6 +42,8 @@ namespace HexaMerge.UI
             if (favoriteButton != null)
                 favoriteButton.onClick.AddListener(OnFavoriteClicked);
 
+            isFavorited = PlayerPrefs.GetInt("IsFavorite", 0) == 1;
+            InitializeIcons();
             UpdateThemeIcon();
         }
 
@@ -50,6 +61,15 @@ namespace HexaMerge.UI
                 rateButton.onClick.RemoveListener(OnRateClicked);
             if (favoriteButton != null)
                 favoriteButton.onClick.RemoveListener(OnFavoriteClicked);
+        }
+
+        private void InitializeIcons()
+        {
+            if (rateIconImage != null)
+                rateIconImage.sprite = GetOrCreateStarSprite();
+            if (leaderboardIconImage != null)
+                leaderboardIconImage.sprite = GetOrCreateTrophySprite();
+            UpdateFavoriteIcon();
         }
 
         private void OnContinueClicked()
@@ -88,11 +108,24 @@ namespace HexaMerge.UI
         private void OnRateClicked()
         {
             PlayClick();
+            Application.OpenURL("https://jflakeee.github.io/hexa_merge_base/");
         }
 
         private void OnFavoriteClicked()
         {
             PlayClick();
+            isFavorited = !isFavorited;
+            PlayerPrefs.SetInt("IsFavorite", isFavorited ? 1 : 0);
+            PlayerPrefs.Save();
+            UpdateFavoriteIcon();
+        }
+
+        private void UpdateFavoriteIcon()
+        {
+            if (favoriteIconImage != null)
+                favoriteIconImage.sprite = isFavorited
+                    ? GetOrCreateFilledHeartSprite()
+                    : GetOrCreateEmptyHeartSprite();
         }
 
         private void UpdateThemeIcon()
@@ -108,6 +141,195 @@ namespace HexaMerge.UI
                 AudioManager.Instance.PlaySFX(SFXType.ButtonClick);
         }
 
+        // ==================== Star Sprite (Rate) ====================
+
+        private static Sprite GetOrCreateStarSprite()
+        {
+            if (cachedStarSprite != null) return cachedStarSprite;
+            int s = 64;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            Color32[] px = new Color32[s * s];
+            Color32 w = new Color32(255, 255, 255, 255);
+            Color32 cl = new Color32(0, 0, 0, 0);
+            float cx = s * 0.5f, cy = s * 0.5f;
+            float outerR = s * 0.42f;
+            float innerR = s * 0.18f;
+
+            float[] vx = new float[10];
+            float[] vy = new float[10];
+            for (int i = 0; i < 10; i++)
+            {
+                float angle = Mathf.Deg2Rad * (i * 36f - 90f);
+                float r = (i % 2 == 0) ? outerR : innerR;
+                vx[i] = cx + r * Mathf.Cos(angle);
+                vy[i] = cy + r * Mathf.Sin(angle);
+            }
+
+            for (int y = 0; y < s; y++)
+                for (int x = 0; x < s; x++)
+                    px[y * s + x] = PointInPolygon(x + 0.5f, y + 0.5f, vx, vy, 10) ? w : cl;
+
+            tex.SetPixels32(px);
+            tex.Apply();
+            cachedStarSprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
+            return cachedStarSprite;
+        }
+
+        // ==================== Heart Sprites (Favorite) ====================
+
+        private static Sprite GetOrCreateFilledHeartSprite()
+        {
+            if (cachedFilledHeartSprite != null) return cachedFilledHeartSprite;
+            cachedFilledHeartSprite = CreateHeartSprite(true);
+            return cachedFilledHeartSprite;
+        }
+
+        private static Sprite GetOrCreateEmptyHeartSprite()
+        {
+            if (cachedEmptyHeartSprite != null) return cachedEmptyHeartSprite;
+            cachedEmptyHeartSprite = CreateHeartSprite(false);
+            return cachedEmptyHeartSprite;
+        }
+
+        private static Sprite CreateHeartSprite(bool filled)
+        {
+            int s = 64;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            Color32[] px = new Color32[s * s];
+            Color32 w = new Color32(255, 255, 255, 255);
+            Color32 cl = new Color32(0, 0, 0, 0);
+            float centerX = s * 0.5f;
+            float centerY = s * 0.48f;
+            float scale = s * 0.3f;
+
+            bool[] inside = new bool[s * s];
+            for (int y = 0; y < s; y++)
+                for (int x = 0; x < s; x++)
+                {
+                    float nx = (x - centerX) / scale;
+                    float ny = -(y - centerY) / scale;
+                    inside[y * s + x] = HeartImplicit(nx, ny) <= 0f;
+                }
+
+            if (filled)
+            {
+                for (int i = 0; i < s * s; i++)
+                    px[i] = inside[i] ? w : cl;
+            }
+            else
+            {
+                int thickness = 3;
+                for (int y = 0; y < s; y++)
+                    for (int x = 0; x < s; x++)
+                    {
+                        if (!inside[y * s + x]) { px[y * s + x] = cl; continue; }
+                        bool isEdge = false;
+                        for (int dy = -thickness; dy <= thickness && !isEdge; dy++)
+                            for (int dx = -thickness; dx <= thickness && !isEdge; dx++)
+                            {
+                                int ny2 = y + dy, nx2 = x + dx;
+                                if (nx2 < 0 || nx2 >= s || ny2 < 0 || ny2 >= s)
+                                    isEdge = true;
+                                else if (!inside[ny2 * s + nx2])
+                                    isEdge = true;
+                            }
+                        px[y * s + x] = isEdge ? w : cl;
+                    }
+            }
+
+            tex.SetPixels32(px);
+            tex.Apply();
+            return Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
+        }
+
+        private static float HeartImplicit(float x, float y)
+        {
+            float x2 = x * x;
+            float y2 = y * y;
+            float sum = x2 + y2 - 1f;
+            return sum * sum * sum - x2 * y2 * y;
+        }
+
+        // ==================== Trophy Sprite (Leaderboard) ====================
+
+        private static Sprite GetOrCreateTrophySprite()
+        {
+            if (cachedTrophySprite != null) return cachedTrophySprite;
+            int s = 64;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            Color32[] px = new Color32[s * s];
+            Color32 w = new Color32(255, 255, 255, 255);
+            Color32 cl = new Color32(0, 0, 0, 0);
+            float cx = s * 0.5f;
+
+            for (int y = 0; y < s; y++)
+                for (int x = 0; x < s; x++)
+                {
+                    px[y * s + x] = cl;
+                    float fy = s - 1 - y; // flip Y (0 = bottom of texture)
+
+                    // Base plate: fy 8-12
+                    if (fy >= 8f && fy <= 12f)
+                    {
+                        if (Mathf.Abs(x - cx) <= 15f)
+                            px[y * s + x] = w;
+                    }
+                    // Pedestal: fy 12-18 (tapering up)
+                    if (fy >= 12f && fy <= 18f)
+                    {
+                        float t = (fy - 12f) / 6f;
+                        float halfW = Mathf.Lerp(12f, 7f, t);
+                        if (Mathf.Abs(x - cx) <= halfW)
+                            px[y * s + x] = w;
+                    }
+                    // Stem: fy 18-26
+                    if (fy >= 18f && fy <= 26f)
+                    {
+                        if (Mathf.Abs(x - cx) <= 3f)
+                            px[y * s + x] = w;
+                    }
+                    // Cup body: fy 26-50 (widening up)
+                    if (fy >= 26f && fy <= 50f)
+                    {
+                        float t = (fy - 26f) / 24f;
+                        float halfW = Mathf.Lerp(10f, 18f, t);
+                        if (Mathf.Abs(x - cx) <= halfW)
+                            px[y * s + x] = w;
+                    }
+                    // Cup rim: fy 48-52
+                    if (fy >= 48f && fy <= 52f)
+                    {
+                        if (Mathf.Abs(x - cx) <= 20f)
+                            px[y * s + x] = w;
+                    }
+                    // Handles: arcs at sides, fy 32-48
+                    if (fy >= 32f && fy <= 48f)
+                    {
+                        float hcy = 40f;
+                        float hdy = fy - hcy;
+                        // Left handle
+                        float lhcx = cx - 18f;
+                        float lhdx = x - lhcx;
+                        float ldist = Mathf.Sqrt(lhdx * lhdx + hdy * hdy);
+                        if (ldist >= 7f && ldist <= 11f && x < cx - 10f)
+                            px[y * s + x] = w;
+                        // Right handle
+                        float rhcx = cx + 18f;
+                        float rhdx = x - rhcx;
+                        float rdist = Mathf.Sqrt(rhdx * rhdx + hdy * hdy);
+                        if (rdist >= 7f && rdist <= 11f && x > cx + 10f)
+                            px[y * s + x] = w;
+                    }
+                }
+
+            tex.SetPixels32(px);
+            tex.Apply();
+            cachedTrophySprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
+            return cachedTrophySprite;
+        }
+
+        // ==================== Moon Sprite (Theme) ====================
+
         private static Sprite GetOrCreateMoonSprite()
         {
             if (cachedMoonSprite != null) return cachedMoonSprite;
@@ -115,7 +337,7 @@ namespace HexaMerge.UI
             Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
-            Color32 c = new Color32(0, 0, 0, 0);
+            Color32 cl = new Color32(0, 0, 0, 0);
             float cx = s * 0.5f, cy = s * 0.5f;
             float r1 = s * 0.38f;
             float r2 = s * 0.3f;
@@ -127,13 +349,15 @@ namespace HexaMerge.UI
                     float dx2 = x - (cx + ox), dy2 = y - cy;
                     bool inMoon = (dx1 * dx1 + dy1 * dy1 <= r1 * r1) &&
                                   (dx2 * dx2 + dy2 * dy2 > r2 * r2);
-                    px[y * s + x] = inMoon ? w : c;
+                    px[y * s + x] = inMoon ? w : cl;
                 }
             tex.SetPixels32(px);
             tex.Apply();
             cachedMoonSprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
             return cachedMoonSprite;
         }
+
+        // ==================== Sun Sprite (Theme) ====================
 
         private static Sprite GetOrCreateSunSprite()
         {
@@ -142,7 +366,7 @@ namespace HexaMerge.UI
             Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
-            Color32 c = new Color32(0, 0, 0, 0);
+            Color32 cl = new Color32(0, 0, 0, 0);
             float cx = s * 0.5f, cy = s * 0.5f;
             float coreR = s * 0.22f;
             float rayInner = s * 0.3f, rayOuter = s * 0.42f;
@@ -159,12 +383,26 @@ namespace HexaMerge.UI
                         float seg = angle % 45f;
                         if (seg < 15f) { px[y * s + x] = w; continue; }
                     }
-                    px[y * s + x] = c;
+                    px[y * s + x] = cl;
                 }
             tex.SetPixels32(px);
             tex.Apply();
             cachedSunSprite = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
             return cachedSunSprite;
+        }
+
+        // ==================== Geometry Helpers ====================
+
+        private static bool PointInPolygon(float px, float py, float[] vx, float[] vy, int n)
+        {
+            bool inside = false;
+            for (int i = 0, j = n - 1; i < n; j = i++)
+            {
+                if (((vy[i] > py) != (vy[j] > py)) &&
+                    (px < (vx[j] - vx[i]) * (py - vy[i]) / (vy[j] - vy[i]) + vx[i]))
+                    inside = !inside;
+            }
+            return inside;
         }
     }
 }
