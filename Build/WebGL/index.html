@@ -93,6 +93,32 @@
   <div id="warning-banner"></div>
 
   <script>
+    // Mobile AudioContext unlock — resume on user gesture
+    (function() {
+      var unlocked = false;
+      function resumeAudio() {
+        if (unlocked) return;
+        if (typeof WEBAudio !== 'undefined' && WEBAudio.audioContext) {
+          if (WEBAudio.audioContext.state === 'suspended') {
+            WEBAudio.audioContext.resume().then(function() {
+              unlocked = true;
+              document.removeEventListener('touchstart', resumeAudio, true);
+              document.removeEventListener('touchend', resumeAudio, true);
+              document.removeEventListener('click', resumeAudio, true);
+            });
+          } else {
+            unlocked = true;
+            document.removeEventListener('touchstart', resumeAudio, true);
+            document.removeEventListener('touchend', resumeAudio, true);
+            document.removeEventListener('click', resumeAudio, true);
+          }
+        }
+      }
+      document.addEventListener('touchstart', resumeAudio, true);
+      document.addEventListener('touchend', resumeAudio, true);
+      document.addEventListener('click', resumeAudio, true);
+    })();
+
     // window.onerror 핸들러 등록 (TC-PLAT-035)
     window.onerror = function(message, source, lineno, colno, error) {
       console.error('[HexaMerge] Uncaught error:', message, 'at', source, lineno, colno);
