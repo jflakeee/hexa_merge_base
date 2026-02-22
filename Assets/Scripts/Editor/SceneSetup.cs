@@ -767,8 +767,8 @@ public static class SceneSetup
         // Rate icon as Image child (star sprite set at runtime)
         GameObject rateIconObj = CreateUIObject("Icon", rateBtn.transform);
         RectTransform rateIconRT = rateIconObj.GetComponent<RectTransform>();
-        rateIconRT.anchorMin = new Vector2(0.2f, 0.2f);
-        rateIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        rateIconRT.anchorMin = new Vector2(0.05f, 0.05f);
+        rateIconRT.anchorMax = new Vector2(0.95f, 0.95f);
         rateIconRT.offsetMin = Vector2.zero;
         rateIconRT.offsetMax = Vector2.zero;
         Image rateIconImg = rateIconObj.AddComponent<Image>();
@@ -784,8 +784,8 @@ public static class SceneSetup
         // Favorite icon as Image child (heart sprite set at runtime)
         GameObject favIconObj = CreateUIObject("Icon", favBtn.transform);
         RectTransform favIconRT = favIconObj.GetComponent<RectTransform>();
-        favIconRT.anchorMin = new Vector2(0.2f, 0.2f);
-        favIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        favIconRT.anchorMin = new Vector2(0.05f, 0.05f);
+        favIconRT.anchorMax = new Vector2(0.95f, 0.95f);
         favIconRT.offsetMin = Vector2.zero;
         favIconRT.offsetMax = Vector2.zero;
         Image favIconImg = favIconObj.AddComponent<Image>();
@@ -803,8 +803,8 @@ public static class SceneSetup
         // Theme icon as Image child (procedurally created at runtime by PauseScreen)
         GameObject themeIconObj = CreateUIObject("ThemeIcon", themeBtn.transform);
         RectTransform themeIconRT = themeIconObj.GetComponent<RectTransform>();
-        themeIconRT.anchorMin = new Vector2(0.2f, 0.2f);
-        themeIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        themeIconRT.anchorMin = new Vector2(0.05f, 0.05f);
+        themeIconRT.anchorMax = new Vector2(0.95f, 0.95f);
         themeIconRT.offsetMin = Vector2.zero;
         themeIconRT.offsetMax = Vector2.zero;
         Image themeIconImg = themeIconObj.AddComponent<Image>();
@@ -820,8 +820,8 @@ public static class SceneSetup
         // Leaderboard icon as Image child (trophy sprite set at runtime)
         GameObject lbIconObj = CreateUIObject("Icon", lbBtn.transform);
         RectTransform lbIconRT = lbIconObj.GetComponent<RectTransform>();
-        lbIconRT.anchorMin = new Vector2(0.2f, 0.2f);
-        lbIconRT.anchorMax = new Vector2(0.8f, 0.8f);
+        lbIconRT.anchorMin = new Vector2(0.05f, 0.05f);
+        lbIconRT.anchorMax = new Vector2(0.95f, 0.95f);
         lbIconRT.offsetMin = Vector2.zero;
         lbIconRT.offsetMax = Vector2.zero;
         Image lbIconImg = lbIconObj.AddComponent<Image>();
