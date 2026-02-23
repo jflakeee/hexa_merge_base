@@ -43,7 +43,7 @@ namespace HexaMerge.UI
             // 육각형 스프라이트 적용
             if (hexBackground != null && hexBackground.sprite == null)
             {
-                hexBackground.sprite = GetOrCreateHexSprite(128);
+                hexBackground.sprite = GetOrCreateHexSprite(256);
                 hexBackground.preserveAspect = false;
                 // 육각형 모양으로 클릭 영역 제한 (투명 영역 클릭 무시)
                 hexBackground.alphaHitTestMinimumThreshold = 0.5f;
@@ -99,9 +99,11 @@ namespace HexaMerge.UI
             int texW = size;
             int texH = Mathf.RoundToInt(size * Mathf.Sqrt(3f) / 2f);
 
-            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] pixels = new Color32[texW * texH];
             Color32 clear = new Color32(0, 0, 0, 0);
+            float aaWidth = 1.5f; // SDF edge feathering width in pixels
 
             float cx = texW * 0.5f;
             float cy = texH * 0.5f;
@@ -134,19 +136,21 @@ namespace HexaMerge.UI
                     float px = x + 0.5f;
                     float py = y + 0.5f;
 
+                    // SDF 기반 경계 판정 + 안티앨리어싱
+                    float edgeDist = PointToPolygonDist(px, py, ivx, ivy, 6);
                     bool inside = PointInHex(px, py, ivx, ivy);
-                    if (!inside)
+                    // signed distance: inside=+cornerRadius-dist (양수), outside=-(dist-cornerRadius) (음수)
+                    float sdf = inside ? cornerRadius - edgeDist : -(edgeDist - cornerRadius);
+                    // 아예 밖이면 스킵
+                    if (sdf < -aaWidth)
                     {
-                        float dist = PointToPolygonDist(px, py, ivx, ivy, 6);
-                        if (dist > cornerRadius)
-                        {
-                            pixels[y * texW + x] = clear;
-                            continue;
-                        }
+                        pixels[y * texW + x] = clear;
+                        continue;
                     }
+                    float alphaAA = Mathf.Clamp01(sdf / aaWidth * 0.5f + 0.5f);
+                    byte a = (byte)(alphaAA * 255f);
 
                     // 비대칭 유리 블럭: 좌상단 밝은 반사 → 우하단 미세 그림자
-                    float edgeDist = PointToPolygonDist(px, py, ivx, ivy, 6);
                     float et = Mathf.Clamp01(edgeDist / rimWidth);
                     float smooth = et * et * (3f - 2f * et);
                     float rim = 1f - smooth; // 1=가장자리, 0=내부
@@ -164,7 +168,7 @@ namespace HexaMerge.UI
 
                     brightness = Mathf.Clamp(brightness, 0.85f, 1.5f);
                     byte b = (byte)Mathf.Min(brightness * 255f, 255f);
-                    pixels[y * texW + x] = new Color32(b, b, b, 255);
+                    pixels[y * texW + x] = new Color32(b, b, b, a);
                 }
             }
 
@@ -179,11 +183,13 @@ namespace HexaMerge.UI
         {
             if (cachedHighlightSprite != null) return cachedHighlightSprite;
 
-            int texW = 128;
-            int texH = Mathf.RoundToInt(128 * Mathf.Sqrt(3f) / 2f); // ~111
-            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            int texW = 256;
+            int texH = Mathf.RoundToInt(256 * Mathf.Sqrt(3f) / 2f); // ~222
+            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] pixels = new Color32[texW * texH];
             Color32 clear = new Color32(0, 0, 0, 0);
+            float aaWidth = 1.5f;
 
             float cx = texW * 0.5f;
             float cy = texH * 0.5f;
@@ -209,10 +215,12 @@ namespace HexaMerge.UI
                     float px = x + 0.5f;
                     float py = y + 0.5f;
 
-                    // 육각형 경계 체크 (메인 스프라이트와 동일)
+                    // SDF 기반 경계 체크 + 안티앨리어싱
+                    float hexDist = PointToPolygonDist(px, py, hvx, hvy, 6);
                     bool inHex = PointInHex(px, py, hvx, hvy);
-                    if (!inHex && PointToPolygonDist(px, py, hvx, hvy, 6) > cornerR)
-                        continue;
+                    float hexSdf = inHex ? cornerR - hexDist : -(hexDist - cornerR);
+                    if (hexSdf < -aaWidth) continue;
+                    float hexAA = Mathf.Clamp01(hexSdf / aaWidth * 0.5f + 0.5f);
 
                     float alpha = 0f;
 
@@ -232,7 +240,7 @@ namespace HexaMerge.UI
 
                     if (alpha > 0.005f)
                     {
-                        byte a = (byte)(Mathf.Clamp01(alpha) * 255f);
+                        byte a = (byte)(Mathf.Clamp01(alpha * hexAA) * 255f);
                         pixels[y * texW + x] = new Color32(255, 255, 255, a);
                     }
                 }
