@@ -146,8 +146,9 @@ namespace HexaMerge.UI
         private static Sprite GetOrCreateStarSprite()
         {
             if (cachedStarSprite != null) return cachedStarSprite;
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
             Color32 cl = new Color32(0, 0, 0, 0);
@@ -193,8 +194,9 @@ namespace HexaMerge.UI
 
         private static Sprite CreateHeartSprite(bool filled)
         {
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
             Color32 cl = new Color32(0, 0, 0, 0);
@@ -218,7 +220,7 @@ namespace HexaMerge.UI
             }
             else
             {
-                int thickness = 3;
+                int thickness = Mathf.Max(3, Mathf.RoundToInt(s * 3f / 64f));
                 for (int y = 0; y < s; y++)
                     for (int x = 0; x < s; x++)
                     {
@@ -255,12 +257,14 @@ namespace HexaMerge.UI
         private static Sprite GetOrCreateTrophySprite()
         {
             if (cachedTrophySprite != null) return cachedTrophySprite;
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
             Color32 cl = new Color32(0, 0, 0, 0);
             float cx = s * 0.5f;
+            float sc = s / 64f; // scale factor for absolute coords
 
             for (int y = 0; y < s; y++)
                 for (int x = 0; x < s; x++)
@@ -268,56 +272,54 @@ namespace HexaMerge.UI
                     px[y * s + x] = cl;
                     float fy = s - 1 - y; // flip Y (0 = bottom of texture)
 
-                    // Base plate: fy 8-12
-                    if (fy >= 8f && fy <= 12f)
+                    // Base plate
+                    if (fy >= 8f * sc && fy <= 12f * sc)
                     {
-                        if (Mathf.Abs(x - cx) <= 15f)
+                        if (Mathf.Abs(x - cx) <= 15f * sc)
                             px[y * s + x] = w;
                     }
-                    // Pedestal: fy 12-18 (tapering up)
-                    if (fy >= 12f && fy <= 18f)
+                    // Pedestal (tapering up)
+                    if (fy >= 12f * sc && fy <= 18f * sc)
                     {
-                        float t = (fy - 12f) / 6f;
-                        float halfW = Mathf.Lerp(12f, 7f, t);
+                        float t = (fy - 12f * sc) / (6f * sc);
+                        float halfW = Mathf.Lerp(12f * sc, 7f * sc, t);
                         if (Mathf.Abs(x - cx) <= halfW)
                             px[y * s + x] = w;
                     }
-                    // Stem: fy 18-26
-                    if (fy >= 18f && fy <= 26f)
+                    // Stem
+                    if (fy >= 18f * sc && fy <= 26f * sc)
                     {
-                        if (Mathf.Abs(x - cx) <= 3f)
+                        if (Mathf.Abs(x - cx) <= 3f * sc)
                             px[y * s + x] = w;
                     }
-                    // Cup body: fy 26-50 (widening up)
-                    if (fy >= 26f && fy <= 50f)
+                    // Cup body (widening up)
+                    if (fy >= 26f * sc && fy <= 50f * sc)
                     {
-                        float t = (fy - 26f) / 24f;
-                        float halfW = Mathf.Lerp(10f, 18f, t);
+                        float t = (fy - 26f * sc) / (24f * sc);
+                        float halfW = Mathf.Lerp(10f * sc, 18f * sc, t);
                         if (Mathf.Abs(x - cx) <= halfW)
                             px[y * s + x] = w;
                     }
-                    // Cup rim: fy 48-52
-                    if (fy >= 48f && fy <= 52f)
+                    // Cup rim
+                    if (fy >= 48f * sc && fy <= 52f * sc)
                     {
-                        if (Mathf.Abs(x - cx) <= 20f)
+                        if (Mathf.Abs(x - cx) <= 20f * sc)
                             px[y * s + x] = w;
                     }
-                    // Handles: arcs at sides, fy 32-48
-                    if (fy >= 32f && fy <= 48f)
+                    // Handles: arcs at sides
+                    if (fy >= 32f * sc && fy <= 48f * sc)
                     {
-                        float hcy = 40f;
+                        float hcy = 40f * sc;
                         float hdy = fy - hcy;
-                        // Left handle
-                        float lhcx = cx - 18f;
+                        float lhcx = cx - 18f * sc;
                         float lhdx = x - lhcx;
                         float ldist = Mathf.Sqrt(lhdx * lhdx + hdy * hdy);
-                        if (ldist >= 7f && ldist <= 11f && x < cx - 10f)
+                        if (ldist >= 7f * sc && ldist <= 11f * sc && x < cx - 10f * sc)
                             px[y * s + x] = w;
-                        // Right handle
-                        float rhcx = cx + 18f;
+                        float rhcx = cx + 18f * sc;
                         float rhdx = x - rhcx;
                         float rdist = Mathf.Sqrt(rhdx * rhdx + hdy * hdy);
-                        if (rdist >= 7f && rdist <= 11f && x > cx + 10f)
+                        if (rdist >= 7f * sc && rdist <= 11f * sc && x > cx + 10f * sc)
                             px[y * s + x] = w;
                     }
                 }
@@ -333,8 +335,9 @@ namespace HexaMerge.UI
         private static Sprite GetOrCreateMoonSprite()
         {
             if (cachedMoonSprite != null) return cachedMoonSprite;
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
             Color32 cl = new Color32(0, 0, 0, 0);
@@ -362,8 +365,9 @@ namespace HexaMerge.UI
         private static Sprite GetOrCreateSunSprite()
         {
             if (cachedSunSprite != null) return cachedSunSprite;
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 w = new Color32(255, 255, 255, 255);
             Color32 cl = new Color32(0, 0, 0, 0);

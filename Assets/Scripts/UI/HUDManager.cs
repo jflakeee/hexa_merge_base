@@ -80,7 +80,7 @@ namespace HexaMerge.UI
 
             img.color = new Color(0.914f, 0.118f, 0.388f, 1f); // #E91E63
             if (img.sprite == null)
-                img.sprite = GetOrCreateHexButtonSprite(64);
+                img.sprite = GetOrCreateHexButtonSprite(128);
 
             // Replace Unicode text icons with procedural sprites (Arial WebGL lacks extended Unicode)
             if (iconType != null)
@@ -125,7 +125,8 @@ namespace HexaMerge.UI
 
             int texW = size;
             int texH = Mathf.RoundToInt(size * Mathf.Sqrt(3f) / 2f);
-            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, false);
+            Texture2D tex = new Texture2D(texW, texH, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] pixels = new Color32[texW * texH];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
@@ -228,8 +229,9 @@ namespace HexaMerge.UI
         {
             if (cachedSpeakerOnSprite != null) return cachedSpeakerOnSprite;
 
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
@@ -239,10 +241,11 @@ namespace HexaMerge.UI
 
             float cy = s * 0.5f;
             float arcX = s * 0.52f;
+            float arcThick = s * 1.8f / 64f;
             // Inner arc
-            DrawArc(px, s, white, arcX, cy, s * 0.16f, 1.8f, Mathf.PI * 0.35f);
+            DrawArc(px, s, white, arcX, cy, s * 0.16f, arcThick, Mathf.PI * 0.35f);
             // Outer arc
-            DrawArc(px, s, white, arcX, cy, s * 0.28f, 1.8f, Mathf.PI * 0.35f);
+            DrawArc(px, s, white, arcX, cy, s * 0.28f, arcThick, Mathf.PI * 0.35f);
 
             tex.SetPixels32(px);
             tex.Apply();
@@ -254,8 +257,9 @@ namespace HexaMerge.UI
         {
             if (cachedSpeakerOffSprite != null) return cachedSpeakerOffSprite;
 
-            int s = 64;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
@@ -267,7 +271,7 @@ namespace HexaMerge.UI
             float xCen = s * 0.72f;
             float yCen = s * 0.5f;
             float xLen = s * 0.15f;
-            float thick = 2.5f;
+            float thick = s * 2.5f / 64f;
             for (int y = 0; y < s; y++)
             {
                 for (int x = 0; x < s; x++)
@@ -299,18 +303,23 @@ namespace HexaMerge.UI
         {
             if (cachedMenuSprite != null) return cachedMenuSprite;
 
-            int s = 32;
-            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, false);
+            int s = 128;
+            Texture2D tex = new Texture2D(s, s, TextureFormat.RGBA32, true);
+            tex.filterMode = FilterMode.Bilinear;
             Color32[] px = new Color32[s * s];
             Color32 white = new Color32(255, 255, 255, 255);
             Color32 clear = new Color32(0, 0, 0, 0);
             for (int i = 0; i < px.Length; i++) px[i] = clear;
 
-            // Three horizontal bars (hamburger menu)
-            int barH = 3;
-            int barLeft = 6;
-            int barRight = 26;
-            int[] barCenters = new int[] { 8, 16, 24 };
+            // Three horizontal bars (hamburger menu) — ratio-based
+            int barH = Mathf.RoundToInt(s * 3f / 32f);
+            int barLeft = Mathf.RoundToInt(s * 6f / 32f);
+            int barRight = Mathf.RoundToInt(s * 26f / 32f);
+            int[] barCenters = new int[] {
+                Mathf.RoundToInt(s * 8f / 32f),
+                Mathf.RoundToInt(s * 16f / 32f),
+                Mathf.RoundToInt(s * 24f / 32f)
+            };
 
             foreach (int cy in barCenters)
             {
