@@ -139,8 +139,8 @@ namespace HexaMerge.UI
                     // SDF 기반 경계 판정 + 안티앨리어싱
                     float edgeDist = PointToPolygonDist(px, py, ivx, ivy, 6);
                     bool inside = PointInHex(px, py, ivx, ivy);
-                    // signed distance: inside=+cornerRadius-dist (양수), outside=-(dist-cornerRadius) (음수)
-                    float sdf = inside ? cornerRadius - edgeDist : -(edgeDist - cornerRadius);
+                    // signed distance: inside=+(cornerRadius+dist), outside=+(cornerRadius-dist)
+                    float sdf = inside ? cornerRadius + edgeDist : cornerRadius - edgeDist;
                     // 아예 밖이면 스킵
                     if (sdf < -aaWidth)
                     {
@@ -218,7 +218,7 @@ namespace HexaMerge.UI
                     // SDF 기반 경계 체크 + 안티앨리어싱
                     float hexDist = PointToPolygonDist(px, py, hvx, hvy, 6);
                     bool inHex = PointInHex(px, py, hvx, hvy);
-                    float hexSdf = inHex ? cornerR - hexDist : -(hexDist - cornerR);
+                    float hexSdf = inHex ? cornerR + hexDist : cornerR - hexDist;
                     if (hexSdf < -aaWidth) continue;
                     float hexAA = Mathf.Clamp01(hexSdf / aaWidth * 0.5f + 0.5f);
 
