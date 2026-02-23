@@ -221,11 +221,13 @@ public static class SceneSetup
         // Pink hexagon sprite for HUD buttons
         Sprite hexBtnSprite = CreateHexButtonSprite(64);
 
-        // ---- Sound button (left, pink hexagon)
-        GameObject soundBtn = CreateButtonObject("SoundButton", hudRT, new Vector2(70f, 70f));
+        // ---- Sound button (left, pink hexagon) — benchmark: ~12% screen width
+        float hudBtnSize = 100f;
+        float hudBtnMargin = 55f;
+        GameObject soundBtn = CreateButtonObject("SoundButton", hudRT, new Vector2(hudBtnSize, hudBtnSize));
         RectTransform soundBtnRT = soundBtn.GetComponent<RectTransform>();
         SetAnchored(soundBtnRT, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(0f, 1f),
-                    new Vector2(70f, 70f), new Vector2(50f, -30f));
+                    new Vector2(hudBtnSize, hudBtnSize), new Vector2(hudBtnMargin, -25f));
         Image soundImg = soundBtn.GetComponent<Image>();
         soundImg.color = Pink;
         soundImg.sprite = hexBtnSprite;
@@ -233,10 +235,10 @@ public static class SceneSetup
         StretchFull(soundLabel.GetComponent<RectTransform>());
 
         // ---- Menu button (right, pink hexagon)
-        GameObject menuBtn = CreateButtonObject("MenuButton", hudRT, new Vector2(70f, 70f));
+        GameObject menuBtn = CreateButtonObject("MenuButton", hudRT, new Vector2(hudBtnSize, hudBtnSize));
         RectTransform menuBtnRT = menuBtn.GetComponent<RectTransform>();
         SetAnchored(menuBtnRT, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                    new Vector2(70f, 70f), new Vector2(-50f, -30f));
+                    new Vector2(hudBtnSize, hudBtnSize), new Vector2(-hudBtnMargin, -25f));
         Image menuImg = menuBtn.GetComponent<Image>();
         menuImg.color = Pink;
         menuImg.sprite = hexBtnSprite;
@@ -244,14 +246,14 @@ public static class SceneSetup
         StretchFull(menuLabel.GetComponent<RectTransform>());
 
         // ---- Help button (right, below menu, pink hexagon)
-        GameObject helpBtn = CreateButtonObject("HelpButton", hudRT, new Vector2(70f, 70f));
+        GameObject helpBtn = CreateButtonObject("HelpButton", hudRT, new Vector2(hudBtnSize, hudBtnSize));
         RectTransform helpBtnRT = helpBtn.GetComponent<RectTransform>();
         SetAnchored(helpBtnRT, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(1f, 1f),
-                    new Vector2(70f, 70f), new Vector2(-50f, -110f));
+                    new Vector2(hudBtnSize, hudBtnSize), new Vector2(-hudBtnMargin, -135f));
         Image helpImg = helpBtn.GetComponent<Image>();
         helpImg.color = Pink;
         helpImg.sprite = hexBtnSprite;
-        Text helpLabel = CreateTMPText("Icon", helpBtn.transform, "?", 28f, White, FontStyle.Bold);
+        Text helpLabel = CreateTMPText("Icon", helpBtn.transform, "?", 32f, White, FontStyle.Bold);
         StretchFull(helpLabel.GetComponent<RectTransform>());
 
         // ---- Wire HUDManager fields via SerializedObject
