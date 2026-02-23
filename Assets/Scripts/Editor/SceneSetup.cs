@@ -629,89 +629,102 @@ public static class SceneSetup
         GameObject goPanel = CreateUIObject("Panel", goScreen.transform);
         StretchFull(goPanel.GetComponent<RectTransform>());
         Image goPanelImg = goPanel.AddComponent<Image>();
-        goPanelImg.color = new Color(0f, 0f, 0f, 0.3f);
+        goPanelImg.color = new Color(0f, 0f, 0f, 0.6f);
         goPanelImg.raycastTarget = true;
 
-        // Purple banner: "NO MOVES LEFT!"
+        // Purple banner: "NO MOVES LEFT!" (XUP benchmark: large header)
         GameObject purpleBanner = CreateUIObject("PurpleBanner", goPanel.transform);
         RectTransform purpleBannerRT = purpleBanner.GetComponent<RectTransform>();
         purpleBannerRT.anchorMin = new Vector2(0.03f, 1f);
         purpleBannerRT.anchorMax = new Vector2(0.97f, 1f);
         purpleBannerRT.pivot = new Vector2(0.5f, 1f);
-        purpleBannerRT.sizeDelta = new Vector2(0f, 140f);
-        purpleBannerRT.anchoredPosition = new Vector2(0f, -170f);
+        purpleBannerRT.sizeDelta = new Vector2(0f, 160f);
+        purpleBannerRT.anchoredPosition = new Vector2(0f, -140f);
         Image purpleBannerImg = purpleBanner.AddComponent<Image>();
-        purpleBannerImg.color = new Color(0.55f, 0.15f, 0.72f, 0.92f);
+        purpleBannerImg.color = new Color(0.55f, 0.15f, 0.72f, 0.95f);
 
-        Text goTitle = CreateTMPText("Title", purpleBanner.transform, "NO MOVES LEFT!", 52f, White, FontStyle.Bold);
+        Text goTitle = CreateTMPText("Title", purpleBanner.transform, "NO MOVES LEFT!", 56f, White, FontStyle.Bold);
         StretchFull(goTitle.GetComponent<RectTransform>());
 
-        // Dark score bar below purple banner
+        // Dark score area below purple banner (XUP: large centered score)
         GameObject scoreBar = CreateUIObject("ScoreBar", goPanel.transform);
         RectTransform scoreBarRT = scoreBar.GetComponent<RectTransform>();
         scoreBarRT.anchorMin = new Vector2(0.03f, 1f);
         scoreBarRT.anchorMax = new Vector2(0.97f, 1f);
         scoreBarRT.pivot = new Vector2(0.5f, 1f);
-        scoreBarRT.sizeDelta = new Vector2(0f, 110f);
-        scoreBarRT.anchoredPosition = new Vector2(0f, -310f);
+        scoreBarRT.sizeDelta = new Vector2(0f, 400f);
+        scoreBarRT.anchoredPosition = new Vector2(0f, -300f);
         Image scoreBarImg = scoreBar.AddComponent<Image>();
         scoreBarImg.color = new Color(0.1f, 0.1f, 0.12f, 0.95f);
 
-        // SCORE label (top-left of score bar)
-        Text scoreLabel = CreateTMPText("ScoreLabel", scoreBar.transform, "SCORE", 22f, White, FontStyle.Bold);
+        // SCORE label (centered, top area)
+        Text scoreLabel = CreateTMPText("ScoreLabel", scoreBar.transform, "SCORE", 32f, White, FontStyle.Bold);
         RectTransform scoreLabelRT = scoreLabel.GetComponent<RectTransform>();
-        scoreLabelRT.anchorMin = new Vector2(0f, 0.55f);
-        scoreLabelRT.anchorMax = new Vector2(0.5f, 1f);
+        scoreLabelRT.anchorMin = new Vector2(0f, 0.82f);
+        scoreLabelRT.anchorMax = new Vector2(1f, 1f);
         scoreLabelRT.offsetMin = Vector2.zero;
         scoreLabelRT.offsetMax = Vector2.zero;
 
-        // Score value (bottom-left of score bar, pink)
-        Text goFinalScore = CreateTMPText("FinalScoreText", scoreBar.transform, "0", 44f, Pink, FontStyle.Bold);
+        // Score value (centered, large pink — XUP benchmark style)
+        Text goFinalScore = CreateTMPText("FinalScoreText", scoreBar.transform, "0", 80f, Pink, FontStyle.Bold);
         RectTransform goFSRT = goFinalScore.GetComponent<RectTransform>();
-        goFSRT.anchorMin = new Vector2(0f, 0f);
-        goFSRT.anchorMax = new Vector2(0.5f, 0.6f);
+        goFSRT.anchorMin = new Vector2(0f, 0.48f);
+        goFSRT.anchorMax = new Vector2(1f, 0.82f);
         goFSRT.offsetMin = Vector2.zero;
         goFSRT.offsetMax = Vector2.zero;
+        goFinalScore.resizeTextForBestFit = true;
+        goFinalScore.resizeTextMinSize = 40;
+        goFinalScore.resizeTextMaxSize = 80;
 
-        // HI-SCORE label (top-right of score bar)
-        Text hiLabel = CreateTMPText("HiScoreLabel", scoreBar.transform, "HI-SCORE", 22f, Grey, FontStyle.Bold);
+        // HI-SCORE label (centered, mid area)
+        Text hiLabel = CreateTMPText("HiScoreLabel", scoreBar.transform, "HI-SCORE", 26f, Grey, FontStyle.Bold);
         RectTransform hiLabelRT = hiLabel.GetComponent<RectTransform>();
-        hiLabelRT.anchorMin = new Vector2(0.5f, 0.55f);
-        hiLabelRT.anchorMax = new Vector2(1f, 1f);
+        hiLabelRT.anchorMin = new Vector2(0f, 0.28f);
+        hiLabelRT.anchorMax = new Vector2(1f, 0.48f);
         hiLabelRT.offsetMin = Vector2.zero;
         hiLabelRT.offsetMax = Vector2.zero;
 
-        // Hi-Score value (bottom-right of score bar, white)
-        Text goHiScore = CreateTMPText("HighScoreText", scoreBar.transform, "0", 44f, White, FontStyle.Bold);
+        // Hi-Score value (centered, white)
+        Text goHiScore = CreateTMPText("HighScoreText", scoreBar.transform, "0", 56f, White, FontStyle.Bold);
         RectTransform goHSRT = goHiScore.GetComponent<RectTransform>();
-        goHSRT.anchorMin = new Vector2(0.5f, 0f);
-        goHSRT.anchorMax = new Vector2(1f, 0.6f);
+        goHSRT.anchorMin = new Vector2(0f, 0.05f);
+        goHSRT.anchorMax = new Vector2(1f, 0.30f);
         goHSRT.offsetMin = Vector2.zero;
         goHSRT.offsetMax = Vector2.zero;
+        goHiScore.resizeTextForBestFit = true;
+        goHiScore.resizeTextMinSize = 32;
+        goHiScore.resizeTextMaxSize = 56;
 
         // New record label (below score bar, gold)
-        Text goNewRecord = CreateTMPText("NewRecordLabel", goPanel.transform, "NEW RECORD!", 32f,
+        Text goNewRecord = CreateTMPText("NewRecordLabel", goPanel.transform, "NEW RECORD!", 40f,
                                                      new Color(1f, 0.84f, 0f, 1f), FontStyle.Bold);
         RectTransform goNRRT = goNewRecord.GetComponent<RectTransform>();
         SetAnchored(goNRRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(400f, 50f), new Vector2(0f, -430f));
+                    new Vector2(600f, 60f), new Vector2(0f, -710f));
 
-        // Restart button (below banner area)
-        GameObject goRestartBtn = CreateButtonObject("RestartButton", goPanel.transform, new Vector2(340f, 75f));
+        // Restart button (XUP benchmark: 85% width, 100px height)
+        float goBtnW = 0f; // stretch via anchors
+        GameObject goRestartBtn = CreateButtonObject("RestartButton", goPanel.transform, new Vector2(100f, 100f));
         RectTransform goRestBtnRT = goRestartBtn.GetComponent<RectTransform>();
-        SetAnchored(goRestBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(340f, 75f), new Vector2(0f, -500f));
+        goRestBtnRT.anchorMin = new Vector2(0.07f, 1f);
+        goRestBtnRT.anchorMax = new Vector2(0.93f, 1f);
+        goRestBtnRT.pivot = new Vector2(0.5f, 1f);
+        goRestBtnRT.sizeDelta = new Vector2(0f, 100f);
+        goRestBtnRT.anchoredPosition = new Vector2(0f, -790f);
         goRestartBtn.GetComponent<Image>().color = Pink;
-        Text restartLabel = CreateTMPText("Label", goRestartBtn.transform, "RESTART", 28f, White, FontStyle.Bold);
+        Text restartLabel = CreateTMPText("Label", goRestartBtn.transform, "PLAY AGAIN", 36f, White, FontStyle.Bold);
         StretchFull(restartLabel.GetComponent<RectTransform>());
 
-        // Watch ad button (below restart)
-        GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(340f, 65f));
+        // Watch ad button (same large style)
+        GameObject goWatchAdBtn = CreateButtonObject("WatchAdButton", goPanel.transform, new Vector2(100f, 90f));
         RectTransform goAdBtnRT = goWatchAdBtn.GetComponent<RectTransform>();
-        SetAnchored(goAdBtnRT, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0.5f, 1f),
-                    new Vector2(340f, 65f), new Vector2(0f, -590f));
+        goAdBtnRT.anchorMin = new Vector2(0.07f, 1f);
+        goAdBtnRT.anchorMax = new Vector2(0.93f, 1f);
+        goAdBtnRT.pivot = new Vector2(0.5f, 1f);
+        goAdBtnRT.sizeDelta = new Vector2(0f, 90f);
+        goAdBtnRT.anchoredPosition = new Vector2(0f, -910f);
         goWatchAdBtn.GetComponent<Image>().color = new Color(0.3f, 0.3f, 0.3f, 1f);
-        Text adBtnLabel = CreateTMPText("Label", goWatchAdBtn.transform, "WATCH AD", 24f, White, FontStyle.Normal);
+        Text adBtnLabel = CreateTMPText("Label", goWatchAdBtn.transform, "WATCH AD", 30f, White, FontStyle.Normal);
         StretchFull(adBtnLabel.GetComponent<RectTransform>());
 
         CanvasGroup goCG = goScreen.GetComponent<CanvasGroup>();
