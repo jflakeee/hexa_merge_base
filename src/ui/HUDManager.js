@@ -69,11 +69,15 @@ export class HUDManager {
 
     /**
      * Update the sound button icon based on mute state.
+     * Toggles between inline SVG variants embedded in the button.
      * @param {boolean} muted - true to show muted icon, false for speaker icon
      */
     setSoundIcon(muted) {
         if (!this._btnSound) return;
-        this._btnSound.textContent = muted ? '\u{1F507}' : '\u{1F50A}';
+        const on = this._btnSound.querySelector('#icon-sound-on');
+        const off = this._btnSound.querySelector('#icon-sound-off');
+        if (on) on.style.display = muted ? 'none' : '';
+        if (off) off.style.display = muted ? '' : 'none';
     }
 
     /**

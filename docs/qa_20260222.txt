@@ -1,0 +1,44 @@
+사운드 퀄리티 + 왕관 디자인 QA (2026-02-22)
+
+== 사운드 퀄리티 개선 ==
+
+[x] 1. CrystalNote 노이즈 트랜지언트 추가 (첫 3% 밴드패스 노이즈 버스트, 0.35 강도)
+[x] 2. CrystalNote 서브톤 추가 (0.5x 주파수, 0.12 강도, exp(-p*6) 감쇠)
+[x] 3. 음량 계층화: 탭(0.5) < TileDrop(0.55) < 머지(0.8~0.9) < 게임오버(1.0)
+[x] 4. 지속시간 적정화: 머지 0.40→0.20s, 게임오버 0.60→1.2s, 탭 0.10→0.07s 등
+[x] 5. 게임오버 3단계 하강 글리산도 (E5→C4→C3, 1.2초)
+[x] 6. 게임시작 음량 0.35로 은은하게, 버튼클릭 0.45로 가볍게
+[x] 7. 깊이그룹 간격 0.17→0.15s, NumberUp 대기 0.17→0.14s (GameplayController)
+[x] 8. WebGL Release 빌드 + gh-pages 배포 완료 (git ca82906)
+
+== 왕관 디자인 개선 ==
+
+[x] 9. 벤치마크(XUP) 프레임 450장 + 스크린샷 분석 (에이전트팀 3명 병렬)
+[x] 10. 5피크 왕관으로 변경 (3피크→5피크, V자 밸리 + 원형 팁)
+[x] 11. 텍스처 해상도 56×40→80×60px (고해상도)
+[x] 12. 표시 크기 28×20→32×24px, Y offset 24→28px
+[x] 13. WebGL Release 빌드 + gh-pages 배포 완료 (git f35f7bc)
+
+== 미완료 (사용자 요청 대기) ==
+
+[x] 14. 폰트 스타일 분위기 개선 (2026-05-13)
+     - Google Fonts: Nunito 800/900 + Russo One import
+     - #game-title, #loading-title: 핑크→마젠타→퍼플 그라디언트 (background-clip:text)
+     - #score: 네온 글로우 text-shadow (다중 레이어)
+     - white-space:nowrap + clamp() 동적 폰트 사이즈
+[x] 15. 모바일 브라우저 메뉴 UI 크기/겹침 수정 (2026-05-13)
+     - viewport-fit=cover + env(safe-area-inset-*) 적용
+     - HUD grid 3-column 레이아웃 (auto/1fr/auto)으로 점수 영역 충돌 방지
+     - 버튼 44px+ (Apple HIG 터치 권장), 미디어쿼리 480/360 분기
+     - touch-action: manipulation, -webkit-tap-highlight-color: transparent
+[x] 16. 메뉴 아이콘 디자인 개선 (2026-05-13)
+     - 이모지 → 인라인 SVG (currentColor 활용)
+     - 스피커 ON/OFF 토글 (음파/X 마크), 햄버거 3선 둥근 라인, 도움말 ?+i
+     - hover/active 상태 강화 (border, box-shadow, scale)
+[x] 17. 메뉴 아이콘 기능 실제 구현 (2026-05-13)
+     - PauseScreen: BEST 점수 표시 (골드 글로우)
+     - RESUME(play)/RESTART(refresh)/HOW TO PLAY(?)/SOUND(speaker) SVG 아이콘 버튼
+     - main.js pauseScreen.onHowToPlay wire 추가
+     - 모든 기능 playwright 검증 통과 (모바일 390x844 + 데스크탑 1280x800)
+
+에이전트팀 사용해서 설계 내용 검토하고 개선되는 방향으로 아이디어 조사 후 구현 각 항목 구현시 마다 테스트후 수정할 부분 없으면 메모리파일 업데이트 하고 원격 깃 빌드 배포

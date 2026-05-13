@@ -108,7 +108,7 @@ function initGame() {
             if (screenManager.getCurrentScreen() === 'gameplay') {
                 gameManager.pauseGame();
                 screenManager.showScreen('pause');
-                pauseScreen.show();
+                pauseScreen.show(gameManager.score.highScore);
             }
         },
         onHelp: () => {
@@ -155,6 +155,13 @@ function initGame() {
         hudManager.setSoundIcon(muted);
         pauseScreen.updateSoundButton(muted);
         sfx.play('buttonClick');
+    };
+    pauseScreen.onHowToPlay = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('pause');
+        pauseScreen.hide();
+        screenManager.showScreen('howtoplay');
+        howToPlayScreen.show();
     };
 
     // How To Play screen
