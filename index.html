@@ -2,385 +2,333 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#000000">
   <title>Hexa Merge</title>
+
+  <!-- Google Fonts: Nunito (ExtraBold 800, Black 900) for game atmosphere -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Russo+One&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@800;900&family=Russo+One&display=swap">
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+    /* ========== Reset & Base ========== */
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #0a0a12;
+      font-family: 'Nunito', 'Arial Black', system-ui, sans-serif;
+      font-weight: 900;
+      color: #fff;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+    button { font-family: inherit; }
 
-    #unity-container {
-      width: 100%; height: 100%;
+    /* ========== Layout ========== */
+    #game-container {
+      width: 100%; height: 100%; position: relative;
+      display: flex; flex-direction: column; align-items: center;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    /* ========== HUD ========== */
+    #hud {
+      position: relative; z-index: 10;
+      padding: 12px 14px 8px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: start;
+      gap: 10px;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    #hud-left, #hud-right {
+      display: flex; gap: 8px; align-items: center;
+      flex-shrink: 0;
+    }
+    #score-container {
+      text-align: center;
+      min-width: 0;
+      padding: 0 6px;
+    }
+
+    /* Game title — gradient pink to magenta with subtle glow */
+    #game-title {
+      font-family: 'Russo One', 'Nunito', sans-serif;
+      font-size: clamp(16px, 4.5vw, 22px);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      white-space: nowrap;
+      background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #C71585 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 1px 2px rgba(255, 20, 147, 0.35));
+      margin-bottom: 2px;
+    }
+
+    /* Score — large with neon glow text-shadow */
+    #score {
+      font-family: 'Nunito', sans-serif;
+      color: #FF4FA3;
+      font-size: clamp(36px, 11vw, 52px);
+      font-weight: 900;
+      line-height: 1.0;
+      text-shadow:
+        0 0 6px rgba(255, 79, 163, 0.55),
+        0 0 14px rgba(255, 79, 163, 0.35),
+        0 2px 0 rgba(0, 0, 0, 0.45);
+      letter-spacing: -0.01em;
+    }
+
+    #hi-score-label {
+      color: #7a7a85;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(10px, 2.6vw, 12px);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      margin-top: 2px;
+    }
+    #hi-score {
+      color: #aaa;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(14px, 4vw, 17px);
+      font-weight: 800;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
+    }
+
+    /* ========== HUD Buttons ========== */
+    .hud-btn {
+      width: 44px; height: 44px;
+      min-width: 44px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 105, 180, 0.35);
+      background: linear-gradient(145deg, rgba(255,105,180,0.08), rgba(199,21,133,0.03));
+      color: #FF8FBF;
+      cursor: pointer;
       display: flex; align-items: center; justify-content: center;
+      transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      touch-action: manipulation;
+      padding: 0;
+    }
+    .hud-btn:hover {
+      border-color: rgba(255, 105, 180, 0.7);
+      background: linear-gradient(145deg, rgba(255,105,180,0.18), rgba(199,21,133,0.08));
+      color: #FFB6D9;
+    }
+    .hud-btn:active {
+      transform: scale(0.92);
+      background: rgba(255, 105, 180, 0.25);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .hud-btn svg {
+      width: 22px; height: 22px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .hud-btn .icon-fill {
+      fill: currentColor;
+      stroke: none;
     }
 
-    #unity-canvas {
-      width: 100%; height: 100%;
-      background: #000;
+    /* ========== Canvas ========== */
+    #game-canvas {
+      flex: 1; width: 100%;
+      touch-action: none;
+      display: block;
     }
 
-    /* ===== 랜딩/스플래시 화면 ===== */
+    /* ========== Screen Overlays ========== */
+    .screen-overlay {
+      position: fixed; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.88);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      flex-direction: column;
+      gap: 20px;
+      padding: 20px;
+      padding-top: calc(20px + env(safe-area-inset-top));
+      padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    }
+    .screen-overlay.active { display: flex; opacity: 1; }
+    .screen-overlay h2 {
+      font-family: 'Russo One', 'Nunito', sans-serif;
+      color: #FF4FA3;
+      font-size: clamp(28px, 8vw, 36px);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-shadow: 0 0 10px rgba(255, 79, 163, 0.55), 0 2px 0 rgba(0, 0, 0, 0.5);
+    }
+    .screen-overlay .score-display {
+      color: #FFF; font-size: clamp(40px, 12vw, 56px); font-weight: 900;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+    .screen-overlay .label {
+      color: #888; font-size: 14px; font-weight: 800;
+      letter-spacing: 0.1em;
+    }
+    .screen-overlay .new-record {
+      color: #FFD700; font-size: 20px; font-weight: 900;
+      letter-spacing: 0.08em;
+      animation: pulse 1s infinite;
+      text-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+    }
+
+    /* ========== Overlay Buttons ========== */
+    .overlay-btn {
+      padding: 14px 36px;
+      min-height: 48px;
+      min-width: 200px;
+      border-radius: 28px;
+      border: none;
+      font-size: 17px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s, filter 0.2s;
+      touch-action: manipulation;
+    }
+    .overlay-btn:active { transform: scale(0.96); }
+    .overlay-btn.primary {
+      background: linear-gradient(135deg, #FF69B4 0%, #E91E63 100%);
+      color: #FFF;
+      box-shadow: 0 4px 14px rgba(233, 30, 99, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    .overlay-btn.primary:hover { filter: brightness(1.08); box-shadow: 0 6px 18px rgba(233, 30, 99, 0.5); }
+    .overlay-btn.secondary {
+      background: linear-gradient(135deg, #3a3a45 0%, #25252e 100%);
+      color: #FFF;
+      border: 2px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+    }
+    .overlay-btn.secondary:hover { filter: brightness(1.15); }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.03); } }
+
+    /* ========== Loading screen ========== */
     #loading-screen {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: #FAFAFA;
+      position: fixed; inset: 0;
+      background: radial-gradient(ellipse at center, #1a0a1a 0%, #000 80%);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 100;
-      transition: opacity 0.6s ease;
-      overflow: hidden;
+      transition: opacity 0.5s;
     }
-
-    #loading-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* 장식용 육각형 */
-    .deco-hex {
-      position: absolute;
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      opacity: 0;
-      animation: hexFadeIn 0.8s ease forwards;
-    }
-
-    /* 좌측 그룹 */
-    .hex-left-big {
-      width: 160px; height: 160px;
-      background: #E91E63;
-      top: 28%; left: -20px;
-      animation-delay: 0.2s;
-    }
-    .hex-left-med {
-      width: 100px; height: 100px;
-      background: #FF9800;
-      top: 42%; left: 100px;
-      animation-delay: 0.4s;
-    }
-    .hex-left-sm {
-      width: 50px; height: 50px;
-      background: #8BC34A;
-      top: 34%; left: 130px;
-      animation-delay: 0.5s;
-    }
-
-    /* 우측 그룹 */
-    .hex-right-big {
-      width: 170px; height: 170px;
-      background: #7B1FA2;
-      bottom: 20%; right: -30px;
-      animation-delay: 0.3s;
-    }
-    .hex-right-med {
-      width: 90px; height: 90px;
-      background: #00BCD4;
-      bottom: 34%; right: 80px;
-      animation-delay: 0.45s;
-    }
-    .hex-right-sm {
-      width: 45px; height: 45px;
-      background: #FFC107;
-      bottom: 28%; right: 110px;
-      animation-delay: 0.55s;
-    }
-
-    @keyframes hexFadeIn {
-      from { opacity: 0; transform: scale(0.7); }
-      to   { opacity: 0.85; transform: scale(1); }
-    }
-
-    @keyframes floatY {
-      0%, 100% { transform: translateY(0); }
-      50%      { transform: translateY(-8px); }
-    }
-
-    .deco-hex.float {
-      animation: hexFadeIn 0.8s ease forwards, floatY 3s ease-in-out infinite;
-    }
-
-    /* 로고 */
-    #splash-logo {
-      position: relative;
-      z-index: 10;
-      text-align: center;
-      opacity: 0;
-      animation: logoIn 0.7s ease 0.3s forwards;
-    }
-
-    @keyframes logoIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    #splash-logo .logo-hexa {
-      font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
-      font-size: 52px;
+    #loading-screen.hidden { opacity: 0; pointer-events: none; }
+    #loading-title {
+      font-family: 'Russo One', 'Nunito', sans-serif;
+      font-size: clamp(32px, 10vw, 52px);
       font-weight: 900;
-      color: #7B1FA2;
-      letter-spacing: 4px;
-      display: inline;
+      letter-spacing: 0.14em;
+      white-space: nowrap;
+      background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #9B30FF 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 16px rgba(255, 20, 147, 0.5));
     }
-
-    #splash-logo .logo-merge {
-      font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
-      font-size: 52px;
-      font-weight: 900;
-      color: #E91E63;
-      letter-spacing: 4px;
-      display: inline;
-    }
-
-    /* 로딩 바 */
-    #loading-bar-container {
-      position: relative;
-      z-index: 10;
-      width: 220px; height: 4px;
-      background: #E0E0E0;
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 32px;
-      opacity: 0;
-      animation: logoIn 0.5s ease 0.8s forwards;
-    }
-
-    #loading-bar {
-      width: 0%; height: 100%;
-      background: linear-gradient(90deg, #7B1FA2, #E91E63);
-      border-radius: 2px;
-      transition: width 0.3s ease;
-    }
-
     #loading-text {
-      position: relative;
-      z-index: 10;
-      font-family: 'Arial', sans-serif;
-      font-size: 12px;
-      color: #999;
-      margin-top: 10px;
-      opacity: 0;
-      animation: logoIn 0.5s ease 0.9s forwards;
+      color: #aaa;
+      font-family: 'Nunito', sans-serif;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      margin-top: 24px;
+      animation: pulse 2s infinite;
     }
 
-    /* 하단 크레딧 */
-    #splash-credit {
-      position: absolute;
-      bottom: 8%;
-      z-index: 10;
-      font-family: 'Arial', sans-serif;
-      font-size: 13px;
-      font-weight: 700;
-      color: #AAA;
-      letter-spacing: 5px;
-      text-transform: uppercase;
-      opacity: 0;
-      animation: logoIn 0.6s ease 1s forwards;
-    }
-
-    /* 경고 배너 */
-    #warning-banner {
-      position: fixed; top: 0; left: 0;
-      width: 100%; padding: 10px;
-      background: #FF4444; color: white;
-      font-family: Arial, sans-serif;
-      text-align: center; z-index: 200;
-      display: none;
-    }
-
-    /* 모바일 반응형 */
+    /* ========== Mobile responsive ========== */
     @media (max-width: 480px) {
-      #splash-logo .logo-hexa,
-      #splash-logo .logo-merge {
-        font-size: 36px;
-        letter-spacing: 2px;
-      }
-      .hex-left-big  { width: 120px; height: 120px; left: -30px; }
-      .hex-left-med  { width: 70px;  height: 70px;  left: 60px; }
-      .hex-left-sm   { width: 35px;  height: 35px;  left: 85px; }
-      .hex-right-big { width: 130px; height: 130px; right: -30px; }
-      .hex-right-med { width: 65px;  height: 65px;  right: 50px; }
-      .hex-right-sm  { width: 32px;  height: 32px;  right: 70px; }
-      #loading-bar-container { width: 180px; }
-      #splash-credit { font-size: 11px; letter-spacing: 3px; }
+      #hud { padding: 10px 12px 6px; gap: 6px; }
+      .hud-btn { width: 42px; height: 42px; min-width: 42px; }
+      .hud-btn svg { width: 20px; height: 20px; }
+      #hud-left, #hud-right { gap: 6px; }
+      #score-container { padding: 0 2px; }
+      .overlay-btn { min-width: 180px; padding: 12px 28px; font-size: 16px; }
+    }
+    @media (max-width: 360px) {
+      #hud { padding: 8px 10px 6px; }
+      .hud-btn { width: 40px; height: 40px; min-width: 40px; }
+      .hud-btn svg { width: 18px; height: 18px; }
+    }
+    /* Tall screens — allow more breathing room */
+    @media (min-height: 800px) {
+      #hud { padding-top: 18px; padding-bottom: 12px; }
     }
   </style>
 </head>
 <body>
-  <div id="unity-container">
-    <canvas id="unity-canvas" tabindex="-1"></canvas>
+  <div id="game-container">
+    <!-- HUD -->
+    <div id="hud">
+      <div id="hud-left">
+        <button class="hud-btn" id="btn-sound" title="Sound" aria-label="Toggle sound">
+          <!-- Speaker ON icon (default) -->
+          <svg viewBox="0 0 24 24" id="icon-sound-on">
+            <path class="icon-fill" d="M3 9.5v5a1 1 0 0 0 1 1h3l4 3.5a1 1 0 0 0 1.6-.8V4.8a1 1 0 0 0-1.6-.8L7 8.5H4a1 1 0 0 0-1 1z"/>
+            <path d="M15.5 8.5a4.5 4.5 0 0 1 0 7"/>
+            <path d="M18.5 5.5a8 8 0 0 1 0 13"/>
+          </svg>
+          <svg viewBox="0 0 24 24" id="icon-sound-off" style="display:none">
+            <path class="icon-fill" d="M3 9.5v5a1 1 0 0 0 1 1h3l4 3.5a1 1 0 0 0 1.6-.8V4.8a1 1 0 0 0-1.6-.8L7 8.5H4a1 1 0 0 0-1 1z"/>
+            <line x1="16" y1="9" x2="22" y2="15"/>
+            <line x1="22" y1="9" x2="16" y2="15"/>
+          </svg>
+        </button>
+      </div>
+      <div id="score-container">
+        <div id="game-title">HEXA MERGE</div>
+        <div id="score">0</div>
+        <div id="hi-score-label">BEST</div>
+        <div id="hi-score">0</div>
+      </div>
+      <div id="hud-right">
+        <button class="hud-btn" id="btn-help" title="Help" aria-label="How to play">
+          <svg viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7v.5"/>
+            <circle class="icon-fill" cx="12" cy="17" r="1.1" stroke="none"/>
+          </svg>
+        </button>
+        <button class="hud-btn" id="btn-menu" title="Menu" aria-label="Open menu">
+          <svg viewBox="0 0 24 24">
+            <line x1="4" y1="7" x2="20" y2="7"/>
+            <line x1="4" y1="12" x2="20" y2="12"/>
+            <line x1="4" y1="17" x2="20" y2="17"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Game Canvas -->
+    <canvas id="game-canvas"></canvas>
   </div>
 
+  <!-- Overlay Screens -->
+  <div class="screen-overlay" id="screen-gameover" data-screen="gameover"></div>
+  <div class="screen-overlay" id="screen-pause" data-screen="pause"></div>
+  <div class="screen-overlay" id="screen-howtoplay" data-screen="howtoplay"></div>
+
+  <!-- Loading Screen -->
   <div id="loading-screen">
-    <!-- 장식 육각형 좌측 -->
-    <div class="deco-hex hex-left-big float"></div>
-    <div class="deco-hex hex-left-med float"></div>
-    <div class="deco-hex hex-left-sm float"></div>
-    <!-- 장식 육각형 우측 -->
-    <div class="deco-hex hex-right-big float"></div>
-    <div class="deco-hex hex-right-med float"></div>
-    <div class="deco-hex hex-right-sm float"></div>
-
-    <!-- 로고 -->
-    <div id="splash-logo">
-      <span class="logo-hexa">HEXA</span><span class="logo-merge"> MERGE</span>
-    </div>
-
-    <!-- 로딩 -->
-    <div id="loading-bar-container">
-      <div id="loading-bar"></div>
-    </div>
-    <div id="loading-text">Loading...</div>
-
-    <!-- 하단 크레딧 -->
-    <div id="splash-credit">HEXA MERGE</div>
+    <div id="loading-title">HEXA MERGE</div>
+    <div id="loading-text">Tap to start</div>
   </div>
 
-  <div id="warning-banner"></div>
-
-  <script>
-    // Mobile AudioContext unlock — resume on user gesture
-    (function() {
-      var unlocked = false;
-      function resumeAudio() {
-        if (unlocked) return;
-        if (typeof WEBAudio !== 'undefined' && WEBAudio.audioContext) {
-          if (WEBAudio.audioContext.state === 'suspended') {
-            WEBAudio.audioContext.resume().then(function() {
-              unlocked = true;
-              document.removeEventListener('touchstart', resumeAudio, true);
-              document.removeEventListener('touchend', resumeAudio, true);
-              document.removeEventListener('click', resumeAudio, true);
-            });
-          } else {
-            unlocked = true;
-            document.removeEventListener('touchstart', resumeAudio, true);
-            document.removeEventListener('touchend', resumeAudio, true);
-            document.removeEventListener('click', resumeAudio, true);
-          }
-        }
-      }
-      document.addEventListener('touchstart', resumeAudio, true);
-      document.addEventListener('touchend', resumeAudio, true);
-      document.addEventListener('click', resumeAudio, true);
-    })();
-
-    // window.onerror 핸들러 등록 (TC-PLAT-035)
-    window.onerror = function(message, source, lineno, colno, error) {
-      console.error('[HexaMerge] Uncaught error:', message, 'at', source, lineno, colno);
-      return false;
-    };
-
-    // gamebridge 객체 (IAP 연동)
-    window.__adsRemovedState = false;
-    window.gamebridge = {
-      isAdsRemoved: function() { return window.__adsRemovedState; },
-      isBannerReady: function() { return true; },
-      isRewardedReady: function() { return true; }
-    };
-
-    // Unity → JS 메시지 수신 (WebGLBridge에서 호출)
-    window.unityMessageCallbacks = {};
-
-    window.SendMessageFromUnity = function(message) {
-      try {
-        var data = JSON.parse(message);
-
-        // 콜백 ID가 있으면 해당 콜백 호출
-        if (data.callbackId && window.unityMessageCallbacks[data.callbackId]) {
-          window.unityMessageCallbacks[data.callbackId](data);
-          delete window.unityMessageCallbacks[data.callbackId];
-          return;
-        }
-
-        // adsRemoved/bannerHidden 이벤트 수신 시 상태 업데이트
-        if (data.event === 'adsRemoved' || data.event === 'adsRemovedBlocked') {
-          window.__adsRemovedState = true;
-        }
-        if (data.event === 'bannerHidden' && data.adsRemoved) {
-          window.__adsRemovedState = true;
-        }
-
-        // 이벤트 발송
-        window.dispatchEvent(new CustomEvent('unityMessage', { detail: data }));
-      } catch(e) {
-        console.warn('[HexaMerge] Failed to parse Unity message:', message, e);
-      }
-    };
-
-    // JS → Unity 메시지 전송 헬퍼
-    window.sendToUnity = function(objectName, methodName, value) {
-      if (window.unityInstance) {
-        window.unityInstance.SendMessage(objectName, methodName, value || '');
-      }
-    };
-
-    // 게임 상태 조회 Promise
-    window.getGameState = function() {
-      return new Promise(function(resolve) {
-        var callbackId = 'gs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        window.unityMessageCallbacks[callbackId] = resolve;
-        window.sendToUnity('WebGLBridge', 'JS_GetGameState', callbackId);
-
-        // 5초 타임아웃
-        setTimeout(function() {
-          if (window.unityMessageCallbacks[callbackId]) {
-            delete window.unityMessageCallbacks[callbackId];
-            resolve(null);
-          }
-        }, 5000);
-      });
-    };
-
-    // Start floating animation after hexagons appear
-    setTimeout(function() {
-      var hexes = document.querySelectorAll('.deco-hex');
-      hexes.forEach(function(h, i) {
-        h.style.animationDelay = (0.2 + i * 0.1) + 's, ' + (1.5 + i * 0.3) + 's';
-      });
-    }, 1500);
-
-    // Unity 로더
-    var buildUrl = "Build/WebGL/Build";
-    var loaderUrl = buildUrl + "/WebGL.loader.js";
-    var config = {
-      dataUrl: buildUrl + "/WebGL.data",
-      frameworkUrl: buildUrl + "/WebGL.framework.js",
-      codeUrl: buildUrl + "/WebGL.wasm",
-      streamingAssetsUrl: "Build/WebGL/StreamingAssets",
-      companyName: "HexaMerge",
-      productName: "Hexa Merge",
-      productVersion: "1.0.0",
-      showBanner: function(msg, type) {
-        var banner = document.getElementById('warning-banner');
-        banner.style.display = 'block';
-        banner.innerText = msg;
-        setTimeout(function() { banner.style.display = 'none'; }, 5000);
-      }
-    };
-
-    var loadingBar = document.getElementById('loading-bar');
-    var loadingText = document.getElementById('loading-text');
-    var loadingScreen = document.getElementById('loading-screen');
-
-    var script = document.createElement('script');
-    script.src = loaderUrl;
-    script.onload = function() {
-      createUnityInstance(document.getElementById('unity-canvas'), config, function(progress) {
-        var percent = Math.round(progress * 100);
-        loadingBar.style.width = percent + '%';
-        loadingText.innerText = 'Loading... ' + percent + '%';
-      }).then(function(instance) {
-        window.unityInstance = instance;
-        loadingScreen.classList.add('hidden');
-        setTimeout(function() {
-          loadingScreen.style.display = 'none';
-        }, 700);
-      }).catch(function(message) {
-        console.error('[HexaMerge] Unity load error:', message);
-        loadingText.innerText = 'Error: ' + message;
-        loadingText.style.color = '#FF4444';
-      });
-    };
-    document.body.appendChild(script);
-  </script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>
