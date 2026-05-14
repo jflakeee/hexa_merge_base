@@ -41,4 +41,15 @@
      - main.js pauseScreen.onHowToPlay wire 추가
      - 모든 기능 playwright 검증 통과 (모바일 390x844 + 데스크탑 1280x800)
 
+== 후속 마무리 (디자인 일관성 확장, 2026-05-14) ==
+
+[x] 18. GameOverScreen에 PauseScreen 디자인 시스템 확장
+     - GAME OVER 네온 핑크 헤더, BEST 골드 글로우 readout
+     - NEW RECORD! 트로피 SVG + 펄스 애니메이션
+     - PLAY AGAIN (primary, restart 아이콘) / WATCH AD & CONTINUE (secondary, play 아이콘) 버튼
+[x] 19. HowToPlayScreen에 PauseScreen 디자인 시스템 확장
+     - 5개 step 카드 (육각 그라디언트 번호 배지 + 제목 + 본문)
+     - 카드 배경 그라디언트 + 핑크 보더 + box-shadow
+     - GOT IT! (primary, check 아이콘) 버튼
+
 에이전트팀 사용해서 설계 내용 검토하고 개선되는 방향으로 아이디어 조사 후 구현 각 항목 구현시 마다 테스트후 수정할 부분 없으면 메모리파일 업데이트 하고 원격 깃 빌드 배포
