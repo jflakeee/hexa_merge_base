@@ -11,7 +11,7 @@ import { InputManager } from './game/InputManager.js';
 import { Renderer } from './render/Renderer.js';
 import { TileAnimator } from './animation/TileAnimator.js';
 import { MergeEffect } from './animation/MergeEffect.js';
-import { ProceduralSFX } from './audio/ProceduralSFX.js';
+import { SampleSFX } from './audio/SampleSFX.js';
 import { ScreenManager } from './ui/ScreenManager.js';
 import { HUDManager } from './ui/HUDManager.js';
 import { GameOverScreen } from './ui/GameOverScreen.js';
@@ -27,7 +27,7 @@ const loadingScreen = document.getElementById('loading-screen');
 // ============================================================
 // Subsystem instances
 // ============================================================
-const sfx = new ProceduralSFX();
+const sfx = new SampleSFX();
 const renderer = new Renderer(canvas);
 const inputManager = new InputManager(canvas, renderer);
 const animator = new TileAnimator();
