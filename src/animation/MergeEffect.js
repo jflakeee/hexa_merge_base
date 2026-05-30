@@ -222,7 +222,7 @@ export class MergeEffect {
             elapsed: 0,
             scale: 0,
             alpha: 1,
-            baseSize: 8,
+            baseSize: 15,
         });
     }
 
@@ -310,11 +310,11 @@ export class MergeEffect {
             const dispersion = ((Math.random() - 0.5) * 2) * (15 * Math.PI / 180);
             const angle = baseAngle + dispersion;
 
-            // Speed: 100-150 px/s
-            const speed = 100 + Math.random() * 50;
+            // Speed: 120-200 px/s
+            const speed = 120 + Math.random() * 80;
 
-            // Size: 3-5 px
-            const size = 3 + Math.random() * 2;
+            // Size: 4-8 px
+            const size = 4 + Math.random() * 4;
 
             this.particles.push({
                 x,
