@@ -108,11 +108,10 @@
 
 ---
 
-## 6. 미해결 쟁점
+## 6. 쟁점 규명 (2026-05-31 해소)
 
-- `res/button/KakaoTalk_20260223_103314583.png`는 **배포본 구현**(`jflakeee.github.io`, AD BANNER 플레이스홀더)인데 **XUP 로고 + HI-SCORE**를 표시.
-  반면 로컬 `index.html`은 `BEST` 라벨·로고 없음 → **배포본과 로컬 소스가 다를 가능성**. 어느 쪽을 정본으로 수정할지 확인 필요.
-- 게임 메카닉: 벤치 문구 "Merge **at least N tiles** for multiply by N" → 같은 값 N개 클러스터 탭 시 결과가 N배일 가능성. 구현 `MergeSystem.js` 규칙과 일치 여부 별도 확인 필요.
+- **배포본 vs 로컬 정합 — 해소됨.** 조사 결과: `res/button`(2/23) 스크린샷은 XUP 브랜딩이었으나, 이후 구현이 "HEXA MERGE" 핑크 테마로 **드리프트**함(gh-pages 5/14 배포본 = HEXA MERGE/BEST 확인). 즉 충돌이 아니라 시간에 따른 이탈이었고, 이번 작업이 다시 XUP로 **복원**함. 로컬 `index.html`/`src`가 정본. **gh-pages는 재배포 필요**(현재 구버전 HEXA MERGE 상태).
+- 게임 메카닉: 벤치 문구 "Merge **at least N tiles** for multiply by N" → 같은 값 N개 클러스터 탭 시 결과가 N배일 가능성. 구현 `MergeSystem.js` 규칙과 일치 여부는 별도 확인 권장(미검증).
 
 ---
 
