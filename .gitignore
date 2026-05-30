@@ -68,6 +68,11 @@ res/audio/*.wav
 res/frames/*.jpg
 res/*.mp4
 
+# 벤치마크 원본 자료 전체 (대용량 ~432MB) + 백업 아카이브 + 분석용 임시폴더
+res/
+*.zip
+_bm/
+
 # Logs
 *.log
 
