@@ -12,25 +12,47 @@ import { formatValue } from '../core/TileHelper.js';
 // ----------------------------------------------------------
 
 /**
- * Draw a flat-top hexagon path on the given context.
- * Vertices at 0, 60, 120, 180, 240, 300 degrees.
+ * Corner rounding radius as a fraction of the hex outer radius.
+ * Measured from the XUP benchmark (docs/benchmark-vs-impl-diff.md §2): r ≈ 0.39·R.
+ */
+export const CORNER_RADIUS_RATIO = 0.39;
+
+/**
+ * Draw a flat-top hexagon path with rounded corners on the given context.
+ * Vertices at 0, 60, 120, 180, 240, 300 degrees; corners rounded via arcTo.
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} cx - Center x
  * @param {number} cy - Center y
  * @param {number} size - Outer radius (center to vertex)
+ * @param {number} [cornerRatio=CORNER_RADIUS_RATIO] - Corner radius as fraction of size
  */
-export function drawHexagon(ctx, cx, cy, size) {
-    ctx.beginPath();
+export function drawHexagon(ctx, cx, cy, size, cornerRatio = CORNER_RADIUS_RATIO) {
+    // Compute the 6 vertices.
+    const verts = [];
     for (let i = 0; i < 6; i++) {
-        const angleDeg = 60 * i;
-        const angleRad = (Math.PI / 180) * angleDeg;
-        const vx = cx + size * Math.cos(angleRad);
-        const vy = cy + size * Math.sin(angleRad);
-        if (i === 0) {
-            ctx.moveTo(vx, vy);
-        } else {
-            ctx.lineTo(vx, vy);
-        }
+        const angleRad = (Math.PI / 180) * (60 * i);
+        verts.push({ x: cx + size * Math.cos(angleRad), y: cy + size * Math.sin(angleRad) });
+    }
+
+    // Corner radius, clamped so it never exceeds half the edge length (edge = size).
+    const r = Math.min(size * cornerRatio, size * 0.5);
+    if (r <= 0.5) {
+        // Degenerate: fall back to sharp polygon.
+        ctx.beginPath();
+        verts.forEach((v, i) => (i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y)));
+        ctx.closePath();
+        return;
+    }
+
+    // Rounded polygon: start at first edge midpoint, arcTo around each vertex.
+    const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    const start = mid(verts[5], verts[0]);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    for (let i = 0; i < 6; i++) {
+        const cur = verts[i];
+        const nextMid = mid(verts[i], verts[(i + 1) % 6]);
+        ctx.arcTo(cur.x, cur.y, nextMid.x, nextMid.y, r);
     }
     ctx.closePath();
 }

@@ -16,23 +16,26 @@ import { getTileLevel } from '../core/TileHelper.js';
  * 16-color mapping for tile values 2 through 65536.
  * @type {Object<number, TileColor>}
  */
+// Values measured pixel-by-pixel from the XUP (GAMEGOS) benchmark recording.
+// See docs/benchmark-vs-impl-diff.md §1. All numbers render white in the benchmark.
+// 16384/32768 reuse the 4/16 hues (benchmark palette cycles at high values).
 export const TILE_COLORS = {
-    2:     { bg: '#FFD700', text: '#FFFFFF' },
-    4:     { bg: '#FF6B35', text: '#FFFFFF' },
-    8:     { bg: '#EC407A', text: '#FFFFFF' },
-    16:    { bg: '#880E4F', text: '#FFFFFF' },
-    32:    { bg: '#C2185B', text: '#FFFFFF' },
-    64:    { bg: '#8E24AA', text: '#FFFFFF' },
-    128:   { bg: '#4A148C', text: '#FFFFFF' },
-    256:   { bg: '#7C4DFF', text: '#FFFFFF' },
-    512:   { bg: '#1976D2', text: '#FFFFFF' },
-    1024:  { bg: '#00897B', text: '#FFFFFF' },
-    2048:  { bg: '#9ACD32', text: '#333333' },
-    4096:  { bg: '#4CAF50', text: '#FFFFFF' },
-    8192:  { bg: '#00695C', text: '#FFFFFF' },
-    16384: { bg: '#FFB300', text: '#333333' },
-    32768: { bg: '#E64A19', text: '#FFFFFF' },
-    65536: { bg: '#E91E63', text: '#FFFFFF' },
+    2:     { bg: '#FECC33', text: '#FFFFFF' },
+    4:     { bg: '#E2491A', text: '#FFFFFF' },
+    8:     { bg: '#E26887', text: '#FFFFFF' },
+    16:    { bg: '#8F1A1E', text: '#FFFFFF' },
+    32:    { bg: '#B61EC5', text: '#FFFFFF' },
+    64:    { bg: '#7953AE', text: '#FFFFFF' },
+    128:   { bg: '#661189', text: '#FFFFFF' },
+    256:   { bg: '#45408A', text: '#FFFFFF' },
+    512:   { bg: '#305DEE', text: '#FFFFFF' },
+    1024:  { bg: '#40C9A5', text: '#FFFFFF' },
+    2048:  { bg: '#A1EF39', text: '#FFFFFF' },
+    4096:  { bg: '#33AA2D', text: '#FFFFFF' },
+    8192:  { bg: '#0B656A', text: '#FFFFFF' },
+    16384: { bg: '#E2491A', text: '#FFFFFF' },
+    32768: { bg: '#8F1A1E', text: '#FFFFFF' },
+    65536: { bg: '#B61EC5', text: '#FFFFFF' },
 };
 
 /**

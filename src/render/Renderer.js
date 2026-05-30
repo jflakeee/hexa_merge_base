@@ -8,6 +8,14 @@ import { drawCell, drawEmptyCell } from './HexCellView.js';
 import { HexCoord } from '../core/HexCoord.js';
 
 /**
+ * Drawn tile radius as a fraction of the layout hex radius, leaving a gap
+ * between neighbours. Benchmark gap ≈ 0.156·R edge-to-edge while centres keep
+ * the touching pitch (√3·R) → drawn radius = 1 - 0.156/√3 ≈ 0.91.
+ * See docs/benchmark-vs-impl-diff.md §2.
+ */
+const TILE_FILL_RATIO = 0.91;
+
+/**
  * Main canvas renderer for the hex merge game.
  */
 export class Renderer {
@@ -176,9 +184,10 @@ export class Renderer {
      */
     _drawBackground(ctx, grid) {
         const allCells = grid.getAllCells();
+        const drawSize = this._hexSize * TILE_FILL_RATIO;
         for (const cell of allCells) {
             const { x, y } = this.hexToPixel(cell.coord.q, cell.coord.r);
-            drawEmptyCell(ctx, x, y, this._hexSize);
+            drawEmptyCell(ctx, x, y, drawSize);
         }
     }
 
@@ -213,7 +222,7 @@ export class Renderer {
                 }
             }
 
-            drawCell(ctx, x + offX, y + offY, this._hexSize, cell.value, {
+            drawCell(ctx, x + offX, y + offY, this._hexSize * TILE_FILL_RATIO, cell.value, {
                 hasCrown: cell.hasCrown,
                 scale,
                 alpha,
