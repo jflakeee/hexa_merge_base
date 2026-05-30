@@ -116,13 +116,15 @@
 
 ---
 
-## 7. 수정 우선순위 (권장)
+## 7. 수정 진행 상황 (2026-05-31 구현 완료)
 
-1. **사운드 교체** — `res`의 추출 wav를 실제 에셋으로 로드/매핑 (가장 확실한 불일치)
-2. **타일 색** — §1 실측 HEX로 `tileColors.js` 교체 (순환 규칙 포함)
-3. **블럭 기하** — gap = 0.156·hexSize, 라운드 = 0.39·hexSize 적용 (`Renderer`, `HexCellView`)
-4. **애니메이션** — 스플랫/입자/연쇄 플래시 강화 및 타이밍 보정
-5. **화면** — 스플래시(XUP+GAMEGOS), 일시정지 메뉴, 게임오버(NO MOVES→축하), HowToPlay 시각화
+- [x] **#1 사운드** — mp4에서 tap/merge/chain 분리(BGM 없어 깨끗) → `audio/sfx/*.wav` + `SampleSFX.js`로 재생, 이벤트 매핑 (커밋 `4f08c45`)
+- [x] **#2 타일 색** — §1 실측 HEX로 `tileColors.js` 교체 (커밋 `39a191e`)
+- [x] **#3 블럭 기하** — gap=0.156·hexSize, 라운드=0.39·hexSize (`Renderer`/`HexCellView`, `39a191e`)
+- [x] **#4 애니메이션** — splat(소스→타깃)·입자 폭발 연결 + 타일 색·크기, 입자 수 병합 타일 비례 (`0406505`)
+- [x] **#5 화면** — HUD(XUP/HI-SCORE, `11d8adf`), 스플래시(XUP+GAMEGOS, `a24988c`), 일시정지 MENU(`5cfed21`), 게임오버 축하카드+점수 전체자릿수(`9eb1153`), HowToPlay 시각데모(`f3edaef`)
+
+전 항목 Playwright 스크린샷/런타임으로 검증. 남은 정밀화 여지: 애니메이션 단일 병합의 정확 프레임 타이밍(고립 병합 추가 분석 필요), gameOver/gameStart 전용 효과음(현재 chain 재사용), 배포본 vs 로컬 소스 정합(§6).
 
 ---
 
