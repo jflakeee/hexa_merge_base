@@ -21,6 +21,7 @@ export class SampleSFX {
             tap: 'audio/sfx/tap.wav',
             merge: 'audio/sfx/merge.wav',
             chain: 'audio/sfx/chain.wav',
+            celebrate: 'audio/sfx/celebrate.wav',
         };
 
         // Logical event name -> clip + volume.
@@ -34,10 +35,10 @@ export class SampleSFX {
             mergeHigh:   { clip: 'chain', vol: 0.85 },
             mergeUltra:  { clip: 'chain', vol: 0.95 },
             chainCombo:  { clip: 'chain', vol: 0.9 },
-            milestone:   { clip: 'chain', vol: 0.95 },
+            milestone:   { clip: 'celebrate', vol: 0.85 },
             crownChange: { clip: 'merge', vol: 0.8 },
             gameStart:   { clip: 'chain', vol: 0.7 },
-            gameOver:    { clip: 'chain', vol: 0.9 },
+            gameOver:    { clip: 'celebrate', vol: 0.9 },
         };
     }
 
