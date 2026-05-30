@@ -60,31 +60,28 @@
       padding: 0 6px;
     }
 
-    /* Game title — gradient pink to magenta with subtle glow */
+    /* Game title — XUP logo: white "X" + pink "UP" (matches benchmark) */
     #game-title {
-      font-family: 'Russo One', 'Nunito', sans-serif;
-      font-size: clamp(16px, 4.5vw, 22px);
+      font-family: 'Nunito', 'Arial Black', sans-serif;
+      font-size: clamp(20px, 5.5vw, 26px);
       font-weight: 900;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.01em;
       white-space: nowrap;
-      background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #C71585 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 1px 2px rgba(255, 20, 147, 0.35));
       margin-bottom: 2px;
     }
+    #game-title .logo-x { color: #FFFFFF; }
+    #game-title .logo-up { color: #EB3758; }
 
     /* Score — large with neon glow text-shadow */
     #score {
       font-family: 'Nunito', sans-serif;
-      color: #FF4FA3;
+      color: #F23A5B;
       font-size: clamp(36px, 11vw, 52px);
       font-weight: 900;
       line-height: 1.0;
       text-shadow:
-        0 0 6px rgba(255, 79, 163, 0.55),
-        0 0 14px rgba(255, 79, 163, 0.35),
+        0 0 6px rgba(242, 58, 91, 0.5),
+        0 0 14px rgba(242, 58, 91, 0.3),
         0 2px 0 rgba(0, 0, 0, 0.45);
       letter-spacing: -0.01em;
     }
@@ -106,28 +103,28 @@
     }
 
     /* ========== HUD Buttons ========== */
+    /* HUD buttons — solid red/pink (matches benchmark) */
     .hud-btn {
       width: 44px; height: 44px;
       min-width: 44px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 105, 180, 0.35);
-      background: linear-gradient(145deg, rgba(255,105,180,0.08), rgba(199,21,133,0.03));
-      color: #FF8FBF;
+      border: none;
+      background: linear-gradient(145deg, #F5466E 0%, #E01E54 100%);
+      color: #FFFFFF;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: transform 0.12s ease, filter 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 3px 8px rgba(224, 30, 84, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
       touch-action: manipulation;
       padding: 0;
     }
     .hud-btn:hover {
-      border-color: rgba(255, 105, 180, 0.7);
-      background: linear-gradient(145deg, rgba(255,105,180,0.18), rgba(199,21,133,0.08));
-      color: #FFB6D9;
+      filter: brightness(1.08);
+      box-shadow: 0 4px 11px rgba(224, 30, 84, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
     .hud-btn:active {
       transform: scale(0.92);
-      background: rgba(255, 105, 180, 0.25);
+      filter: brightness(0.95);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .hud-btn svg {
@@ -291,9 +288,9 @@
         </button>
       </div>
       <div id="score-container">
-        <div id="game-title">HEXA MERGE</div>
+        <div id="game-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
         <div id="score">0</div>
-        <div id="hi-score-label">BEST</div>
+        <div id="hi-score-label">HI-SCORE</div>
         <div id="hi-score">0</div>
       </div>
       <div id="hud-right">
