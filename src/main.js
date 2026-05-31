@@ -11,12 +11,13 @@ import { InputManager } from './game/InputManager.js';
 import { Renderer } from './render/Renderer.js';
 import { TileAnimator } from './animation/TileAnimator.js';
 import { MergeEffect } from './animation/MergeEffect.js';
-import { ProceduralSFX } from './audio/ProceduralSFX.js';
+import { SampleSFX } from './audio/SampleSFX.js';
 import { ScreenManager } from './ui/ScreenManager.js';
 import { HUDManager } from './ui/HUDManager.js';
 import { GameOverScreen } from './ui/GameOverScreen.js';
 import { PauseScreen } from './ui/PauseScreen.js';
 import { HowToPlayScreen } from './ui/HowToPlayScreen.js';
+import { getColor } from './config/tileColors.js';
 // ============================================================
 // DOM References
 // ============================================================
@@ -26,7 +27,7 @@ const loadingScreen = document.getElementById('loading-screen');
 // ============================================================
 // Subsystem instances
 // ============================================================
-const sfx = new ProceduralSFX();
+const sfx = new SampleSFX();
 const renderer = new Renderer(canvas);
 const inputManager = new InputManager(canvas, renderer);
 const animator = new TileAnimator();
@@ -200,10 +201,24 @@ function initGame() {
             animator.playMergeAnimation(fromPositions, toCoordKey, toPosition);
         }
 
-        // Visual merge effect (particles / splash)
+        // Visual merge effect — liquid splats flow from sources into the target,
+        // then a splash + particle burst scaled by how many tiles merged.
+        // Colored with the resulting tile's color (matches benchmark feel).
         if (result.tapCoord) {
-            const pos = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
-            effects.playSplash(pos.x, pos.y, '#FF69B4');
+            const color = getColor(result.resultValue);
+            const target = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
+
+            if (result.mergedCoords) {
+                for (let i = 1; i < result.mergedCoords.length; i++) {
+                    const c = result.mergedCoords[i];
+                    const src = renderer.hexToPixel(c.q, c.r);
+                    effects.playSplat(src.x, src.y, target.x, target.y, color);
+                }
+            }
+
+            const tileCount = result.mergedCoords ? result.mergedCoords.length : 2;
+            effects.playSplash(target.x, target.y, color);
+            effects.playParticleBurst(target.x, target.y, color, Math.min(6 + tileCount * 2, 22));
         }
     });
 

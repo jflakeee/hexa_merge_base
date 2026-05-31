@@ -103,14 +103,20 @@ export class MergeSystem {
             if (depth > maxDepth) maxDepth = depth;
         }
 
-        // depthLevels = number of distinct depth levels (excluding 0)
+        // depthLevels = number of distinct BFS depth levels (used only for the
+        // cascade animation grouping, not for the merge value).
         const depthLevels = depthGroupsMap.size;
-        const mergedValue = this._calculateMergeValue(baseValue, depthLevels);
 
-        // StepValues: one per depth level, doubling at each step
+        // Merge value follows the XUP benchmark rule (docs/benchmark-vs-impl-diff.md §6):
+        // result = baseValue × 2^floor(log2(N)) where N = total merged tiles.
+        // 2 tiles → ×2, 4 → ×4, 8 → ×8 (regardless of shape/depth).
+        const mergeExponent = Math.floor(Math.log2(totalCells));
+        const mergedValue = this._calculateMergeValue(baseValue, mergeExponent);
+
+        // StepValues: one per doubling step (drives intermediate count-up visuals)
         const stepValues = [];
         let stepValue = baseValue;
-        for (let d = 0; d < depthLevels; d++) {
+        for (let d = 0; d < mergeExponent; d++) {
             stepValue = Math.min(stepValue * 2, MAX_VALUE);
             stepValues.push(stepValue);
         }
@@ -143,7 +149,7 @@ export class MergeSystem {
             tapCoord,
             baseValue,
             resultValue: mergedValue,
-            scoreGained: mergedValue * depthLevels,
+            scoreGained: mergedValue * mergeExponent,
             mergedCount: totalCells,
             mergedCoords,
             stepValues,
@@ -206,16 +212,16 @@ export class MergeSystem {
     }
 
     /**
-     * Calculate the merged value based on base value and number of depth levels.
-     * Each depth level doubles the value.
+     * Calculate the merged value: baseValue doubled `exponent` times.
+     * exponent = floor(log2(totalMergedTiles)) per the benchmark rule.
      * @param {number} baseValue
-     * @param {number} depthLevels
+     * @param {number} exponent - number of doublings
      * @returns {number}
      * @private
      */
-    _calculateMergeValue(baseValue, depthLevels) {
+    _calculateMergeValue(baseValue, exponent) {
         let value = baseValue;
-        for (let i = 0; i < depthLevels; i++) {
+        for (let i = 0; i < exponent; i++) {
             value *= 2;
             if (value >= MAX_VALUE) return MAX_VALUE;
         }

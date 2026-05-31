@@ -5,8 +5,6 @@
  * ES Module - pure web implementation.
  */
 
-import { formatValue } from '../core/TileHelper.js';
-
 export class HUDManager {
     constructor() {
         /** @type {HTMLElement|null} */
@@ -35,36 +33,36 @@ export class HUDManager {
 
     /**
      * Update the displayed score with dynamic font sizing based on digit count.
-     * - 1-3 digits: 48px
-     * - 4-6 digits: 36px
-     * - 7+ digits: 28px
-     * Uses formatValue for large number abbreviation.
+     * Shows the FULL number (benchmark never abbreviates the score counter;
+     * K/M abbreviation is only used on tile values).
      * @param {number} score
      */
     updateScore(score) {
         if (!this._scoreEl) return;
 
-        const formatted = formatValue(score);
+        const formatted = String(Math.floor(score));
         this._scoreEl.textContent = formatted;
 
         // Dynamic font size based on character length
         const len = formatted.length;
-        if (len <= 3) {
+        if (len <= 4) {
             this._scoreEl.style.fontSize = '48px';
         } else if (len <= 6) {
-            this._scoreEl.style.fontSize = '36px';
+            this._scoreEl.style.fontSize = '38px';
+        } else if (len <= 8) {
+            this._scoreEl.style.fontSize = '30px';
         } else {
-            this._scoreEl.style.fontSize = '28px';
+            this._scoreEl.style.fontSize = '24px';
         }
     }
 
     /**
-     * Update the displayed high score.
+     * Update the displayed high score (full number, no abbreviation).
      * @param {number} score
      */
     updateHighScore(score) {
         if (!this._hiScoreEl) return;
-        this._hiScoreEl.textContent = formatValue(score);
+        this._hiScoreEl.textContent = String(Math.floor(score));
     }
 
     /**

@@ -60,31 +60,28 @@
       padding: 0 6px;
     }
 
-    /* Game title — gradient pink to magenta with subtle glow */
+    /* Game title — XUP logo: white "X" + pink "UP" (matches benchmark) */
     #game-title {
-      font-family: 'Russo One', 'Nunito', sans-serif;
-      font-size: clamp(16px, 4.5vw, 22px);
+      font-family: 'Nunito', 'Arial Black', sans-serif;
+      font-size: clamp(20px, 5.5vw, 26px);
       font-weight: 900;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.01em;
       white-space: nowrap;
-      background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #C71585 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 1px 2px rgba(255, 20, 147, 0.35));
       margin-bottom: 2px;
     }
+    #game-title .logo-x { color: #FFFFFF; }
+    #game-title .logo-up { color: #EB3758; }
 
     /* Score — large with neon glow text-shadow */
     #score {
       font-family: 'Nunito', sans-serif;
-      color: #FF4FA3;
+      color: #F23A5B;
       font-size: clamp(36px, 11vw, 52px);
       font-weight: 900;
       line-height: 1.0;
       text-shadow:
-        0 0 6px rgba(255, 79, 163, 0.55),
-        0 0 14px rgba(255, 79, 163, 0.35),
+        0 0 6px rgba(242, 58, 91, 0.5),
+        0 0 14px rgba(242, 58, 91, 0.3),
         0 2px 0 rgba(0, 0, 0, 0.45);
       letter-spacing: -0.01em;
     }
@@ -106,28 +103,28 @@
     }
 
     /* ========== HUD Buttons ========== */
+    /* HUD buttons — solid red/pink (matches benchmark) */
     .hud-btn {
       width: 44px; height: 44px;
       min-width: 44px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 105, 180, 0.35);
-      background: linear-gradient(145deg, rgba(255,105,180,0.08), rgba(199,21,133,0.03));
-      color: #FF8FBF;
+      border: none;
+      background: linear-gradient(145deg, #F5466E 0%, #E01E54 100%);
+      color: #FFFFFF;
       cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.12s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      transition: transform 0.12s ease, filter 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 3px 8px rgba(224, 30, 84, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25);
       touch-action: manipulation;
       padding: 0;
     }
     .hud-btn:hover {
-      border-color: rgba(255, 105, 180, 0.7);
-      background: linear-gradient(145deg, rgba(255,105,180,0.18), rgba(199,21,133,0.08));
-      color: #FFB6D9;
+      filter: brightness(1.08);
+      box-shadow: 0 4px 11px rgba(224, 30, 84, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
     }
     .hud-btn:active {
       transform: scale(0.92);
-      background: rgba(255, 105, 180, 0.25);
+      filter: brightness(0.95);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3);
     }
     .hud-btn svg {
@@ -165,6 +162,8 @@
       padding-bottom: calc(20px + env(safe-area-inset-bottom));
     }
     .screen-overlay.active { display: flex; opacity: 1; }
+    /* Pause uses a light backdrop (matches benchmark MENU screen) */
+    #screen-pause { background: rgba(225, 225, 230, 0.94); }
     .screen-overlay h2 {
       font-family: 'Russo One', 'Nunito', sans-serif;
       color: #FF4FA3;
@@ -219,36 +218,53 @@
 
     @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(1.03); } }
 
-    /* ========== Loading screen ========== */
+    /* ========== Splash / Loading screen (XUP + GAMEGOS on white) ========== */
     #loading-screen {
       position: fixed; inset: 0;
-      background: radial-gradient(ellipse at center, #1a0a1a 0%, #000 80%);
+      background: #FFFFFF;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       z-index: 100;
       transition: opacity 0.5s;
+      overflow: hidden;
     }
     #loading-screen.hidden { opacity: 0; pointer-events: none; }
     #loading-title {
-      font-family: 'Russo One', 'Nunito', sans-serif;
-      font-size: clamp(32px, 10vw, 52px);
+      font-family: 'Nunito', 'Arial Black', sans-serif;
+      font-size: clamp(44px, 14vw, 72px);
       font-weight: 900;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.01em;
       white-space: nowrap;
-      background: linear-gradient(135deg, #FF69B4 0%, #FF1493 50%, #9B30FF 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 16px rgba(255, 20, 147, 0.5));
+      z-index: 2;
+    }
+    #loading-title .logo-x { color: #4A148C; }
+    #loading-title .logo-up { color: #EB3758; }
+    /* Decorative flat-top hexagons around the logo */
+    .splash-hex {
+      position: absolute;
+      clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+      z-index: 1;
+    }
+    #loading-publisher {
+      position: absolute;
+      bottom: calc(10% + env(safe-area-inset-bottom));
+      color: #2b2b30;
+      font-family: 'Nunito', sans-serif;
+      font-size: clamp(15px, 4.2vw, 20px);
+      font-weight: 900;
+      letter-spacing: 0.22em;
+      z-index: 2;
     }
     #loading-text {
-      color: #aaa;
+      position: absolute;
+      bottom: calc(4% + env(safe-area-inset-bottom));
+      color: #b0b0b8;
       font-family: 'Nunito', sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.18em;
-      margin-top: 24px;
       animation: pulse 2s infinite;
+      z-index: 2;
     }
 
     /* ========== Mobile responsive ========== */
@@ -291,9 +307,9 @@
         </button>
       </div>
       <div id="score-container">
-        <div id="game-title">HEXA MERGE</div>
+        <div id="game-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
         <div id="score">0</div>
-        <div id="hi-score-label">BEST</div>
+        <div id="hi-score-label">HI-SCORE</div>
         <div id="hi-score">0</div>
       </div>
       <div id="hud-right">
@@ -323,9 +339,18 @@
   <div class="screen-overlay" id="screen-pause" data-screen="pause"></div>
   <div class="screen-overlay" id="screen-howtoplay" data-screen="howtoplay"></div>
 
-  <!-- Loading Screen -->
+  <!-- Splash / Loading Screen -->
   <div id="loading-screen">
-    <div id="loading-title">HEXA MERGE</div>
+    <!-- Decorative hexagons (top-left & bottom-right clusters, matches benchmark) -->
+    <div class="splash-hex" style="width:128px;height:114px;background:#EB3758;left:8%;top:30%;"></div>
+    <div class="splash-hex" style="width:62px;height:55px;background:#A1EF39;left:26%;top:39%;"></div>
+    <div class="splash-hex" style="width:80px;height:71px;background:#FECC33;left:11%;top:42%;"></div>
+    <div class="splash-hex" style="width:78px;height:69px;background:#4ECDE6;right:14%;bottom:36%;"></div>
+    <div class="splash-hex" style="width:56px;height:50px;background:#FECC33;right:30%;bottom:36%;"></div>
+    <div class="splash-hex" style="width:120px;height:107px;background:#4A148C;right:8%;bottom:24%;"></div>
+
+    <div id="loading-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
+    <div id="loading-publisher">GAMEGOS</div>
     <div id="loading-text">Tap to start</div>
   </div>
 

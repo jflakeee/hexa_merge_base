@@ -1,28 +1,18 @@
 /**
- * @fileoverview Pause overlay screen.
- * Provides Resume, Restart, How To Play, and Sound toggle buttons,
- * plus a Best Score readout.
+ * @fileoverview Pause overlay screen — "MENU" card matching the XUP benchmark.
+ * Purple header, a 2x2 grid of colored icon buttons, plus RESTART / CONTINUE.
+ * See docs/benchmark-vs-impl-diff.md §5 (menu_02).
  * ES Module - pure web implementation.
  */
-
-import { formatValue } from '../core/TileHelper.js';
 
 export class PauseScreen {
     constructor() {
         /** @type {HTMLElement|null} */
         this._container = null;
-        /** @type {HTMLButtonElement|null} */
-        this._resumeBtn = null;
-        /** @type {HTMLButtonElement|null} */
-        this._restartBtn = null;
-        /** @type {HTMLButtonElement|null} */
-        this._soundBtn = null;
-        /** @type {HTMLButtonElement|null} */
-        this._howToPlayBtn = null;
         /** @type {HTMLElement|null} */
         this._bestScoreEl = null;
 
-        /** Callback when "Resume" is pressed. @type {function|null} */
+        /** Callback when "Continue" is pressed. @type {function|null} */
         this.onResume = null;
         /** Callback when "Restart" is pressed. @type {function|null} */
         this.onRestart = null;
@@ -34,118 +24,154 @@ export class PauseScreen {
 
     /**
      * Build the pause screen DOM inside the given container.
-     * @param {HTMLElement} container - The overlay container element (e.g., #screen-pause)
+     * @param {HTMLElement} container - The overlay container element (#screen-pause)
      */
     init(container) {
         this._container = container;
         container.innerHTML = '';
 
-        // Title
-        const title = document.createElement('h2');
-        title.textContent = 'PAUSED';
-        container.appendChild(title);
+        // ----- MENU card -----
+        const card = document.createElement('div');
+        card.style.cssText = [
+            'width:min(86vw,340px)',
+            'background:#FFFFFF',
+            'border-radius:22px',
+            'overflow:hidden',
+            'box-shadow:0 18px 48px rgba(0,0,0,0.45)',
+            'display:flex',
+            'flex-direction:column',
+        ].join(';');
 
-        // Best score readout
-        const bestWrap = document.createElement('div');
-        bestWrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:4px;margin-bottom:8px;';
-        const bestLabel = document.createElement('div');
-        bestLabel.className = 'label';
-        bestLabel.textContent = 'BEST';
-        bestWrap.appendChild(bestLabel);
-        this._bestScoreEl = document.createElement('div');
-        this._bestScoreEl.style.cssText = 'color:#FFD700;font-size:32px;font-weight:900;letter-spacing:0.04em;text-shadow:0 0 10px rgba(255,215,0,0.45);';
-        this._bestScoreEl.textContent = '0';
-        bestWrap.appendChild(this._bestScoreEl);
-        container.appendChild(bestWrap);
+        // Purple header
+        const header = document.createElement('div');
+        header.textContent = 'MENU';
+        header.style.cssText = [
+            'background:#4A148C',
+            'color:#FFFFFF',
+            'font-weight:900',
+            'font-size:30px',
+            'letter-spacing:0.04em',
+            'text-align:center',
+            'padding:20px 0',
+        ].join(';');
+        card.appendChild(header);
 
-        // Button container
-        const btnContainer = document.createElement('div');
-        btnContainer.style.cssText = 'display:flex;flex-direction:column;gap:12px;margin-top:12px;align-items:center;';
-        container.appendChild(btnContainer);
+        // Body
+        const body = document.createElement('div');
+        body.style.cssText = 'padding:20px;display:flex;flex-direction:column;gap:14px;';
+        card.appendChild(body);
 
-        // Resume button (primary)
-        this._resumeBtn = document.createElement('button');
-        this._resumeBtn.className = 'overlay-btn primary';
-        this._resumeBtn.innerHTML = this._iconSvg('play') + '<span>RESUME</span>';
-        this._resumeBtn.style.cssText = 'display:inline-flex;align-items:center;gap:10px;';
-        this._resumeBtn.addEventListener('click', () => {
-            if (this.onResume) this.onResume();
-        });
-        btnContainer.appendChild(this._resumeBtn);
+        // 2x2 icon grid
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:14px;';
+        body.appendChild(grid);
 
-        // Restart button
-        this._restartBtn = document.createElement('button');
-        this._restartBtn.className = 'overlay-btn secondary';
-        this._restartBtn.innerHTML = this._iconSvg('restart') + '<span>RESTART</span>';
-        this._restartBtn.style.cssText = 'display:inline-flex;align-items:center;gap:10px;';
-        this._restartBtn.addEventListener('click', () => {
-            if (this.onRestart) this.onRestart();
-        });
-        btnContainer.appendChild(this._restartBtn);
+        // [icon, bgColor, callbackName]
+        const cells = [
+            ['thumb', '#4ECDE6', 'onHowToPlay'],
+            ['star', '#FFC02E', null],
+            ['sun', '#3E9BD6', 'onSoundToggle'],
+            ['chart', '#8BD93C', null],
+        ];
+        for (const [icon, bg, cb] of cells) {
+            grid.appendChild(this._gridButton(icon, bg, cb));
+        }
 
-        // How to Play button
-        this._howToPlayBtn = document.createElement('button');
-        this._howToPlayBtn.className = 'overlay-btn secondary';
-        this._howToPlayBtn.innerHTML = this._iconSvg('help') + '<span>HOW TO PLAY</span>';
-        this._howToPlayBtn.style.cssText = 'display:inline-flex;align-items:center;gap:10px;';
-        this._howToPlayBtn.addEventListener('click', () => {
-            if (this.onHowToPlay) this.onHowToPlay();
-        });
-        btnContainer.appendChild(this._howToPlayBtn);
+        // RESTART (outline)
+        const restart = document.createElement('button');
+        restart.textContent = 'RESTART';
+        restart.style.cssText = this._pillStyle() +
+            'background:#FFFFFF;color:#F2674F;border:2.5px solid #F2674F;';
+        restart.addEventListener('click', () => { if (this.onRestart) this.onRestart(); });
+        body.appendChild(restart);
 
-        // Sound toggle button
-        this._soundBtn = document.createElement('button');
-        this._soundBtn.className = 'overlay-btn secondary';
-        this._soundBtn.style.cssText = 'display:inline-flex;align-items:center;gap:10px;';
-        this._soundBtn.addEventListener('click', () => {
-            if (this.onSoundToggle) this.onSoundToggle();
-        });
-        btnContainer.appendChild(this._soundBtn);
-        this.updateSoundButton(false);
+        // CONTINUE (solid)
+        const cont = document.createElement('button');
+        cont.textContent = 'CONTINUE';
+        cont.style.cssText = this._pillStyle() +
+            'background:#EE4B6A;color:#FFFFFF;border:none;box-shadow:0 4px 12px rgba(238,75,106,0.4);';
+        cont.addEventListener('click', () => { if (this.onResume) this.onResume(); });
+        body.appendChild(cont);
+
+        container.appendChild(card);
+    }
+
+    /** @private Shared pill-button style. */
+    _pillStyle() {
+        return [
+            'width:100%',
+            'min-height:54px',
+            'border-radius:14px',
+            'font-family:inherit',
+            'font-weight:900',
+            'font-size:20px',
+            'letter-spacing:0.06em',
+            'cursor:pointer',
+            'touch-action:manipulation',
+            '',
+        ].join(';');
     }
 
     /**
-     * Show the pause screen and refresh best-score readout.
-     * @param {number} [bestScore]
+     * @private Build a colored icon button for the 2x2 grid.
+     * @param {string} icon
+     * @param {string} bg
+     * @param {string|null} cbName
      */
-    show(bestScore) {
-        if (this._bestScoreEl && typeof bestScore === 'number') {
-            this._bestScoreEl.textContent = formatValue(bestScore);
-        }
+    _gridButton(icon, bg, cbName) {
+        const b = document.createElement('button');
+        b.style.cssText = [
+            'height:66px',
+            `background:${bg}`,
+            'border:none',
+            'border-radius:14px',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+            'color:#FFFFFF',
+            'cursor:pointer',
+            'box-shadow:0 3px 8px rgba(0,0,0,0.18)',
+            'touch-action:manipulation',
+        ].join(';');
+        b.innerHTML = this._iconSvg(icon);
+        b.addEventListener('click', () => {
+            const cb = cbName ? this[cbName] : null;
+            if (cb) cb();
+        });
+        return b;
     }
+
+    /**
+     * Show the pause screen.
+     * @param {number} [bestScore] - unused (HUD shows score); kept for compatibility
+     */
+    show(bestScore) { void bestScore; }
 
     /** Hide the pause screen. Visibility managed by ScreenManager. */
     hide() {}
 
     /**
-     * Update the sound toggle button label.
+     * Kept for compatibility with main.js; sound toggle lives in the HUD speaker.
      * @param {boolean} muted
      */
-    updateSoundButton(muted) {
-        if (!this._soundBtn) return;
-        const icon = this._iconSvg(muted ? 'sound-off' : 'sound-on');
-        const label = muted ? 'SOUND: OFF' : 'SOUND: ON';
-        this._soundBtn.innerHTML = icon + '<span>' + label + '</span>';
-    }
+    updateSoundButton(muted) { void muted; }
 
     /**
-     * Returns an inline SVG string for the named icon, sized 18px.
-     * @param {'play'|'restart'|'help'|'sound-on'|'sound-off'} name
+     * Inline SVG icon (white, 30px) for the menu grid.
+     * @param {'thumb'|'star'|'sun'|'chart'} name
      * @returns {string}
      */
     _iconSvg(name) {
-        const base = 'width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"';
+        const f = 'width="30" height="30" viewBox="0 0 24 24" fill="#FFFFFF"';
         switch (name) {
-            case 'play':
-                return `<svg ${base}><path d="M6 4l14 8-14 8V4z" fill="currentColor"/></svg>`;
-            case 'restart':
-                return `<svg ${base}><path d="M3 12a9 9 0 1 0 3-6.7"/><polyline points="3 4 3 10 9 10"/></svg>`;
-            case 'help':
-                return `<svg ${base}><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 1-1 1.7v.5"/><circle cx="12" cy="17" r="1.1" fill="currentColor" stroke="none"/></svg>`;
-            case 'sound-on':
-                return `<svg ${base}><path d="M3 9.5v5a1 1 0 0 0 1 1h3l4 3.5a1 1 0 0 0 1.6-.8V4.8a1 1 0 0 0-1.6-.8L7 8.5H4a1 1 0 0 0-1 1z" fill="currentColor"/><path d="M15.5 8.5a4.5 4.5 0 0 1 0 7"/><path d="M18.5 5.5a8 8 0 0 1 0 13"/></svg>`;
-            case 'sound-off':
-                return `<svg ${base}><path d="M3 9.5v5a1 1 0 0 0 1 1h3l4 3.5a1 1 0 0 0 1.6-.8V4.8a1 1 0 0 0-1.6-.8L7 8.5H4a1 1 0 0 0-1 1z" fill="currentColor"/><line x1="16" y1="9" x2="22" y2="15"/><line x1="22" y1="9" x2="16" y2="15"/></svg>`;
+            case 'thumb':
+                return `<svg ${f}><path d="M2 10h3v11H2zM7 21h9.3a2 2 0 0 0 2-1.5l1.6-7A1.6 1.6 0 0 0 18.3 10H14V5a2 2 0 0 0-2-2l-3 8v10z"/></svg>`;
+            case 'star':
+                return `<svg ${f}><path d="M12 2l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6L12 17.8 6.1 20.8l1.2-6.6L2.5 9l6.6-.9z"/></svg>`;
+            case 'sun':
+                return `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="#FFFFFF" stroke="none"/><g><line x1="12" y1="2.5" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="21.5"/><line x1="2.5" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="21.5" y2="12"/><line x1="5.2" y1="5.2" x2="7" y2="7"/><line x1="17" y1="17" x2="18.8" y2="18.8"/><line x1="18.8" y1="5.2" x2="17" y2="7"/><line x1="7" y1="17" x2="5.2" y2="18.8"/></g></svg>`;
+            case 'chart':
+                return `<svg ${f}><rect x="3" y="12" width="4.5" height="9" rx="1"/><rect x="9.7" y="7" width="4.5" height="14" rx="1"/><rect x="16.5" y="14" width="4.5" height="7" rx="1"/></svg>`;
             default:
                 return '';
         }
