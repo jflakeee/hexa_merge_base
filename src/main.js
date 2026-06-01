@@ -46,8 +46,10 @@ const howToPlayScreen = new HowToPlayScreen();
 // ============================================================
 let lastTimestamp = 0;
 let running = false;
-/** Last crown coordinate key — used to fire the crown sound only on a real move. */
+/** Last crown coordinate key — used to detect crown moves. */
 let prevCrownKey = null;
+/** Last crown (highest) value — used to detect crown number increases. */
+let prevCrownValue = 0;
 
 // ============================================================
 // Initialization sequence
@@ -276,15 +278,20 @@ function initGame() {
     // 'crownchange' event - detail: { crownCoords: HexCoord[] }
     gameManager.addEventListener('crownchange', (e) => {
         const { crownCoords } = e.detail;
-        const key = (crownCoords && crownCoords.length > 0) ? crownCoords[0].toKey() : null;
-        // Only when the crown actually MOVES to a new tile — dramatic deep+loud
-        // sound. Skip the very first event (game start) so the start stays silent.
-        if (prevCrownKey !== null && key !== null && key !== prevCrownKey) {
-            sfx.play('crownChange'); // bell chime at natural pitch
-            // Background fireworks celebration when the crown moves to a new block.
+        const has = crownCoords && crownCoords.length > 0;
+        const key = has ? crownCoords[0].toKey() : null;
+        const cell = has ? gameManager.grid.getCell(crownCoords[0]) : null;
+        const value = cell ? cell.value : 0;
+        // Celebrate when the crown MOVES to a new tile OR its NUMBER increases.
+        // Skip the very first event (game start) so the start stays silent.
+        const moved = key !== prevCrownKey;
+        const grew = value > prevCrownValue;
+        if (prevCrownKey !== null && has && (moved || grew)) {
+            sfx.play('crownChange'); // bell chime
             fireworks.celebrate(canvas.clientWidth, canvas.clientHeight);
         }
         prevCrownKey = key;
+        prevCrownValue = value;
     });
 
     // Start game
@@ -295,7 +302,8 @@ function initGame() {
  * Start a new game session.
  */
 function startNewGame() {
-    prevCrownKey = null; // suppress crown sound for the initial board
+    prevCrownKey = null;   // suppress crown effect for the initial board
+    prevCrownValue = 0;
     gameManager.startNewGame();
 
     sfx.play('gameStart');
