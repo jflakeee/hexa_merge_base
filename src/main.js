@@ -89,7 +89,7 @@ function initGame() {
     // Input
     inputManager.init();
     inputManager.onCellTap = (coord) => {
-        sfx.play('tap');
+        // No click/tap sound — only merges produce sound (mergeStep per cascade level).
         gameManager.handleTap(coord);
     };
 
