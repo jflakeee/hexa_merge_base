@@ -30,10 +30,10 @@ const INITIAL_TILE_COUNT = 5;
  * Display range ratio: when a new max block appears, blocks smaller than
  * (max / MIN_DISPLAY_RATIO) are cleared. A larger ratio keeps a WIDER span of
  * values on the board at once (expanded min-vs-max display range).
- * 4096 = 2^12 → up to ~12 value levels visible (was 128 = 2^7 → ~7 levels).
+ * 16384 = 2^14 → up to ~14 value levels visible (was 128 = 2^7 → ~7 levels).
  * @type {number}
  */
-const MIN_DISPLAY_RATIO = 4096;
+const MIN_DISPLAY_RATIO = 16384;
 
 /**
  * Main game manager.
