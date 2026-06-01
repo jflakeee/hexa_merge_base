@@ -208,8 +208,9 @@ function initGame() {
                 const delay = gi * MOVE_DUR; // gi 0 = deepest leaves -> earliest
 
                 // Per-step merge sound: pitch climbs each cascade level
-                // (deepest first = lowest), matching the benchmark chain rise.
-                const rate = Math.min(1 + gi * 0.13, 2.2);
+                // (deepest first = lowest). Steeper rise per step for a more
+                // pronounced chain escalation.
+                const rate = Math.min(1 + gi * 0.22, 3.0);
                 if (gi === 0) sfx.play('mergeStep', 1, rate);
                 else setTimeout(() => sfx.play('mergeStep', 1, rate), delay * 1000);
 
