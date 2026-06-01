@@ -37,7 +37,8 @@ export class SampleSFX {
             chainCombo:  { clip: 'chain', vol: 0.9 },
             milestone:   { clip: 'celebrate', vol: 0.85 },
             crownChange: { clip: 'merge', vol: 0.8 },
-            gameStart:   { clip: 'chain', vol: 0.7 },
+            // gameStart intentionally silent — the benchmark plays no start sound
+            // (landing video is silent; main capture is silent until first tap).
             gameOver:    { clip: 'celebrate', vol: 0.9 },
         };
     }

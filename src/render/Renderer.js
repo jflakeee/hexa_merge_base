@@ -212,6 +212,8 @@ export class Renderer {
             let offX = 0;
             let offY = 0;
 
+            let displayValue = cell.value;
+
             if (animations) {
                 const animState = animations.getAnimationState(coordKey);
                 if (animState) {
@@ -220,9 +222,12 @@ export class Renderer {
                     offX = animState.offsetX;
                     offY = animState.offsetY;
                 }
+                if (animations.getDisplayValue) {
+                    displayValue = animations.getDisplayValue(coordKey, cell.value);
+                }
             }
 
-            drawCell(ctx, x + offX, y + offY, this._hexSize * TILE_FILL_RATIO, cell.value, {
+            drawCell(ctx, x + offX, y + offY, this._hexSize * TILE_FILL_RATIO, displayValue, {
                 hasCrown: cell.hasCrown,
                 scale,
                 alpha,

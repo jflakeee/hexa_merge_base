@@ -91,6 +91,8 @@ export class TileAnimator {
         this.activeAnimations = [];
         this.scorePopups = [];
         this.shakeOffset = { shakeX: 0, shakeY: 0 };
+        /** @type {Object<string, number>} coordKey -> temporary display value during a merge count-up */
+        this.valueOverrides = {};
     }
 
     // ----------------------------------------------------------
@@ -107,7 +109,18 @@ export class TileAnimator {
             const anim = this.activeAnimations[i];
             anim.elapsed += dt;
 
+            // Merge value count-up: step the displayed value base -> ... -> final.
+            if (anim.type === 'value_countup') {
+                const t = Math.min(anim.elapsed / anim.duration, 1);
+                const steps = anim.data.stepValues;
+                const idx = Math.min(Math.floor(t * (steps.length + 1)), steps.length);
+                this.valueOverrides[anim.coordKey] = idx === 0 ? anim.data.baseValue : steps[idx - 1];
+            }
+
             if (anim.elapsed >= anim.duration) {
+                if (anim.type === 'value_countup') {
+                    delete this.valueOverrides[anim.coordKey];
+                }
                 anim.elapsed = anim.duration;
                 // Fire resolve callback
                 if (anim.resolve) {
@@ -337,6 +350,42 @@ export class TileAnimator {
     }
 
     /**
+     * Play a merge value count-up: the merged tile's displayed value climbs
+     * base -> step -> ... -> final over the cascade, instead of snapping to the
+     * final value instantly. (Renderer reads getDisplayValue.)
+     * @param {string} coordKey - Coordinate key of the merge target
+     * @param {number} baseValue - Original tile value before merging
+     * @param {number[]} stepValues - Doubling sequence ending at the final value
+     * @param {number} [duration=0.4]
+     * @returns {Promise<void>}
+     */
+    playValueCountUp(coordKey, baseValue, stepValues, duration = 0.4) {
+        return new Promise((resolve) => {
+            this.valueOverrides[coordKey] = baseValue;
+            this.activeAnimations.push({
+                type: 'value_countup',
+                coordKey,
+                duration,
+                elapsed: 0,
+                resolve,
+                data: { baseValue, stepValues },
+            });
+        });
+    }
+
+    /**
+     * Get the value to display for a cell, honoring an active count-up override.
+     * @param {string} coordKey
+     * @param {number} actualValue
+     * @returns {number}
+     */
+    getDisplayValue(coordKey, actualValue) {
+        return Object.prototype.hasOwnProperty.call(this.valueOverrides, coordKey)
+            ? this.valueOverrides[coordKey]
+            : actualValue;
+    }
+
+    /**
      * Play a score popup: text rises and fades.
      * @param {number} x - Screen x position
      * @param {number} y - Screen y position
@@ -435,6 +484,7 @@ export class TileAnimator {
             }
         }
         this.activeAnimations.length = 0;
+        this.valueOverrides = {};
 
         for (const popup of this.scorePopups) {
             if (popup.resolve) {
