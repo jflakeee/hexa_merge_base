@@ -81,23 +81,14 @@ export class GameManager extends EventTarget {
         this.grid.initialize();
         this.score.reset();
 
-        // Place initial tiles ensuring at least one merge is possible
+        // Fill the ENTIRE board with tiles (benchmark starts with no empty cells),
+        // retrying until at least one merge is possible.
         let attempts = 0;
         do {
-            // Clear all cells
             const allCells = this.grid.getAllCells();
             for (const cell of allCells) {
-                cell.clear();
-            }
-
-            // Pick INITIAL_TILE_COUNT random positions
-            const allCoords = this.grid.allCoords;
-            this._shuffle(allCoords);
-            for (let i = 0; i < INITIAL_TILE_COUNT && i < allCoords.length; i++) {
-                const cell = this.grid.getCell(allCoords[i]);
                 cell.setValue(TileHelper.getInitialValue());
             }
-
             attempts++;
         } while (!this.grid.hasValidMerge() && attempts < 100);
 

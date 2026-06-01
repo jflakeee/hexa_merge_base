@@ -207,9 +207,9 @@ export class MergeEffect {
      * @param {number} tgtX
      * @param {number} tgtY
      * @param {string} color - CSS hex color
-     * @param {number} [duration=0.44]
+     * @param {number} [duration=0.5]
      */
-    playSplat(srcX, srcY, tgtX, tgtY, color, duration = 0.44) {
+    playSplat(srcX, srcY, tgtX, tgtY, color, duration = 0.5) {
         this.splats.push({
             srcX,
             srcY,
@@ -222,7 +222,7 @@ export class MergeEffect {
             elapsed: 0,
             scale: 0,
             alpha: 1,
-            baseSize: 15,
+            baseSize: 20,
         });
     }
 
@@ -269,19 +269,44 @@ export class MergeEffect {
         }
     }
 
-    /** @private */
+    /** @private
+     * Draw each splat as a viscous honey droplet: a head blob with a tapering
+     * tail trailing back toward its source, with soft (blurred) edges so the
+     * overlapping blobs read as one connected, high-viscosity liquid streak
+     * flowing into the merge target.
+     */
     _drawSplats(ctx) {
         for (const s of this.splats) {
             if (s.alpha <= 0 || s.scale <= 0) continue;
 
             ctx.save();
             ctx.globalAlpha = s.alpha;
-
-            // Draw as an elongated blob
-            const radius = s.baseSize * s.scale;
-            ctx.beginPath();
-            ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
             ctx.fillStyle = hexToRGBA(s.color, 1);
+            // Gooey soft edges so the blobs blend like thick liquid.
+            ctx.shadowColor = hexToRGBA(s.color, 0.95);
+            ctx.shadowBlur = s.baseSize * 0.9;
+
+            const r = s.baseSize * s.scale;
+
+            // Unit vector pointing back toward the source (the trailing tail).
+            let ux = s.srcX - s.x;
+            let uy = s.srcY - s.y;
+            const len = Math.hypot(ux, uy);
+            if (len > 0.001) { ux /= len; uy /= len; }
+
+            // Tail end behind the head; three tapering blobs form the stretch.
+            const stretch = r * 1.8;
+            const tx = s.x + ux * stretch;
+            const ty = s.y + uy * stretch;
+
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc((s.x + tx) / 2, (s.y + ty) / 2, r * 0.72, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(tx, ty, r * 0.45, 0, Math.PI * 2);
             ctx.fill();
 
             ctx.restore();
