@@ -200,6 +200,14 @@ function initGame() {
             const toCoordKey = result.tapCoord.toKey();
             const toPosition = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
             animator.playMergeAnimation(fromPositions, toCoordKey, toPosition);
+
+            // Value count-up: for multi-step merges the target value climbs
+            // base -> ... -> final over the cascade instead of snapping instantly.
+            if (result.stepValues && result.stepValues.length >= 2) {
+                const groups = result.depthGroups ? result.depthGroups.length : 1;
+                const cascadeDur = groups * 0.07 + 0.45;
+                animator.playValueCountUp(toCoordKey, result.baseValue, result.stepValues, cascadeDur);
+            }
         }
 
         // Visual merge effect — tree-structured sequential cascade:
