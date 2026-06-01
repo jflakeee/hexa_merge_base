@@ -257,13 +257,23 @@
     }
     #loading-text {
       position: absolute;
-      bottom: calc(4% + env(safe-area-inset-bottom));
+      bottom: calc(5% + env(safe-area-inset-bottom));
       color: #b0b0b8;
       font-family: 'Nunito', sans-serif;
       font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.18em;
       animation: pulse 2s infinite;
+      z-index: 2;
+    }
+    #build-time {
+      position: absolute;
+      bottom: calc(1.8% + env(safe-area-inset-bottom));
+      color: #9a9aa2;
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
       z-index: 2;
     }
 
@@ -352,6 +362,7 @@
     <div id="loading-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
     <div id="loading-publisher">GAMEGOS</div>
     <div id="loading-text">Tap to start</div>
+    <div id="build-time">최근 업데이트: <span id="bt">2026-06-01 13:08:46 KST</span></div>
   </div>
 
   <script type="module" src="src/main.js"></script>
