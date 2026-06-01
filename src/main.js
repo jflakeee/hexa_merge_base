@@ -17,7 +17,6 @@ import { HUDManager } from './ui/HUDManager.js';
 import { GameOverScreen } from './ui/GameOverScreen.js';
 import { PauseScreen } from './ui/PauseScreen.js';
 import { HowToPlayScreen } from './ui/HowToPlayScreen.js';
-import { getColor } from './config/tileColors.js';
 import { HexCoord } from './core/HexCoord.js';
 // ============================================================
 // DOM References
@@ -192,47 +191,37 @@ function initGame() {
             animator.playScorePopup(pos.x, pos.y, result.scoreGained);
         }
 
-        // Merge movement animation: source cells slide to target
-        if (result.mergedCoords && result.tapCoord) {
-            const fromPositions = result.mergedCoords.map((coord) => {
-                return renderer.hexToPixel(coord.q, coord.r);
-            });
-            const toCoordKey = result.tapCoord.toKey();
-            const toPosition = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
-            animator.playMergeAnimation(fromPositions, toCoordKey, toPosition);
-
-            // Value count-up: for multi-step merges the target value climbs
-            // base -> ... -> final over the cascade instead of snapping instantly.
-            if (result.stepValues && result.stepValues.length >= 2) {
-                const groups = result.depthGroups ? result.depthGroups.length : 1;
-                const cascadeDur = groups * 0.07 + 0.45;
-                animator.playValueCountUp(toCoordKey, result.baseValue, result.stepValues, cascadeDur);
-            }
-        }
-
-        // Visual merge effect — tree-structured sequential cascade:
-        // depthGroups are deepest-first, so the deepest tiles dissolve into
-        // viscous liquid that flows along each tree edge toward its PARENT,
-        // rippling inward toward the tapped target one depth level at a time.
+        // Tree-structured sequential merge: the tapped tile is the root and the
+        // merged cluster collapses inward. Each tile slides to its PARENT;
+        // deepest leaves (depthGroups[0]) move first, then their parents, and so
+        // on up to the root — level by level. No liquid/metaball effect.
         if (result.tapCoord && result.depthGroups) {
-            const color = getColor(result.resultValue);
-            const parentMap = result.parentMap;
-            const STAGGER_MS = 70; // delay per depth level
+            const rootKey = result.tapCoord.toKey();
+            const MOVE_DUR = 0.16; // seconds per level slide
 
+            const movers = [];
             result.depthGroups.forEach((group, gi) => {
-                const fire = () => {
-                    for (const coord of group) {
-                        const src = renderer.hexToPixel(coord.q, coord.r);
-                        const pKey = parentMap && parentMap.get(coord.toKey());
-                        const pCoord = pKey ? HexCoord.fromKey(pKey) : result.tapCoord;
-                        const dst = renderer.hexToPixel(pCoord.q, pCoord.r);
-                        effects.playSplat(src.x, src.y, dst.x, dst.y, color);
-                        effects.playSplash(dst.x, dst.y, color);
-                    }
-                };
-                if (gi === 0) fire();
-                else setTimeout(fire, gi * STAGGER_MS);
+                const delay = gi * MOVE_DUR; // gi 0 = deepest leaves -> earliest
+                for (const coord of group) {
+                    const from = renderer.hexToPixel(coord.q, coord.r);
+                    const pKey = result.parentMap && result.parentMap.get(coord.toKey());
+                    const pCoord = pKey ? HexCoord.fromKey(pKey) : result.tapCoord;
+                    const to = renderer.hexToPixel(pCoord.q, pCoord.r);
+                    movers.push({
+                        fromX: from.x, fromY: from.y,
+                        toX: to.x, toY: to.y,
+                        value: result.baseValue,
+                        delay, dur: MOVE_DUR,
+                    });
+                }
             });
+            animator.playTreeMerge(movers);
+
+            // Root value climbs base -> ... -> final as the levels arrive.
+            if (result.stepValues && result.stepValues.length >= 1) {
+                const total = result.depthGroups.length * MOVE_DUR + MOVE_DUR;
+                animator.playValueCountUp(rootKey, result.baseValue, result.stepValues, total);
+            }
         }
     });
 

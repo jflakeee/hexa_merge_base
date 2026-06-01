@@ -36,6 +36,15 @@ export function easeInQuad(t) {
 }
 
 /**
+ * Smooth ease in/out.
+ * @param {number} t
+ * @returns {number}
+ */
+export function easeInOutQuad(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+/**
  * @param {number} t
  * @returns {number}
  */
@@ -93,6 +102,11 @@ export class TileAnimator {
         this.shakeOffset = { shakeX: 0, shakeY: 0 };
         /** @type {Object<string, number>} coordKey -> temporary display value during a merge count-up */
         this.valueOverrides = {};
+        /**
+         * Tiles sliding toward their tree parent during a sequential merge.
+         * @type {Array<{fromX:number,fromY:number,toX:number,toY:number,value:number,delay:number,dur:number,elapsed:number}>}
+         */
+        this.mergeMovers = [];
     }
 
     // ----------------------------------------------------------
@@ -155,6 +169,15 @@ export class TileAnimator {
                 this.scorePopups.splice(i, 1);
             }
         }
+
+        // Advance merge movers; drop them once they reach the parent.
+        for (let i = this.mergeMovers.length - 1; i >= 0; i--) {
+            const m = this.mergeMovers[i];
+            m.elapsed += dt;
+            if (m.elapsed >= m.delay + m.dur) {
+                this.mergeMovers.splice(i, 1);
+            }
+        }
     }
 
     /**
@@ -163,7 +186,8 @@ export class TileAnimator {
      */
     hasActiveAnimations() {
         return this.activeAnimations.length > 0
-            || this.scorePopups.length > 0;
+            || this.scorePopups.length > 0
+            || this.mergeMovers.length > 0;
     }
 
     /**
@@ -386,6 +410,43 @@ export class TileAnimator {
     }
 
     /**
+     * Queue a tree-structured merge: each entry is a tile sliding from its own
+     * position to its parent's position. Deepest leaves use the smallest delay
+     * so the cluster collapses inward toward the tapped root, level by level.
+     * @param {Array<{fromX:number,fromY:number,toX:number,toY:number,value:number,delay:number,dur:number}>} movers
+     */
+    playTreeMerge(movers) {
+        for (const m of movers) {
+            this.mergeMovers.push({ ...m, elapsed: 0 });
+        }
+    }
+
+    /**
+     * Current render state for each active merge mover.
+     * Before its delay the tile waits at its origin; then it eases to the
+     * parent, fading out over the final stretch as it is absorbed.
+     * @returns {Array<{x:number,y:number,value:number,alpha:number}>}
+     */
+    getMergeMovers() {
+        const out = [];
+        for (const m of this.mergeMovers) {
+            if (m.elapsed < m.delay) {
+                out.push({ x: m.fromX, y: m.fromY, value: m.value, alpha: 1 });
+                continue;
+            }
+            const t = Math.min((m.elapsed - m.delay) / m.dur, 1);
+            const e = easeInOutQuad(t);
+            out.push({
+                x: lerp(m.fromX, m.toX, e),
+                y: lerp(m.fromY, m.toY, e),
+                value: m.value,
+                alpha: t > 0.75 ? lerp(1, 0, (t - 0.75) / 0.25) : 1,
+            });
+        }
+        return out;
+    }
+
+    /**
      * Play a score popup: text rises and fades.
      * @param {number} x - Screen x position
      * @param {number} y - Screen y position
@@ -485,6 +546,7 @@ export class TileAnimator {
         }
         this.activeAnimations.length = 0;
         this.valueOverrides = {};
+        this.mergeMovers.length = 0;
 
         for (const popup of this.scorePopups) {
             if (popup.resolve) {
