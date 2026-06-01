@@ -18,6 +18,7 @@ import { GameOverScreen } from './ui/GameOverScreen.js';
 import { PauseScreen } from './ui/PauseScreen.js';
 import { HowToPlayScreen } from './ui/HowToPlayScreen.js';
 import { getColor } from './config/tileColors.js';
+import { HexCoord } from './core/HexCoord.js';
 // ============================================================
 // DOM References
 // ============================================================
@@ -201,24 +202,29 @@ function initGame() {
             animator.playMergeAnimation(fromPositions, toCoordKey, toPosition);
         }
 
-        // Visual merge effect — liquid splats flow from sources into the target,
-        // then a splash + particle burst scaled by how many tiles merged.
-        // Colored with the resulting tile's color (matches benchmark feel).
-        if (result.tapCoord) {
+        // Visual merge effect — tree-structured sequential cascade:
+        // depthGroups are deepest-first, so the deepest tiles dissolve into
+        // viscous liquid that flows along each tree edge toward its PARENT,
+        // rippling inward toward the tapped target one depth level at a time.
+        if (result.tapCoord && result.depthGroups) {
             const color = getColor(result.resultValue);
-            const target = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
+            const parentMap = result.parentMap;
+            const STAGGER_MS = 70; // delay per depth level
 
-            if (result.mergedCoords) {
-                for (let i = 1; i < result.mergedCoords.length; i++) {
-                    const c = result.mergedCoords[i];
-                    const src = renderer.hexToPixel(c.q, c.r);
-                    effects.playSplat(src.x, src.y, target.x, target.y, color);
-                }
-            }
-
-            const tileCount = result.mergedCoords ? result.mergedCoords.length : 2;
-            effects.playSplash(target.x, target.y, color);
-            effects.playParticleBurst(target.x, target.y, color, Math.min(6 + tileCount * 2, 22));
+            result.depthGroups.forEach((group, gi) => {
+                const fire = () => {
+                    for (const coord of group) {
+                        const src = renderer.hexToPixel(coord.q, coord.r);
+                        const pKey = parentMap && parentMap.get(coord.toKey());
+                        const pCoord = pKey ? HexCoord.fromKey(pKey) : result.tapCoord;
+                        const dst = renderer.hexToPixel(pCoord.q, pCoord.r);
+                        effects.playSplat(src.x, src.y, dst.x, dst.y, color);
+                        effects.playSplash(dst.x, dst.y, color);
+                    }
+                };
+                if (gi === 0) fire();
+                else setTimeout(fire, gi * STAGGER_MS);
+            });
         }
     });
 

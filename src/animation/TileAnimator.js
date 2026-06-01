@@ -169,8 +169,9 @@ export class TileAnimator {
 
             switch (anim.type) {
                 case 'spawn':
+                    // Smooth non-bouncy grow (benchmark has no elastic overshoot).
                     return {
-                        scale: easeOutElastic(t),
+                        scale: easeOutQuad(t),
                         alpha: 1,
                         offsetX: 0,
                         offsetY: 0,
@@ -310,10 +311,9 @@ export class TileAnimator {
             });
         });
 
-        // After all moves complete, play a scale punch on the target
-        return Promise.all(movePromises).then(() => {
-            return this._playScalePunch(toCoordKey, 0.15);
-        });
+        // Sources flow into the target and are absorbed — no bouncy scale punch
+        // (benchmark merges look like viscous liquid combining, not a pop).
+        return Promise.all(movePromises);
     }
 
     /**
