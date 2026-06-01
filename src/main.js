@@ -44,6 +44,8 @@ const howToPlayScreen = new HowToPlayScreen();
 // ============================================================
 let lastTimestamp = 0;
 let running = false;
+/** Last crown coordinate key — used to fire the crown sound only on a real move. */
+let prevCrownKey = null;
 
 // ============================================================
 // Initialization sequence
@@ -181,9 +183,11 @@ function initGame() {
     gameManager.addEventListener('merge', (e) => {
         const { result } = e.detail;
 
-        // Play merge SFX based on resulting tile value
-        const soundName = sfx.getMergeSoundName(result.resultValue);
-        sfx.play(soundName);
+        // Merge SFX is played per cascade level (rising pitch) in the block below.
+        // Fallback: a single tick if there is no depth structure.
+        if (!result.depthGroups || result.depthGroups.length === 0) {
+            sfx.play('mergeStep');
+        }
 
         // Score popup animation at merge target position
         if (result.tapCoord) {
@@ -202,6 +206,13 @@ function initGame() {
             const movers = [];
             result.depthGroups.forEach((group, gi) => {
                 const delay = gi * MOVE_DUR; // gi 0 = deepest leaves -> earliest
+
+                // Per-step merge sound: pitch climbs each cascade level
+                // (deepest first = lowest), matching the benchmark chain rise.
+                const rate = Math.min(1 + gi * 0.13, 2.2);
+                if (gi === 0) sfx.play('mergeStep', 1, rate);
+                else setTimeout(() => sfx.play('mergeStep', 1, rate), delay * 1000);
+
                 for (const coord of group) {
                     const from = renderer.hexToPixel(coord.q, coord.r);
                     const pKey = result.parentMap && result.parentMap.get(coord.toKey());
@@ -262,9 +273,13 @@ function initGame() {
     // 'crownchange' event - detail: { crownCoords: HexCoord[] }
     gameManager.addEventListener('crownchange', (e) => {
         const { crownCoords } = e.detail;
-        if (crownCoords && crownCoords.length > 0) {
-            sfx.play('crownChange');
+        const key = (crownCoords && crownCoords.length > 0) ? crownCoords[0].toKey() : null;
+        // Only when the crown actually MOVES to a new tile — dramatic deep+loud
+        // sound. Skip the very first event (game start) so the start stays silent.
+        if (prevCrownKey !== null && key !== null && key !== prevCrownKey) {
+            sfx.play('crownChange', 1, 0.8);
         }
+        prevCrownKey = key;
     });
 
     // Start game
@@ -275,6 +290,7 @@ function initGame() {
  * Start a new game session.
  */
 function startNewGame() {
+    prevCrownKey = null; // suppress crown sound for the initial board
     gameManager.startNewGame();
 
     sfx.play('gameStart');
