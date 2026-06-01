@@ -34,9 +34,12 @@ export class SampleSFX {
             mergeMid:    { clip: 'merge', vol: 0.9 },
             mergeHigh:   { clip: 'chain', vol: 0.85 },
             mergeUltra:  { clip: 'chain', vol: 0.95 },
+            // Per-cascade-level merge tick (pitch raised per step by the caller).
+            mergeStep:   { clip: 'merge', vol: 0.6 },
             chainCombo:  { clip: 'chain', vol: 0.9 },
             milestone:   { clip: 'celebrate', vol: 0.85 },
-            crownChange: { clip: 'merge', vol: 0.8 },
+            // Crown move — dramatic: richer chain clip, played deep + loud.
+            crownChange: { clip: 'chain', vol: 1.0 },
             // gameStart intentionally silent — the benchmark plays no start sound
             // (landing video is silent; main capture is silent until first tap).
             gameOver:    { clip: 'celebrate', vol: 0.9 },
@@ -75,8 +78,9 @@ export class SampleSFX {
      * Play an SFX by logical event name.
      * @param {string} name
      * @param {number} [volume=1] - extra multiplier
+     * @param {number} [playbackRate=1] - pitch/speed; >1 higher, <1 lower/deeper
      */
-    play(name, volume = 1) {
+    play(name, volume = 1, playbackRate = 1) {
         if (this.muted || !this.audioContext) return;
         const entry = this._map[name];
         if (!entry) return;
@@ -85,6 +89,7 @@ export class SampleSFX {
 
         const source = this.audioContext.createBufferSource();
         source.buffer = buffer;
+        if (playbackRate !== 1) source.playbackRate.value = playbackRate;
         const gain = this.audioContext.createGain();
         gain.gain.value = entry.vol * volume;
         source.connect(gain);
