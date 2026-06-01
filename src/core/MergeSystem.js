@@ -107,18 +107,10 @@ export class MergeSystem {
         // cascade animation grouping, not for the merge value).
         const depthLevels = depthGroupsMap.size;
 
-        // Merge value follows the tree structure: each parent node that absorbs
-        // its children multiplies the value — ×2 for a single child, ×4 when the
-        // parent has 2 or more children. The total exponent is the sum of these
-        // per-parent contributions (×2 = exponent 1, ×4 = exponent 2).
-        const childCount = new Map();
-        for (const [, parentKey] of parentMap) {
-            childCount.set(parentKey, (childCount.get(parentKey) || 0) + 1);
-        }
-        let mergeExponent = 0;
-        for (const [, count] of childCount) {
-            mergeExponent += count >= 2 ? 2 : 1;
-        }
+        // Merge value follows the How To Play rule: result = base × 2^floor(log2(N))
+        // where N = total merged tiles. 2 tiles → ×2, 4 → ×4, 8 → ×8
+        // ("at least N tiles → ×N"; thresholds at powers of 2, shape-independent).
+        const mergeExponent = Math.floor(Math.log2(totalCells));
         const mergedValue = this._calculateMergeValue(baseValue, mergeExponent);
 
         // StepValues: one per doubling step (drives intermediate count-up visuals)
