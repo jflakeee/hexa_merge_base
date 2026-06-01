@@ -151,7 +151,7 @@ export class Renderer {
      * @param {import('../animation/TileAnimator.js').TileAnimator} [animations=null]
      * @param {import('../animation/MergeEffect.js').MergeEffect} [effects=null]
      */
-    render(grid, animations = null, effects = null) {
+    render(grid, animations = null, effects = null, fireworks = null) {
         const ctx = this._ctx;
         const canvas = this._canvas;
         const containerW = canvas.width / this._dpr;
@@ -159,6 +159,11 @@ export class Renderer {
 
         // 1) Clear entire canvas
         ctx.clearRect(0, 0, containerW, containerH);
+
+        // 1b) Background fireworks (behind the board)
+        if (fireworks) {
+            fireworks.draw(ctx);
+        }
 
         // 2) Draw board background (empty cell placeholders)
         this._drawBackground(ctx, grid);
