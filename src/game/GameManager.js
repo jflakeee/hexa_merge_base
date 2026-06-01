@@ -27,6 +27,15 @@ export const GameState = Object.freeze({
 const INITIAL_TILE_COUNT = 5;
 
 /**
+ * Display range ratio: when a new max block appears, blocks smaller than
+ * (max / MIN_DISPLAY_RATIO) are cleared. A larger ratio keeps a WIDER span of
+ * values on the board at once (expanded min-vs-max display range).
+ * 4096 = 2^12 → up to ~12 value levels visible (was 128 = 2^7 → ~7 levels).
+ * @type {number}
+ */
+const MIN_DISPLAY_RATIO = 4096;
+
+/**
  * Main game manager.
  *
  * Events dispatched (via CustomEvent on EventTarget):
@@ -98,13 +107,13 @@ export class GameManager extends EventTarget {
 
     /**
      * Handle a tap on a hex coordinate.
-     * Performs merge, scoring, 128x destruction rule, refill, crown update, and game over check.
+     * Performs merge, scoring, display-range destruction rule, refill, crown update, and game over check.
      * @param {import('../core/HexCoord.js').HexCoord} coord
      */
     handleTap(coord) {
         if (this.state !== GameState.PLAYING) return;
 
-        // Record previous max value for 128x destruction rule
+        // Record previous max value for the display-range destruction rule
         const previousMax = this._getHighestValue();
 
         const result = this.mergeSystem.tryMerge(coord);
@@ -116,7 +125,8 @@ export class GameManager extends EventTarget {
         // Dispatch merge event
         this._dispatch('merge', { result });
 
-        // 128x destruction rule: if new max block was created, destroy blocks <= maxValue/128
+        // Display-range rule: if a new max block was created, clear blocks that
+        // are now too small relative to it (value <= max / MIN_DISPLAY_RATIO).
         if (result.resultValue > previousMax) {
             this.destroySmallBlocks(result.resultValue);
         }
@@ -133,11 +143,11 @@ export class GameManager extends EventTarget {
     }
 
     /**
-     * Destroy all blocks with value <= maxValue / 128.
+     * Destroy all blocks with value <= maxValue / MIN_DISPLAY_RATIO.
      * @param {number} maxValue - The new maximum value on the board
      */
     destroySmallBlocks(maxValue) {
-        const threshold = maxValue / 128;
+        const threshold = maxValue / MIN_DISPLAY_RATIO;
         if (threshold < TileHelper.MIN_VALUE) return;
 
         let destroyed = 0;
@@ -151,7 +161,7 @@ export class GameManager extends EventTarget {
         }
 
         if (destroyed > 0) {
-            console.log(`[GameManager] 128x rule: destroyed ${destroyed} blocks <= ${threshold}`);
+            console.log(`[GameManager] display-range rule (1/${MIN_DISPLAY_RATIO}): destroyed ${destroyed} blocks <= ${threshold}`);
         }
     }
 
