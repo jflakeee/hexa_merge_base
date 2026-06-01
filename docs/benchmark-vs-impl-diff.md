@@ -123,7 +123,14 @@
 - [x] **#4 애니메이션** — splat(소스→타깃)·입자 폭발 연결 + 타일 색·크기, 입자 수 병합 타일 비례 (`0406505`)
 - [x] **#5 화면** — HUD(XUP/HI-SCORE, `11d8adf`), 스플래시(XUP+GAMEGOS, `a24988c`), 일시정지 MENU(`5cfed21`), 게임오버 축하카드+점수 전체자릿수(`9eb1153`), HowToPlay 시각데모(`f3edaef`)
 
-전 항목 Playwright 스크린샷/런타임으로 검증. 남은 정밀화 여지: 애니메이션 단일 병합의 정확 프레임 타이밍(고립 병합 추가 분석 필요), gameOver/gameStart 전용 효과음(현재 chain 재사용), 배포본 vs 로컬 소스 정합(§6).
+전 항목 Playwright 스크린샷/런타임으로 검증.
+
+### 추가 게임필 보정 (2026-06-01, 커밋 `6a183c7`, 사용자 대조 검토 반영)
+- [x] **시작 풀보드** — `GameManager.startNewGame`이 5개만 배치하던 것을 전 셀 채움으로(빈칸 없음, 벤치마크 일치).
+- [x] **트리구조 단계별 순차 병합** — `main.js` 병합 핸들러가 동시 처리하던 것을, `depthGroups`(깊은 순)별 stagger(70ms)로 각 타일이 `parentMap` 따라 부모로 흘러 안쪽으로 cascade.
+- [x] **통통튀기 제거 + 점성 액체** — `TileAnimator` 병합 scale_punch 제거·스폰 elastic→easeOutQuad. `MergeEffect.playSplat`을 꿀방울(머리+꼬리+shadowBlur metaball)로 재작성, 입자 폭발 제거. (벤치 원본의 "꿀처럼 점도 높은 액체가 병합 방향으로 스며드는" 효과)
+
+남은 정밀화 여지: 병합 cascade 중 값 카운트업(stepValues 시각화), gameStart 전용 효과음(현재 chain 재사용).
 
 ---
 
