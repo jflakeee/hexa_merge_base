@@ -280,7 +280,7 @@ function initGame() {
         // Only when the crown actually MOVES to a new tile — dramatic deep+loud
         // sound. Skip the very first event (game start) so the start stays silent.
         if (prevCrownKey !== null && key !== null && key !== prevCrownKey) {
-            sfx.play('crownChange', 1, 0.8);
+            sfx.play('crownChange'); // bell chime at natural pitch
             // Background fireworks celebration when the crown moves to a new block.
             fireworks.celebrate(canvas.clientWidth, canvas.clientHeight);
         }

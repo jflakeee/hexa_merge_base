@@ -22,6 +22,7 @@ export class SampleSFX {
             merge: 'audio/sfx/merge.wav',
             chain: 'audio/sfx/chain.wav',
             celebrate: 'audio/sfx/celebrate.wav',
+            bell: 'audio/sfx/bell.wav',
         };
 
         // Logical event name -> clip + volume.
@@ -38,8 +39,8 @@ export class SampleSFX {
             mergeStep:   { clip: 'merge', vol: 0.6 },
             chainCombo:  { clip: 'chain', vol: 0.9 },
             milestone:   { clip: 'celebrate', vol: 0.85 },
-            // Crown move — dramatic: richer chain clip, played deep + loud.
-            crownChange: { clip: 'chain', vol: 1.0 },
+            // Crown move — bell chime (종소리).
+            crownChange: { clip: 'bell', vol: 0.9 },
             // gameStart intentionally silent — the benchmark plays no start sound
             // (landing video is silent; main capture is silent until first tap).
             gameOver:    { clip: 'celebrate', vol: 0.9 },
