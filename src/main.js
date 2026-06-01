@@ -11,6 +11,7 @@ import { InputManager } from './game/InputManager.js';
 import { Renderer } from './render/Renderer.js';
 import { TileAnimator } from './animation/TileAnimator.js';
 import { MergeEffect } from './animation/MergeEffect.js';
+import { Fireworks } from './animation/Fireworks.js';
 import { SampleSFX } from './audio/SampleSFX.js';
 import { ScreenManager } from './ui/ScreenManager.js';
 import { HUDManager } from './ui/HUDManager.js';
@@ -32,6 +33,7 @@ const renderer = new Renderer(canvas);
 const inputManager = new InputManager(canvas, renderer);
 const animator = new TileAnimator();
 const effects = new MergeEffect();
+const fireworks = new Fireworks();
 const gameManager = new GameManager();
 const screenManager = new ScreenManager();
 const hudManager = new HUDManager();
@@ -279,6 +281,8 @@ function initGame() {
         // sound. Skip the very first event (game start) so the start stays silent.
         if (prevCrownKey !== null && key !== null && key !== prevCrownKey) {
             sfx.play('crownChange', 1, 0.8);
+            // Background fireworks celebration when the crown moves to a new block.
+            fireworks.celebrate(canvas.clientWidth, canvas.clientHeight);
         }
         prevCrownKey = key;
     });
@@ -328,9 +332,10 @@ function gameLoop(timestamp) {
     // Update animations
     animator.update(clampedDt);
     effects.update(clampedDt);
+    fireworks.update(clampedDt);
 
     // Render the current frame
-    renderer.render(gameManager.grid, animator, effects);
+    renderer.render(gameManager.grid, animator, effects, fireworks);
 
     // Next frame
     requestAnimationFrame(gameLoop);
