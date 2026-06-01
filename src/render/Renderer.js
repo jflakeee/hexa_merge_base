@@ -166,6 +166,18 @@ export class Renderer {
         // 3) Draw tiles
         this._drawTiles(ctx, grid, animations);
 
+        // 3b) Draw merge movers (tiles sliding toward their tree parent)
+        if (animations && animations.getMergeMovers) {
+            const drawSize = this._hexSize * TILE_FILL_RATIO;
+            for (const m of animations.getMergeMovers()) {
+                drawCell(ctx, m.x, m.y, drawSize, m.value, {
+                    scale: 1,
+                    alpha: m.alpha,
+                    highlight: true,
+                });
+            }
+        }
+
         // 4) Draw effects (particles, splashes)
         if (effects) {
             effects.draw(ctx);
