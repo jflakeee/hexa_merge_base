@@ -102,16 +102,20 @@ export function getNewTileValue() {
 }
 
 /**
- * Generate an initial board tile value with broader distribution.
- * 50% -> 2, 30% -> 4, 15% -> 8, 5% -> 16
+ * Generate an initial board tile value with a WIDE, fairly flat distribution
+ * (2..64) so the starting board has more distinct numbers and fewer duplicates
+ * of any single value.
+ * 25% -> 2, 22% -> 4, 18% -> 8, 15% -> 16, 12% -> 32, 8% -> 64
  * @returns {number}
  */
 export function getInitialValue() {
     const roll = Math.random();
-    if (roll < 0.50) return 2;
-    if (roll < 0.80) return 4;
-    if (roll < 0.95) return 8;
-    return 16;
+    if (roll < 0.25) return 2;
+    if (roll < 0.47) return 4;
+    if (roll < 0.65) return 8;
+    if (roll < 0.80) return 16;
+    if (roll < 0.92) return 32;
+    return 64;
 }
 
 /**
