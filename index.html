@@ -147,6 +147,22 @@
       display: block;
     }
 
+    /* ========== Ad banner (bottom strip) ========== */
+    #ad-banner {
+      flex-shrink: 0;
+      width: calc(100% - 16px);
+      height: 56px;
+      margin: 0 8px calc(8px + env(safe-area-inset-bottom));
+      background: linear-gradient(180deg, #26262e 0%, #1b1b21 100%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #6e6e78;
+      font-family: 'Nunito', sans-serif;
+      font-size: 12px; font-weight: 800; letter-spacing: 0.3em;
+      z-index: 10;
+    }
+
     /* ========== Screen Overlays ========== */
     .screen-overlay {
       position: fixed; inset: 0;
@@ -342,6 +358,9 @@
 
     <!-- Game Canvas -->
     <canvas id="game-canvas"></canvas>
+
+    <!-- Ad banner (bottom strip, matches benchmark position) -->
+    <div id="ad-banner"><span>AD BANNER</span></div>
   </div>
 
   <!-- Overlay Screens -->
@@ -362,7 +381,7 @@
     <div id="loading-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
     <div id="loading-publisher">GAMEGOS</div>
     <div id="loading-text">Tap to start</div>
-    <div id="build-time">최근 업데이트: <span id="bt">2026-06-01 13:08:46 KST</span></div>
+    <div id="build-time">최근 업데이트: <span id="bt">2026-06-02 01:24:23 KST</span></div>
   </div>
 
   <script type="module" src="src/main.js"></script>
