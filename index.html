@@ -151,7 +151,9 @@
     #ad-banner {
       flex-shrink: 0;
       width: calc(100% - 16px);
-      height: 56px;
+      /* Benchmark ratio: banner height ≈ 5.9% of screen height */
+      height: 5.9vh;
+      min-height: 40px;
       margin: 0 8px calc(8px + env(safe-area-inset-bottom));
       background: linear-gradient(180deg, #26262e 0%, #1b1b21 100%);
       border: 1px solid rgba(255, 255, 255, 0.07);
