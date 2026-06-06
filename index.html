@@ -8,6 +8,11 @@
   <meta name="theme-color" content="#000000">
   <title>Hexa Merge</title>
 
+  <!-- Google AdSense -->
+  <meta name="google-adsense-account" content="ca-pub-9645429447397687">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9645429447397687"
+          crossorigin="anonymous"></script>
+
   <!-- Google Fonts: Nunito (ExtraBold 800, Black 900) for game atmosphere -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -286,13 +291,24 @@
     }
     #build-time {
       position: absolute;
-      bottom: calc(1.8% + env(safe-area-inset-bottom));
+      bottom: calc(3.4% + env(safe-area-inset-bottom));
       color: #9a9aa2;
       font-family: 'Nunito', sans-serif;
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.04em;
       z-index: 2;
+    }
+    #privacy-link {
+      position: absolute;
+      bottom: calc(1.3% + env(safe-area-inset-bottom));
+      color: #8a8a92;
+      font-family: 'Nunito', sans-serif;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-decoration: underline;
+      z-index: 3;
     }
 
     /* ========== Mobile responsive ========== */
@@ -383,7 +399,9 @@
     <div id="loading-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
     <div id="loading-publisher">GAMEGOS</div>
     <div id="loading-text">Tap to start</div>
-    <div id="build-time">최근 업데이트: <span id="bt">2026-06-06 01:52:14 KST</span></div>
+    <div id="build-time">최근 업데이트: <span id="bt">2026-06-06 07:16:08 KST</span></div>
+    <a id="privacy-link" href="privacy.html" target="_blank" rel="noopener"
+       onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">개인정보처리방침</a>
   </div>
 
   <script type="module" src="src/main.js"></script>
