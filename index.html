@@ -6,7 +6,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#000000">
-  <title>Hexa Merge</title>
+  <title>XUP — 헥사곤 숫자 머지 퍼즐 (무료 웹 게임)</title>
+  <meta name="description" content="XUP은 브라우저에서 바로 즐기는 무료 헥사곤 숫자 머지 퍼즐입니다. 같은 숫자 타일을 모아 합치고, 한 번에 많이 묶을수록 ×2·×4·×8로 크게 점프시켜 고득점에 도전하세요.">
+  <meta name="keywords" content="XUP, 헥사 머지, 헥사곤 퍼즐, 숫자 합치기 게임, 머지 퍼즐, 무료 웹게임, 퍼즐 게임">
 
   <!-- Google AdSense -->
   <meta name="google-adsense-account" content="ca-pub-9645429447397687">
@@ -270,7 +272,7 @@
     }
     #loading-publisher {
       position: absolute;
-      bottom: calc(10% + env(safe-area-inset-bottom));
+      bottom: calc(20% + env(safe-area-inset-bottom));
       color: #2b2b30;
       font-family: 'Nunito', sans-serif;
       font-size: clamp(15px, 4.2vw, 20px);
@@ -278,37 +280,60 @@
       letter-spacing: 0.22em;
       z-index: 2;
     }
-    #loading-text {
+    /* Bottom stack: CTA + game blurb + build time + page nav, laid out vertically */
+    #landing-footer {
       position: absolute;
-      bottom: calc(5% + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: calc(2.4% + env(safe-area-inset-bottom));
+      width: 100%;
+      padding: 0 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 3;
+    }
+    #loading-text {
       color: #b0b0b8;
       font-family: 'Nunito', sans-serif;
       font-size: 13px;
       font-weight: 800;
       letter-spacing: 0.18em;
       animation: pulse 2s infinite;
-      z-index: 2;
+    }
+    #landing-desc {
+      max-width: min(88vw, 460px);
+      margin: 0;
+      text-align: center;
+      color: #6f6f77;
+      font-family: 'Nunito', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+      font-size: 12px;
+      font-weight: 800;
+      line-height: 1.5;
+      letter-spacing: 0.01em;
     }
     #build-time {
-      position: absolute;
-      bottom: calc(3.4% + env(safe-area-inset-bottom));
       color: #9a9aa2;
       font-family: 'Nunito', sans-serif;
       font-size: 11px;
       font-weight: 800;
       letter-spacing: 0.04em;
-      z-index: 2;
     }
-    #privacy-link {
-      position: absolute;
-      bottom: calc(1.3% + env(safe-area-inset-bottom));
+    #landing-nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px 12px;
+      max-width: 96vw;
+    }
+    #landing-nav a {
       color: #8a8a92;
-      font-family: 'Nunito', sans-serif;
+      font-family: 'Nunito', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
       font-size: 11px;
       font-weight: 800;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.02em;
       text-decoration: underline;
-      z-index: 3;
     }
 
     /* ========== Mobile responsive ========== */
@@ -398,10 +423,18 @@
 
     <div id="loading-title"><span class="logo-x">X</span><span class="logo-up">UP</span></div>
     <div id="loading-publisher">GAMEGOS</div>
-    <div id="loading-text">Tap to start</div>
-    <div id="build-time">최근 업데이트: <span id="bt">2026-06-01 13:07:50 KST</span></div>
-    <a id="privacy-link" href="privacy.html" target="_blank" rel="noopener"
-       onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">개인정보처리방침</a>
+    <div id="landing-footer">
+      <div id="loading-text">Tap to start</div>
+      <p id="landing-desc">같은 숫자 타일을 모아 합치는 헥사곤 머지 퍼즐. 한 번에 많이 묶을수록 크게 점프합니다.</p>
+      <div id="build-time">최근 업데이트: <span id="bt">2026-06-01 13:07:50 KST</span></div>
+      <nav id="landing-nav">
+        <a href="how-to-play.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">게임 방법</a>
+        <a href="tips.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">공략 팁</a>
+        <a href="about.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">소개</a>
+        <a href="faq.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">FAQ</a>
+        <a href="privacy.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">개인정보처리방침</a>
+      </nav>
+    </div>
   </div>
 
   <script type="module" src="src/main.js"></script>
