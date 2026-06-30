@@ -1,0 +1,85 @@
+name: Deploy to GitHub Pages
+
+# main에 웹 산출물이 push되면 빌드 단계에서 "최근 업데이트" 타임스탬프를
+# 현재 KST 시각으로 치환한 뒤 gh-pages 브랜치로 배포한다.
+# (Pages는 gh-pages 브랜치를 서빙 — 별도 설정 변경 불필요, 커스텀 도메인 CNAME 보존)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'about.html'
+      - 'faq.html'
+      - 'how-to-play.html'
+      - 'privacy.html'
+      - 'tips.html'
+      - 'ads.txt'
+      - 'CNAME'
+      - 'Build/**'
+      - 'audio/**'
+      - 'src/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch: {}   # 수동 실행(Actions 탭) 허용
+
+permissions:
+  contents: write          # gh-pages 브랜치 push 권한
+
+concurrency:
+  group: deploy-gh-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (source)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Checkout gh-pages (deploy target)
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+          # 기본 GITHUB_TOKEN + persist-credentials 로 push 가능
+
+      - name: Stamp build timestamp (KST)
+        run: |
+          set -euo pipefail
+          STAMP="$(TZ='Asia/Seoul' date '+%Y-%m-%d %H:%M:%S KST')"
+          echo "Build time (KST): $STAMP"
+          file="main/index.html"
+          sed -E -i "s#(<span id=\"bt\">)[^<]*(</span>)#\1${STAMP}\2#" "$file"
+          # 치환 검증: 새 타임스탬프가 실제로 들어갔는지 확인(셀렉터가 깨지면 실패)
+          grep -qF ">${STAMP}<" "$file" || { echo "::error::timestamp substitution failed (#bt span not found)"; exit 1; }
+          grep -n 'id="bt"' "$file"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+
+      - name: Sync web files into gh-pages tree
+        run: |
+          set -euo pipefail
+          cd main
+          # gh-pages 산출물 집합(현재 gh-pages 최상위와 동일하게 유지)
+          FILES="index.html about.html faq.html how-to-play.html privacy.html tips.html ads.txt CNAME .gitattributes"
+          DIRS="Build audio src"
+          # 디렉터리는 통째로 교체해 삭제된 파일이 남지 않게 함
+          for d in $DIRS; do rm -rf "../gh-pages/$d"; done
+          cp -r $FILES $DIRS "../gh-pages/"
+
+      - name: Commit and push to gh-pages
+        run: |
+          set -euo pipefail
+          cd gh-pages
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to deploy."
+          else
+            git commit -m "deploy: ${GITHUB_SHA::7} (타임스탬프 ${STAMP})"
+            git push origin gh-pages
+            echo "Deployed to gh-pages at ${STAMP}"
+          fi
