@@ -62,29 +62,47 @@ export class Renderer {
 
     /**
      * Resize the canvas to match its container and recalculate hexSize.
-     * Call this on window resize or orientation change.
+     * Call this on window resize, orientation change, or any layout change.
+     *
+     * For maximum crispness the backing store is sized to EXACT device pixels and
+     * the context is scaled so 1 CSS pixel maps to exactly its device-pixel count.
+     * When the caller knows the precise device-pixel box (e.g. from a
+     * ResizeObserver's `devicePixelContentBoxSize`) it can pass it in; otherwise
+     * we derive it from the fractional CSS box × devicePixelRatio. Using the
+     * fractional `getBoundingClientRect()` size (not the rounded `clientWidth`)
+     * avoids a sub-pixel mismatch between the backing store and the displayed box
+     * that the browser would otherwise resample — which softens tile edges.
+     *
+     * @param {number} [deviceW] - Exact backing width in device pixels (optional)
+     * @param {number} [deviceH] - Exact backing height in device pixels (optional)
      */
-    resize() {
+    resize(deviceW, deviceH) {
         this._dpr = window.devicePixelRatio || 1;
 
-        // Use the canvas element's own CSS layout dimensions (respects flex layout)
-        const w = this._canvas.clientWidth;
-        const h = this._canvas.clientHeight;
+        // Fractional CSS layout size of the canvas box (respects flex layout).
+        const rect = this._canvas.getBoundingClientRect();
+        const cssW = rect.width;
+        const cssH = rect.height;
+        if (cssW <= 0 || cssH <= 0) return; // not laid out / hidden
 
-        // Set actual pixel size (scaled for DPR)
-        this._canvas.width = Math.round(w * this._dpr);
-        this._canvas.height = Math.round(h * this._dpr);
+        // Backing store in exact device pixels.
+        const backingW = Math.max(1, Math.round(deviceW != null ? deviceW : cssW * this._dpr));
+        const backingH = Math.max(1, Math.round(deviceH != null ? deviceH : cssH * this._dpr));
+        if (this._canvas.width !== backingW) this._canvas.width = backingW;
+        if (this._canvas.height !== backingH) this._canvas.height = backingH;
 
-        // Scale context for DPR so we can work in CSS pixel coordinates
-        this._ctx.setTransform(this._dpr, 0, 0, this._dpr, 0, 0);
+        // Map CSS-pixel drawing coordinates onto the device-pixel backing store
+        // exactly (handles fractional dpr and sub-pixel box sizes without resampling).
+        this._ctx.setTransform(backingW / cssW, 0, 0, backingH / cssH, 0, 0);
 
-        // Calculate hex size to fit the grid within the canvas area
+        // Calculate hex size to fit the grid within the canvas area (CSS pixels).
         const gridDiameter = this._gridRadius * 2 + 1;
-        this._hexSize = Math.min(w, h) * 0.85 / gridDiameter / Math.sqrt(3);
+        this._hexSize = Math.min(cssW, cssH) * 0.85 / gridDiameter / Math.sqrt(3);
 
-        // Center the grid in the canvas
-        this._offsetX = w / 2;
-        this._offsetY = h / 2;
+        // Center the grid in the canvas (CSS pixels — matches InputManager's
+        // getBoundingClientRect-based pointer coordinates).
+        this._offsetX = cssW / 2;
+        this._offsetY = cssH / 2;
     }
 
     // ----------------------------------------------------------
@@ -153,9 +171,10 @@ export class Renderer {
      */
     render(grid, animations = null, effects = null, fireworks = null) {
         const ctx = this._ctx;
-        const canvas = this._canvas;
-        const containerW = canvas.width / this._dpr;
-        const containerH = canvas.height / this._dpr;
+        // Clear the full board area in CSS-pixel space. Offsets are cssW/2, cssH/2,
+        // so the canvas spans (0,0)..(offsetX*2, offsetY*2) in the current transform.
+        const containerW = this._offsetX * 2;
+        const containerH = this._offsetY * 2;
 
         // 1) Clear entire canvas
         ctx.clearRect(0, 0, containerW, containerH);
