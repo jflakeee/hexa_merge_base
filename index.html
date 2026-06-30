@@ -149,7 +149,12 @@
 
     /* ========== Canvas ========== */
     #game-canvas {
-      flex: 1; width: 100%;
+      flex: 1 1 0; width: 100%;
+      /* Flex items default to min-height:auto, which for a <canvas> resolves to
+         its intrinsic (height-attribute) size. In short/landscape viewports that
+         keeps the canvas from shrinking, so it overflows and the board is clipped
+         vertically. min-height:0 lets it shrink to the available flex space. */
+      min-height: 0; min-width: 0;
       touch-action: none;
       display: block;
     }
@@ -426,7 +431,7 @@
     <div id="landing-footer">
       <div id="loading-text">Tap to start</div>
       <p id="landing-desc">같은 숫자 타일을 모아 합치는 헥사곤 머지 퍼즐. 한 번에 많이 묶을수록 크게 점프합니다.</p>
-      <div id="build-time">최근 업데이트: <span id="bt">2026-06-01 13:07:50 KST</span></div>
+      <div id="build-time">최근 업데이트: <span id="bt">2026-06-30 09:27:13 KST</span></div>
       <nav id="landing-nav">
         <a href="how-to-play.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">게임 방법</a>
         <a href="tips.html" onpointerdown="event.stopPropagation()" onclick="event.stopPropagation()">공략 팁</a>

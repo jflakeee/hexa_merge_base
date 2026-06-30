@@ -85,10 +85,30 @@ function waitForUserGesture() {
  */
 function initGame() {
     // Renderer already initializes in constructor (calls resize()).
-    // Listen for window resize to re-fit the grid.
-    window.addEventListener('resize', () => {
+    // Re-fit the canvas whenever its DISPLAYED size changes. A ResizeObserver on
+    // the canvas element catches every box-size change — window resize, device
+    // rotation, mobile URL-bar show/hide, and flex relayouts — not only window
+    // 'resize' events. Each resize() rebuilds the backing store at the device
+    // pixel resolution and recomputes the hex geometry, so the board is always
+    // redrawn crisply as vector paths at native resolution instead of a stale
+    // bitmap being stretched/squashed (which looks blurry).
+    if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => renderer.resize());
+        ro.observe(canvas);
+    } else {
+        window.addEventListener('resize', () => renderer.resize());
+    }
+
+    // devicePixelRatio can change without the CSS box changing — e.g. dragging
+    // the window to a monitor with different scaling, or browser zoom. That
+    // alters the backing-store resolution we need, so re-fit on each dpr change.
+    const onDprChange = () => {
         renderer.resize();
-    });
+        matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+            .addEventListener('change', onDprChange, { once: true });
+    };
+    matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+        .addEventListener('change', onDprChange, { once: true });
 
     // Input
     inputManager.init();
