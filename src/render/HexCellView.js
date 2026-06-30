@@ -126,42 +126,23 @@ export function drawCell(ctx, cx, cy, size, value, options = {}) {
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    // --- Background gradient (bright top-left to darker bottom-right) ---
+    // --- Background: near-flat solid color with a subtle vertical gradient ---
+    // Benchmark (XUP) tiles are matte, saturated solids separated by black gaps;
+    // the crisp boundary comes from the vivid fill meeting the gap directly, not
+    // from an outline. Keep only a gentle top→bottom shade for slight volume so
+    // the edges stay saturated and read sharply (no edge-darkening, no outline,
+    // no glass highlight — those muddied the perimeter and softened the edge).
     const bgColor = getColor(value);
-    const lightBg = lightenColor(bgColor, 0.2);
-    const darkBg = darkenColor(bgColor, 0.2);
+    const topBg = lightenColor(bgColor, 0.12);
+    const botBg = darkenColor(bgColor, 0.10);
 
-    const grad = ctx.createLinearGradient(
-        cx - effectiveSize, cy - effectiveSize,
-        cx + effectiveSize, cy + effectiveSize
-    );
-    grad.addColorStop(0, lightBg);
-    grad.addColorStop(1, darkBg);
+    const grad = ctx.createLinearGradient(cx, cy - effectiveSize, cx, cy + effectiveSize);
+    grad.addColorStop(0, topBg);
+    grad.addColorStop(1, botBg);
 
     drawHexagon(ctx, cx, cy, effectiveSize);
     ctx.fillStyle = grad;
     ctx.fill();
-
-    // --- Border stroke (slightly darker than background) ---
-    const borderColor = darkenColor(bgColor, 0.35);
-    drawHexagon(ctx, cx, cy, effectiveSize);
-    ctx.strokeStyle = borderColor;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // --- Highlight: top-half semi-transparent white gradient (glass effect) ---
-    if (highlight) {
-        ctx.save();
-        drawHexagon(ctx, cx, cy, effectiveSize);
-        ctx.clip();
-
-        const hlGrad = ctx.createLinearGradient(cx, cy - effectiveSize, cx, cy);
-        hlGrad.addColorStop(0, 'rgba(255,255,255,0.35)');
-        hlGrad.addColorStop(1, 'rgba(255,255,255,0.0)');
-        ctx.fillStyle = hlGrad;
-        ctx.fillRect(cx - effectiveSize, cy - effectiveSize, effectiveSize * 2, effectiveSize);
-        ctx.restore();
-    }
 
     // --- Text: formatValue(value) with dynamic font size ---
     const display = formatValue(value);
