@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>미디어 서버로 이동 중…</title>
+<!-- 외부접속(Funnel) 주소가 바뀌면 아래 TARGET(2곳: meta·script)만 수정하세요. -->
+<meta http-equiv="refresh" content="0; url=https://desktop-f6utbg1.tail2b18d8.ts.net:8443/">
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    margin: 0; min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1.1rem; text-align: center; padding: 2rem;
+    background: #0f172a; color: #e2e8f0;
+  }
+  .card { max-width: 420px; width: 100%; }
+  .spinner {
+    width: 42px; height: 42px; margin: 0 auto 0.4rem;
+    border: 4px solid #334155; border-top-color: #38bdf8;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  h1 { font-size: 1.35rem; margin: 0.4rem 0; }
+  p.muted { color: #94a3b8; font-size: 0.9rem; margin: 0.2rem 0 0.8rem; }
+  a.btn {
+    display: inline-block; padding: 0.8rem 1.5rem; border-radius: 10px;
+    background: #38bdf8; color: #0f172a; text-decoration: none; font-weight: 700;
+    font-size: 1.05rem;
+  }
+  a.btn:active { transform: translateY(1px); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner"></div>
+    <h1>🎬 미디어 서버로 이동 중…</h1>
+    <p class="muted">잠시 후 자동으로 이동합니다. 넘어가지 않으면 아래 버튼을 누르세요.</p>
+    <a class="btn" id="go" href="https://desktop-f6utbg1.tail2b18d8.ts.net:8443/">미디어 서버 열기</a>
+  </div>
+
+  <script>
+    // ── 외부접속(Funnel) 주소가 바뀌면 이 한 줄만 고치세요 ──
+    var TARGET = "https://desktop-f6utbg1.tail2b18d8.ts.net:8443/";
+    document.getElementById("go").href = TARGET;
+    // history 에 남기지 않고 즉시 이동(뒤로가기 무한루프 방지)
+    location.replace(TARGET);
+  </script>
+
+  <noscript>
+    <p><a href="https://desktop-f6utbg1.tail2b18d8.ts.net:8443/">미디어 서버 열기 →</a></p>
+  </noscript>
+</body>
+</html>
