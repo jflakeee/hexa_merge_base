@@ -19,6 +19,7 @@ on:
       - 'Build/**'
       - 'audio/**'
       - 'src/**'
+      - 'home/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch: {}   # 수동 실행(Actions 탭) 허용
 
@@ -64,7 +65,7 @@ jobs:
           cd main
           # gh-pages 산출물 집합(현재 gh-pages 최상위와 동일하게 유지)
           FILES="index.html about.html faq.html how-to-play.html privacy.html tips.html ads.txt CNAME .gitattributes"
-          DIRS="Build audio src"
+          DIRS="Build audio src home"
           # 디렉터리는 통째로 교체해 삭제된 파일이 남지 않게 함
           for d in $DIRS; do rm -rf "../gh-pages/$d"; done
           cp -r $FILES $DIRS "../gh-pages/"
