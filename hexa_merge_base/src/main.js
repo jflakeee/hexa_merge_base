@@ -1,0 +1,375 @@
+/**
+ * @fileoverview Application bootstrap and game loop for Hexa Merge web version.
+ * Initializes all subsystems, connects events, and runs the render loop.
+ * ES Module entry point - loaded by index.html via <script type="module">.
+ */
+
+// --- Module imports ---
+import { GameManager } from './game/GameManager.js';
+import { ScoreManager } from './game/ScoreManager.js';
+import { InputManager } from './game/InputManager.js';
+import { Renderer } from './render/Renderer.js';
+import { TileAnimator } from './animation/TileAnimator.js';
+import { MergeEffect } from './animation/MergeEffect.js';
+import { Fireworks } from './animation/Fireworks.js';
+import { SampleSFX } from './audio/SampleSFX.js';
+import { ScreenManager } from './ui/ScreenManager.js';
+import { HUDManager } from './ui/HUDManager.js';
+import { GameOverScreen } from './ui/GameOverScreen.js';
+import { PauseScreen } from './ui/PauseScreen.js';
+import { HowToPlayScreen } from './ui/HowToPlayScreen.js';
+import { HexCoord } from './core/HexCoord.js';
+// ============================================================
+// DOM References
+// ============================================================
+const canvas = document.getElementById('game-canvas');
+const loadingScreen = document.getElementById('loading-screen');
+
+// ============================================================
+// Subsystem instances
+// ============================================================
+const sfx = new SampleSFX();
+const renderer = new Renderer(canvas);
+const inputManager = new InputManager(canvas, renderer);
+const animator = new TileAnimator();
+const effects = new MergeEffect();
+const fireworks = new Fireworks();
+const gameManager = new GameManager();
+const screenManager = new ScreenManager();
+const hudManager = new HUDManager();
+const gameOverScreen = new GameOverScreen();
+const pauseScreen = new PauseScreen();
+const howToPlayScreen = new HowToPlayScreen();
+
+// ============================================================
+// Game state
+// ============================================================
+let lastTimestamp = 0;
+let running = false;
+/** Last crown coordinate key — used to detect crown moves. */
+let prevCrownKey = null;
+/** Last crown (highest) value — used to detect crown number increases. */
+let prevCrownValue = 0;
+
+// ============================================================
+// Initialization sequence
+// ============================================================
+
+/**
+ * Wait for first user gesture on the loading screen,
+ * then initialize AudioContext and start the game.
+ * AudioContext creation requires a user gesture on iOS and Chrome.
+ */
+function waitForUserGesture() {
+    const handler = () => {
+        loadingScreen.removeEventListener('pointerdown', handler);
+
+        // Initialize audio (requires user gesture for iOS/Chrome autoplay policy)
+        sfx.init();
+
+        // Hide loading screen with fade
+        loadingScreen.classList.add('hidden');
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 500);
+
+        // Start the game
+        initGame();
+    };
+
+    loadingScreen.addEventListener('pointerdown', handler);
+}
+
+/**
+ * Initialize all game subsystems and start the game loop.
+ */
+function initGame() {
+    // Renderer already initializes in constructor (calls resize()).
+    // Re-fit the canvas whenever its DISPLAYED size changes. A ResizeObserver on
+    // the canvas element catches every box-size change — window resize, device
+    // rotation, mobile URL-bar show/hide, and flex relayouts — not only window
+    // 'resize' events. Each resize() rebuilds the backing store at the device
+    // pixel resolution and recomputes the hex geometry, so the board is always
+    // redrawn crisply as vector paths at native resolution instead of a stale
+    // bitmap being stretched/squashed (which looks blurry).
+    if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => renderer.resize());
+        ro.observe(canvas);
+    } else {
+        window.addEventListener('resize', () => renderer.resize());
+    }
+
+    // devicePixelRatio can change without the CSS box changing — e.g. dragging
+    // the window to a monitor with different scaling, or browser zoom. That
+    // alters the backing-store resolution we need, so re-fit on each dpr change.
+    const onDprChange = () => {
+        renderer.resize();
+        matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+            .addEventListener('change', onDprChange, { once: true });
+    };
+    matchMedia(`(resolution: ${window.devicePixelRatio}dppx)`)
+        .addEventListener('change', onDprChange, { once: true });
+
+    // Input
+    inputManager.init();
+    inputManager.onCellTap = (coord) => {
+        // No click/tap sound — only merges produce sound (mergeStep per cascade level).
+        gameManager.handleTap(coord);
+    };
+
+    // Screen overlays
+    screenManager.init();
+
+    // HUD
+    hudManager.init();
+    hudManager.setButtonCallbacks({
+        onSound: () => {
+            const muted = !sfx.isMuted();
+            sfx.setMuted(muted);
+            hudManager.setSoundIcon(muted);
+            pauseScreen.updateSoundButton(muted);
+            sfx.play('buttonClick');
+        },
+        onMenu: () => {
+            sfx.play('buttonClick');
+            if (screenManager.getCurrentScreen() === 'gameplay') {
+                gameManager.pauseGame();
+                screenManager.showScreen('pause');
+                pauseScreen.show(gameManager.score.highScore);
+            }
+        },
+        onHelp: () => {
+            sfx.play('buttonClick');
+            if (screenManager.getCurrentScreen() === 'gameplay') {
+                screenManager.showScreen('howtoplay');
+                howToPlayScreen.show();
+            }
+        }
+    });
+
+    // Game Over screen
+    gameOverScreen.init(document.getElementById('screen-gameover'));
+    gameOverScreen.onContinue = () => {
+        screenManager.hideScreen('gameover');
+        gameOverScreen.hide();
+        // Continue: remove 3 random tiles and resume
+        gameManager.continueAfterGameOver();
+    };
+    gameOverScreen.onPlayAgain = () => {
+        screenManager.hideScreen('gameover');
+        gameOverScreen.hide();
+        startNewGame();
+    };
+
+    // Pause screen
+    pauseScreen.init(document.getElementById('screen-pause'));
+    pauseScreen.updateSoundButton(sfx.isMuted());
+    pauseScreen.onResume = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('pause');
+        pauseScreen.hide();
+        gameManager.resumeGame();
+    };
+    pauseScreen.onRestart = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('pause');
+        pauseScreen.hide();
+        startNewGame();
+    };
+    pauseScreen.onSoundToggle = () => {
+        const muted = !sfx.isMuted();
+        sfx.setMuted(muted);
+        hudManager.setSoundIcon(muted);
+        pauseScreen.updateSoundButton(muted);
+        sfx.play('buttonClick');
+    };
+    pauseScreen.onHowToPlay = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('pause');
+        pauseScreen.hide();
+        screenManager.showScreen('howtoplay');
+        howToPlayScreen.show();
+    };
+
+    // How To Play screen
+    howToPlayScreen.init(document.getElementById('screen-howtoplay'));
+    howToPlayScreen.onClose = () => {
+        sfx.play('buttonClick');
+        screenManager.hideScreen('howtoplay');
+        howToPlayScreen.hide();
+    };
+
+    // ----------------------------------------------------------
+    // GameManager event wiring (EventTarget / CustomEvent API)
+    // ----------------------------------------------------------
+
+    // 'merge' event - detail: { result: MergeResult }
+    gameManager.addEventListener('merge', (e) => {
+        const { result } = e.detail;
+
+        // Merge SFX is played per cascade level (rising pitch) in the block below.
+        // Fallback: a single tick if there is no depth structure.
+        if (!result.depthGroups || result.depthGroups.length === 0) {
+            sfx.play('mergeStep');
+        }
+
+        // Score popup animation at merge target position
+        if (result.tapCoord) {
+            const pos = renderer.hexToPixel(result.tapCoord.q, result.tapCoord.r);
+            animator.playScorePopup(pos.x, pos.y, result.scoreGained);
+        }
+
+        // Tree-structured sequential merge: the tapped tile is the root and the
+        // merged cluster collapses inward. Each tile slides to its PARENT;
+        // deepest leaves (depthGroups[0]) move first, then their parents, and so
+        // on up to the root — level by level. No liquid/metaball effect.
+        if (result.tapCoord && result.depthGroups) {
+            const rootKey = result.tapCoord.toKey();
+            const MOVE_DUR = 0.16; // seconds per level slide
+
+            const movers = [];
+            result.depthGroups.forEach((group, gi) => {
+                const delay = gi * MOVE_DUR; // gi 0 = deepest leaves -> earliest
+
+                // Per-step merge sound: pitch climbs each cascade level
+                // (deepest first = lowest). Steeper rise per step for a more
+                // pronounced chain escalation.
+                const rate = Math.min(1 + gi * 0.22, 3.0);
+                if (gi === 0) sfx.play('mergeStep', 1, rate);
+                else setTimeout(() => sfx.play('mergeStep', 1, rate), delay * 1000);
+
+                for (const coord of group) {
+                    const from = renderer.hexToPixel(coord.q, coord.r);
+                    const pKey = result.parentMap && result.parentMap.get(coord.toKey());
+                    const pCoord = pKey ? HexCoord.fromKey(pKey) : result.tapCoord;
+                    const to = renderer.hexToPixel(pCoord.q, pCoord.r);
+                    movers.push({
+                        fromX: from.x, fromY: from.y,
+                        toX: to.x, toY: to.y,
+                        value: result.baseValue,
+                        delay, dur: MOVE_DUR,
+                    });
+                }
+            });
+            animator.playTreeMerge(movers);
+
+            // Root value climbs base -> ... -> final as the levels arrive.
+            if (result.stepValues && result.stepValues.length >= 1) {
+                const total = result.depthGroups.length * MOVE_DUR + MOVE_DUR;
+                animator.playValueCountUp(rootKey, result.baseValue, result.stepValues, total);
+            }
+        }
+    });
+
+    // 'scoreupdate' event - detail: { currentScore, highScore }
+    gameManager.addEventListener('scoreupdate', (e) => {
+        const { currentScore, highScore } = e.detail;
+        hudManager.updateScore(currentScore);
+        hudManager.updateHighScore(highScore);
+    });
+
+    // 'statechange' event - detail: { state }
+    gameManager.addEventListener('statechange', (e) => {
+        const { state } = e.detail;
+        if (state === 'gameover') {
+            sfx.play('gameOver');
+            const currentScore = gameManager.score.currentScore;
+            const highScore = gameManager.score.highScore;
+            const isNewRecord = currentScore > highScore;
+            gameOverScreen.show(currentScore, highScore, isNewRecord);
+            screenManager.showScreen('gameover');
+        }
+    });
+
+    // 'newtiles' event - detail: { cells: HexCell[] }
+    gameManager.addEventListener('newtiles', (e) => {
+        const { cells } = e.detail;
+        if (cells && cells.length > 0) {
+            cells.forEach((cell) => {
+                const coordKey = cell.coord ? cell.coord.toKey() : null;
+                if (coordKey) {
+                    animator.playSpawnAnimation(coordKey);
+                }
+            });
+            sfx.play('tileDrop');
+        }
+    });
+
+    // 'crownchange' event - detail: { crownCoords: HexCoord[] }
+    gameManager.addEventListener('crownchange', (e) => {
+        const { crownCoords } = e.detail;
+        const has = crownCoords && crownCoords.length > 0;
+        const key = has ? crownCoords[0].toKey() : null;
+        const cell = has ? gameManager.grid.getCell(crownCoords[0]) : null;
+        const value = cell ? cell.value : 0;
+        // Celebrate when the crown MOVES to a new tile OR its NUMBER increases.
+        // Skip the very first event (game start) so the start stays silent.
+        const moved = key !== prevCrownKey;
+        const grew = value > prevCrownValue;
+        if (prevCrownKey !== null && has && (moved || grew)) {
+            sfx.play('crownChange'); // bell chime
+            fireworks.celebrate(canvas.clientWidth, canvas.clientHeight);
+        }
+        prevCrownKey = key;
+        prevCrownValue = value;
+    });
+
+    // Start game
+    startNewGame();
+}
+
+/**
+ * Start a new game session.
+ */
+function startNewGame() {
+    prevCrownKey = null;   // suppress crown effect for the initial board
+    prevCrownValue = 0;
+    gameManager.startNewGame();
+
+    sfx.play('gameStart');
+
+    // Reset HUD with initial values from GameManager's internal ScoreManager
+    hudManager.updateScore(0);
+    hudManager.updateHighScore(gameManager.score.highScore);
+
+    // Start the game loop if not already running
+    if (!running) {
+        running = true;
+        lastTimestamp = performance.now();
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// ============================================================
+// Game Loop
+// ============================================================
+
+/**
+ * Main render/update loop using requestAnimationFrame.
+ * @param {number} timestamp - High-resolution timestamp from rAF
+ */
+function gameLoop(timestamp) {
+    if (!running) return;
+
+    const dt = (timestamp - lastTimestamp) / 1000; // delta time in seconds
+    lastTimestamp = timestamp;
+
+    // Clamp dt to avoid huge jumps (e.g., when tab was hidden)
+    const clampedDt = Math.min(dt, 0.1);
+
+    // Update animations
+    animator.update(clampedDt);
+    effects.update(clampedDt);
+    fireworks.update(clampedDt);
+
+    // Render the current frame
+    renderer.render(gameManager.grid, animator, effects, fireworks);
+
+    // Next frame
+    requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+// Entry point
+// ============================================================
+waitForUserGesture();

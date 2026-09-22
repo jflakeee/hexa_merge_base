@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Hexa Merge</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #000; }
+
+    #unity-container {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    #unity-canvas {
+      width: 100%; height: 100%;
+      background: #000;
+    }
+
+    /* ===== 랜딩/스플래시 화면 ===== */
+    #loading-screen {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #FAFAFA;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100;
+      transition: opacity 0.6s ease;
+      overflow: hidden;
+    }
+
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* 장식용 육각형 */
+    .deco-hex {
+      position: absolute;
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      opacity: 0;
+      animation: hexFadeIn 0.8s ease forwards;
+    }
+
+    /* 좌측 그룹 */
+    .hex-left-big {
+      width: 160px; height: 160px;
+      background: #E91E63;
+      top: 28%; left: -20px;
+      animation-delay: 0.2s;
+    }
+    .hex-left-med {
+      width: 100px; height: 100px;
+      background: #FF9800;
+      top: 42%; left: 100px;
+      animation-delay: 0.4s;
+    }
+    .hex-left-sm {
+      width: 50px; height: 50px;
+      background: #8BC34A;
+      top: 34%; left: 130px;
+      animation-delay: 0.5s;
+    }
+
+    /* 우측 그룹 */
+    .hex-right-big {
+      width: 170px; height: 170px;
+      background: #7B1FA2;
+      bottom: 20%; right: -30px;
+      animation-delay: 0.3s;
+    }
+    .hex-right-med {
+      width: 90px; height: 90px;
+      background: #00BCD4;
+      bottom: 34%; right: 80px;
+      animation-delay: 0.45s;
+    }
+    .hex-right-sm {
+      width: 45px; height: 45px;
+      background: #FFC107;
+      bottom: 28%; right: 110px;
+      animation-delay: 0.55s;
+    }
+
+    @keyframes hexFadeIn {
+      from { opacity: 0; transform: scale(0.7); }
+      to   { opacity: 0.85; transform: scale(1); }
+    }
+
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    .deco-hex.float {
+      animation: hexFadeIn 0.8s ease forwards, floatY 3s ease-in-out infinite;
+    }
+
+    /* 로고 */
+    #splash-logo {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      opacity: 0;
+      animation: logoIn 0.7s ease 0.3s forwards;
+    }
+
+    @keyframes logoIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    #splash-logo .logo-hexa {
+      font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      color: #7B1FA2;
+      letter-spacing: 4px;
+      display: inline;
+    }
+
+    #splash-logo .logo-merge {
+      font-family: 'Arial Black', 'Helvetica Neue', sans-serif;
+      font-size: 52px;
+      font-weight: 900;
+      color: #E91E63;
+      letter-spacing: 4px;
+      display: inline;
+    }
+
+    /* 로딩 바 */
+    #loading-bar-container {
+      position: relative;
+      z-index: 10;
+      width: 220px; height: 4px;
+      background: #E0E0E0;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-top: 32px;
+      opacity: 0;
+      animation: logoIn 0.5s ease 0.8s forwards;
+    }
+
+    #loading-bar {
+      width: 0%; height: 100%;
+      background: linear-gradient(90deg, #7B1FA2, #E91E63);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    #loading-text {
+      position: relative;
+      z-index: 10;
+      font-family: 'Arial', sans-serif;
+      font-size: 12px;
+      color: #999;
+      margin-top: 10px;
+      opacity: 0;
+      animation: logoIn 0.5s ease 0.9s forwards;
+    }
+
+    /* 하단 크레딧 */
+    #splash-credit {
+      position: absolute;
+      bottom: 8%;
+      z-index: 10;
+      font-family: 'Arial', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: #AAA;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: logoIn 0.6s ease 1s forwards;
+    }
+
+    /* 경고 배너 */
+    #warning-banner {
+      position: fixed; top: 0; left: 0;
+      width: 100%; padding: 10px;
+      background: #FF4444; color: white;
+      font-family: Arial, sans-serif;
+      text-align: center; z-index: 200;
+      display: none;
+    }
+
+    /* 모바일 반응형 */
+    @media (max-width: 480px) {
+      #splash-logo .logo-hexa,
+      #splash-logo .logo-merge {
+        font-size: 36px;
+        letter-spacing: 2px;
+      }
+      .hex-left-big  { width: 120px; height: 120px; left: -30px; }
+      .hex-left-med  { width: 70px;  height: 70px;  left: 60px; }
+      .hex-left-sm   { width: 35px;  height: 35px;  left: 85px; }
+      .hex-right-big { width: 130px; height: 130px; right: -30px; }
+      .hex-right-med { width: 65px;  height: 65px;  right: 50px; }
+      .hex-right-sm  { width: 32px;  height: 32px;  right: 70px; }
+      #loading-bar-container { width: 180px; }
+      #splash-credit { font-size: 11px; letter-spacing: 3px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+  </div>
+
+  <div id="loading-screen">
+    <!-- 장식 육각형 좌측 -->
+    <div class="deco-hex hex-left-big float"></div>
+    <div class="deco-hex hex-left-med float"></div>
+    <div class="deco-hex hex-left-sm float"></div>
+    <!-- 장식 육각형 우측 -->
+    <div class="deco-hex hex-right-big float"></div>
+    <div class="deco-hex hex-right-med float"></div>
+    <div class="deco-hex hex-right-sm float"></div>
+
+    <!-- 로고 -->
+    <div id="splash-logo">
+      <span class="logo-hexa">HEXA</span><span class="logo-merge"> MERGE</span>
+    </div>
+
+    <!-- 로딩 -->
+    <div id="loading-bar-container">
+      <div id="loading-bar"></div>
+    </div>
+    <div id="loading-text">Loading...</div>
+
+    <!-- 하단 크레딧 -->
+    <div id="splash-credit">HEXA MERGE</div>
+  </div>
+
+  <div id="warning-banner"></div>
+
+  <script>
+    // Mobile AudioContext unlock — resume on user gesture
+    (function() {
+      var unlocked = false;
+      function resumeAudio() {
+        if (unlocked) return;
+        if (typeof WEBAudio !== 'undefined' && WEBAudio.audioContext) {
+          if (WEBAudio.audioContext.state === 'suspended') {
+            WEBAudio.audioContext.resume().then(function() {
+              unlocked = true;
+              document.removeEventListener('touchstart', resumeAudio, true);
+              document.removeEventListener('touchend', resumeAudio, true);
+              document.removeEventListener('click', resumeAudio, true);
+            });
+          } else {
+            unlocked = true;
+            document.removeEventListener('touchstart', resumeAudio, true);
+            document.removeEventListener('touchend', resumeAudio, true);
+            document.removeEventListener('click', resumeAudio, true);
+          }
+        }
+      }
+      document.addEventListener('touchstart', resumeAudio, true);
+      document.addEventListener('touchend', resumeAudio, true);
+      document.addEventListener('click', resumeAudio, true);
+    })();
+
+    // window.onerror 핸들러 등록 (TC-PLAT-035)
+    window.onerror = function(message, source, lineno, colno, error) {
+      console.error('[HexaMerge] Uncaught error:', message, 'at', source, lineno, colno);
+      return false;
+    };
+
+    // gamebridge 객체 (IAP 연동)
+    window.__adsRemovedState = false;
+    window.gamebridge = {
+      isAdsRemoved: function() { return window.__adsRemovedState; },
+      isBannerReady: function() { return true; },
+      isRewardedReady: function() { return true; }
+    };
+
+    // Unity → JS 메시지 수신 (WebGLBridge에서 호출)
+    window.unityMessageCallbacks = {};
+
+    window.SendMessageFromUnity = function(message) {
+      try {
+        var data = JSON.parse(message);
+
+        // 콜백 ID가 있으면 해당 콜백 호출
+        if (data.callbackId && window.unityMessageCallbacks[data.callbackId]) {
+          window.unityMessageCallbacks[data.callbackId](data);
+          delete window.unityMessageCallbacks[data.callbackId];
+          return;
+        }
+
+        // adsRemoved/bannerHidden 이벤트 수신 시 상태 업데이트
+        if (data.event === 'adsRemoved' || data.event === 'adsRemovedBlocked') {
+          window.__adsRemovedState = true;
+        }
+        if (data.event === 'bannerHidden' && data.adsRemoved) {
+          window.__adsRemovedState = true;
+        }
+
+        // 이벤트 발송
+        window.dispatchEvent(new CustomEvent('unityMessage', { detail: data }));
+      } catch(e) {
+        console.warn('[HexaMerge] Failed to parse Unity message:', message, e);
+      }
+    };
+
+    // JS → Unity 메시지 전송 헬퍼
+    window.sendToUnity = function(objectName, methodName, value) {
+      if (window.unityInstance) {
+        window.unityInstance.SendMessage(objectName, methodName, value || '');
+      }
+    };
+
+    // 게임 상태 조회 Promise
+    window.getGameState = function() {
+      return new Promise(function(resolve) {
+        var callbackId = 'gs_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        window.unityMessageCallbacks[callbackId] = resolve;
+        window.sendToUnity('WebGLBridge', 'JS_GetGameState', callbackId);
+
+        // 5초 타임아웃
+        setTimeout(function() {
+          if (window.unityMessageCallbacks[callbackId]) {
+            delete window.unityMessageCallbacks[callbackId];
+            resolve(null);
+          }
+        }, 5000);
+      });
+    };
+
+    // Start floating animation after hexagons appear
+    setTimeout(function() {
+      var hexes = document.querySelectorAll('.deco-hex');
+      hexes.forEach(function(h, i) {
+        h.style.animationDelay = (0.2 + i * 0.1) + 's, ' + (1.5 + i * 0.3) + 's';
+      });
+    }, 1500);
+
+    // Unity 로더
+    var buildUrl = "Build";
+    var loaderUrl = buildUrl + "/WebGL.loader.js";
+    var config = {
+      dataUrl: buildUrl + "/WebGL.data",
+      frameworkUrl: buildUrl + "/WebGL.framework.js",
+      codeUrl: buildUrl + "/WebGL.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "HexaMerge",
+      productName: "Hexa Merge",
+      productVersion: "1.0.0",
+      showBanner: function(msg, type) {
+        var banner = document.getElementById('warning-banner');
+        banner.style.display = 'block';
+        banner.innerText = msg;
+        setTimeout(function() { banner.style.display = 'none'; }, 5000);
+      }
+    };
+
+    var loadingBar = document.getElementById('loading-bar');
+    var loadingText = document.getElementById('loading-text');
+    var loadingScreen = document.getElementById('loading-screen');
+
+    var script = document.createElement('script');
+    script.src = loaderUrl;
+    script.onload = function() {
+      createUnityInstance(document.getElementById('unity-canvas'), config, function(progress) {
+        var percent = Math.round(progress * 100);
+        loadingBar.style.width = percent + '%';
+        loadingText.innerText = 'Loading... ' + percent + '%';
+      }).then(function(instance) {
+        window.unityInstance = instance;
+        loadingScreen.classList.add('hidden');
+        setTimeout(function() {
+          loadingScreen.style.display = 'none';
+        }, 700);
+      }).catch(function(message) {
+        console.error('[HexaMerge] Unity load error:', message);
+        loadingText.innerText = 'Error: ' + message;
+        loadingText.style.color = '#FF4444';
+      });
+    };
+    document.body.appendChild(script);
+  </script>
+</body>
+</html>

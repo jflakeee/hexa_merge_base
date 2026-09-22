@@ -1,0 +1,352 @@
+/**
+ * @fileoverview Main Canvas renderer for the Hexa Merge web version.
+ * Manages the canvas, coordinate transforms, and full-frame rendering pipeline.
+ * Flat-top hex layout. Canvas origin is top-left, +x right, +y down.
+ */
+
+import { drawCell, drawEmptyCell } from './HexCellView.js';
+import { HexCoord } from '../core/HexCoord.js';
+
+/**
+ * Drawn tile radius as a fraction of the layout hex radius, leaving a gap
+ * between neighbours. Benchmark gap ≈ 0.156·R edge-to-edge while centres keep
+ * the touching pitch (√3·R) → drawn radius = 1 - 0.156/√3 ≈ 0.91.
+ * See docs/benchmark-vs-impl-diff.md §2.
+ */
+const TILE_FILL_RATIO = 0.91;
+
+/**
+ * Main canvas renderer for the hex merge game.
+ */
+export class Renderer {
+    /** @type {HTMLCanvasElement} */
+    _canvas;
+
+    /** @type {CanvasRenderingContext2D} */
+    _ctx;
+
+    /** @type {number} Device pixel ratio */
+    _dpr;
+
+    /** @type {number} Current hex size (outer radius in CSS pixels) */
+    _hexSize;
+
+    /** @type {number} Grid center offset X in CSS pixels */
+    _offsetX;
+
+    /** @type {number} Grid center offset Y in CSS pixels */
+    _offsetY;
+
+    /** @type {number} Grid radius (default 2 for 19-cell hex) */
+    _gridRadius;
+
+    /**
+     * @param {HTMLCanvasElement} canvas
+     * @param {number} [gridRadius=2]
+     */
+    constructor(canvas, gridRadius = 2) {
+        this._canvas = canvas;
+        this._ctx = canvas.getContext('2d');
+        this._dpr = window.devicePixelRatio || 1;
+        this._gridRadius = gridRadius;
+        this._hexSize = 40;
+        this._offsetX = 0;
+        this._offsetY = 0;
+
+        this.resize();
+    }
+
+    // ----------------------------------------------------------
+    // Sizing
+    // ----------------------------------------------------------
+
+    /**
+     * Resize the canvas to match its container and recalculate hexSize.
+     * Call this on window resize, orientation change, or any layout change.
+     *
+     * For maximum crispness the backing store is sized to EXACT device pixels and
+     * the context is scaled so 1 CSS pixel maps to exactly its device-pixel count.
+     * When the caller knows the precise device-pixel box (e.g. from a
+     * ResizeObserver's `devicePixelContentBoxSize`) it can pass it in; otherwise
+     * we derive it from the fractional CSS box × devicePixelRatio. Using the
+     * fractional `getBoundingClientRect()` size (not the rounded `clientWidth`)
+     * avoids a sub-pixel mismatch between the backing store and the displayed box
+     * that the browser would otherwise resample — which softens tile edges.
+     *
+     * @param {number} [deviceW] - Exact backing width in device pixels (optional)
+     * @param {number} [deviceH] - Exact backing height in device pixels (optional)
+     */
+    resize(deviceW, deviceH) {
+        this._dpr = window.devicePixelRatio || 1;
+
+        // Fractional CSS layout size of the canvas box (respects flex layout).
+        const rect = this._canvas.getBoundingClientRect();
+        const cssW = rect.width;
+        const cssH = rect.height;
+        if (cssW <= 0 || cssH <= 0) return; // not laid out / hidden
+
+        // Backing store in exact device pixels.
+        const backingW = Math.max(1, Math.round(deviceW != null ? deviceW : cssW * this._dpr));
+        const backingH = Math.max(1, Math.round(deviceH != null ? deviceH : cssH * this._dpr));
+        if (this._canvas.width !== backingW) this._canvas.width = backingW;
+        if (this._canvas.height !== backingH) this._canvas.height = backingH;
+
+        // Map CSS-pixel drawing coordinates onto the device-pixel backing store
+        // exactly (handles fractional dpr and sub-pixel box sizes without resampling).
+        this._ctx.setTransform(backingW / cssW, 0, 0, backingH / cssH, 0, 0);
+
+        // Calculate hex size to fit the grid within the canvas area (CSS pixels).
+        const gridDiameter = this._gridRadius * 2 + 1;
+        this._hexSize = Math.min(cssW, cssH) * 0.85 / gridDiameter / Math.sqrt(3);
+
+        // Center the grid in the canvas (CSS pixels — matches InputManager's
+        // getBoundingClientRect-based pointer coordinates).
+        this._offsetX = cssW / 2;
+        this._offsetY = cssH / 2;
+    }
+
+    // ----------------------------------------------------------
+    // Coordinate Transforms
+    // ----------------------------------------------------------
+
+    /**
+     * Convert hex axial coordinates (q, r) to screen pixel coordinates.
+     * Flat-top hex layout. Returns position in CSS pixel space.
+     * @param {number} q
+     * @param {number} r
+     * @returns {{x: number, y: number}}
+     */
+    hexToPixel(q, r) {
+        const x = this._offsetX + this._hexSize * 1.5 * q;
+        const y = this._offsetY + this._hexSize * Math.sqrt(3) * (r + q / 2);
+        return { x, y };
+    }
+
+    /**
+     * Convert screen pixel coordinates to the nearest hex coordinate.
+     * Uses cube rounding for accurate inverse mapping.
+     * @param {number} px - Pixel x in CSS coordinates
+     * @param {number} py - Pixel y in CSS coordinates
+     * @returns {HexCoord}
+     */
+    pixelToHex(px, py) {
+        // Subtract offset to get hex-local coordinates
+        const localX = px - this._offsetX;
+        const localY = py - this._offsetY;
+
+        // Inverse of flat-top hex: localX = hexSize * 1.5 * q
+        //                           localY = hexSize * sqrt(3) * (r + q/2)
+        const q = (2 / 3) * localX / this._hexSize;
+        const r = (-1 / 3) * localX / this._hexSize
+                + (Math.sqrt(3) / 3) * localY / this._hexSize;
+
+        // Cube round
+        const s = -q - r;
+        let rq = Math.round(q);
+        let rr = Math.round(r);
+        const rs = Math.round(s);
+
+        const dq = Math.abs(rq - q);
+        const dr = Math.abs(rr - r);
+        const ds = Math.abs(rs - s);
+
+        if (dq > dr && dq > ds) {
+            rq = -rr - rs;
+        } else if (dr > ds) {
+            rr = -rq - rs;
+        }
+
+        return new HexCoord(rq, rr);
+    }
+
+    // ----------------------------------------------------------
+    // Main Render Pipeline
+    // ----------------------------------------------------------
+
+    /**
+     * Render a full frame.
+     * @param {import('../core/HexGrid.js').HexGrid} grid - The game grid
+     * @param {import('../animation/TileAnimator.js').TileAnimator} [animations=null]
+     * @param {import('../animation/MergeEffect.js').MergeEffect} [effects=null]
+     */
+    render(grid, animations = null, effects = null, fireworks = null) {
+        const ctx = this._ctx;
+        // Clear the full board area in CSS-pixel space. Offsets are cssW/2, cssH/2,
+        // so the canvas spans (0,0)..(offsetX*2, offsetY*2) in the current transform.
+        const containerW = this._offsetX * 2;
+        const containerH = this._offsetY * 2;
+
+        // 1) Clear entire canvas
+        ctx.clearRect(0, 0, containerW, containerH);
+
+        // 1b) Background fireworks (behind the board)
+        if (fireworks) {
+            fireworks.draw(ctx);
+        }
+
+        // 2) Draw board background (empty cell placeholders)
+        this._drawBackground(ctx, grid);
+
+        // 3) Draw tiles
+        this._drawTiles(ctx, grid, animations);
+
+        // 3b) Draw merge movers (tiles sliding toward their tree parent)
+        if (animations && animations.getMergeMovers) {
+            const drawSize = this._hexSize * TILE_FILL_RATIO;
+            for (const m of animations.getMergeMovers()) {
+                drawCell(ctx, m.x, m.y, drawSize, m.value, {
+                    scale: 1,
+                    alpha: m.alpha,
+                    highlight: true,
+                });
+            }
+        }
+
+        // 4) Draw effects (particles, splashes)
+        if (effects) {
+            effects.draw(ctx);
+        }
+
+        // 5) Draw overlay animations (score popups, etc.)
+        if (animations) {
+            this._drawAnimations(ctx, animations);
+        }
+    }
+
+    /**
+     * Draw empty cell hexagons as background placeholders.
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {import('../core/HexGrid.js').HexGrid} grid
+     */
+    _drawBackground(ctx, grid) {
+        const allCells = grid.getAllCells();
+        const drawSize = this._hexSize * TILE_FILL_RATIO;
+        for (const cell of allCells) {
+            const { x, y } = this.hexToPixel(cell.coord.q, cell.coord.r);
+            drawEmptyCell(ctx, x, y, drawSize);
+        }
+    }
+
+    /**
+     * Draw all non-empty tiles on the grid.
+     * Applies animation state (scale, alpha, offset) if available.
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {import('../core/HexGrid.js').HexGrid} grid
+     * @param {import('../animation/TileAnimator.js').TileAnimator|null} animations
+     */
+    _drawTiles(ctx, grid, animations) {
+        const allCells = grid.getAllCells();
+        for (const cell of allCells) {
+            if (cell.isEmpty) continue;
+
+            const coordKey = cell.coord.toKey();
+            const { x, y } = this.hexToPixel(cell.coord.q, cell.coord.r);
+
+            // Check for active animation on this cell
+            let scale = 1;
+            let alpha = 1;
+            let offX = 0;
+            let offY = 0;
+
+            let displayValue = cell.value;
+
+            if (animations) {
+                const animState = animations.getAnimationState(coordKey);
+                if (animState) {
+                    scale = animState.scale;
+                    alpha = animState.alpha;
+                    offX = animState.offsetX;
+                    offY = animState.offsetY;
+                }
+                if (animations.getDisplayValue) {
+                    displayValue = animations.getDisplayValue(coordKey, cell.value);
+                }
+            }
+
+            drawCell(ctx, x + offX, y + offY, this._hexSize * TILE_FILL_RATIO, displayValue, {
+                hasCrown: cell.hasCrown,
+                scale,
+                alpha,
+                highlight: true,
+            });
+        }
+    }
+
+    /**
+     * Draw animation overlays (score popups, board shake, etc.).
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {import('../animation/TileAnimator.js').TileAnimator} animations
+     */
+    _drawAnimations(ctx, animations) {
+        // Score popups
+        if (animations.scorePopups) {
+            for (const popup of animations.scorePopups) {
+                if (popup.elapsed >= popup.duration) continue;
+
+                ctx.save();
+                ctx.globalAlpha = popup.alpha;
+
+                const fontSize = Math.round(20 * popup.scale);
+                ctx.font = `bold ${fontSize}px 'Nunito ExtraBold', 'Nunito', 'Arial Black', sans-serif`;
+                ctx.fillStyle = '#FFFFFF';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 3;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+
+                ctx.strokeText(`+${popup.score}`, popup.x, popup.y);
+                ctx.fillText(`+${popup.score}`, popup.x, popup.y);
+
+                ctx.restore();
+            }
+        }
+
+        // Board shake (game over)
+        // The shake offset is applied globally via animations.getShakeOffset()
+        // This is handled by the game loop wrapping calls with ctx.translate()
+    }
+
+    // ----------------------------------------------------------
+    // Accessors
+    // ----------------------------------------------------------
+
+    /**
+     * Get the current hex size (outer radius).
+     * @returns {number}
+     */
+    getHexSize() {
+        return this._hexSize;
+    }
+
+    /**
+     * Get the canvas element reference.
+     * @returns {HTMLCanvasElement}
+     */
+    getCanvas() {
+        return this._canvas;
+    }
+
+    /**
+     * Get the 2D rendering context.
+     * @returns {CanvasRenderingContext2D}
+     */
+    getContext() {
+        return this._ctx;
+    }
+
+    /**
+     * Get the grid center offset.
+     * @returns {{x: number, y: number}}
+     */
+    getOffset() {
+        return { x: this._offsetX, y: this._offsetY };
+    }
+
+    /**
+     * Get the device pixel ratio.
+     * @returns {number}
+     */
+    getDPR() {
+        return this._dpr;
+    }
+}

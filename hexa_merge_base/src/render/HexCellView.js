@@ -1,0 +1,287 @@
+/**
+ * @fileoverview Hex cell visual rendering for Canvas.
+ * Draws individual hex cells with flat-top orientation, gradients,
+ * text labels, crown icons, and highlight effects.
+ */
+
+import { getColor, getTextColor } from '../config/tileColors.js';
+import { formatValue } from '../core/TileHelper.js';
+
+// ----------------------------------------------------------
+// Hexagon Path
+// ----------------------------------------------------------
+
+/**
+ * Corner rounding radius as a fraction of the hex outer radius.
+ * Measured from the XUP benchmark (docs/benchmark-vs-impl-diff.md §2): r ≈ 0.39·R.
+ */
+export const CORNER_RADIUS_RATIO = 0.39;
+
+/**
+ * Draw a flat-top hexagon path with rounded corners on the given context.
+ * Vertices at 0, 60, 120, 180, 240, 300 degrees; corners rounded via arcTo.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx - Center x
+ * @param {number} cy - Center y
+ * @param {number} size - Outer radius (center to vertex)
+ * @param {number} [cornerRatio=CORNER_RADIUS_RATIO] - Corner radius as fraction of size
+ */
+export function drawHexagon(ctx, cx, cy, size, cornerRatio = CORNER_RADIUS_RATIO) {
+    // Compute the 6 vertices.
+    const verts = [];
+    for (let i = 0; i < 6; i++) {
+        const angleRad = (Math.PI / 180) * (60 * i);
+        verts.push({ x: cx + size * Math.cos(angleRad), y: cy + size * Math.sin(angleRad) });
+    }
+
+    // Corner radius, clamped so it never exceeds half the edge length (edge = size).
+    const r = Math.min(size * cornerRatio, size * 0.5);
+    if (r <= 0.5) {
+        // Degenerate: fall back to sharp polygon.
+        ctx.beginPath();
+        verts.forEach((v, i) => (i === 0 ? ctx.moveTo(v.x, v.y) : ctx.lineTo(v.x, v.y)));
+        ctx.closePath();
+        return;
+    }
+
+    // Rounded polygon: start at first edge midpoint, arcTo around each vertex.
+    const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+    const start = mid(verts[5], verts[0]);
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    for (let i = 0; i < 6; i++) {
+        const cur = verts[i];
+        const nextMid = mid(verts[i], verts[(i + 1) % 6]);
+        ctx.arcTo(cur.x, cur.y, nextMid.x, nextMid.y, r);
+    }
+    ctx.closePath();
+}
+
+// ----------------------------------------------------------
+// Color Helpers
+// ----------------------------------------------------------
+
+/**
+ * Darken a hex color string by a given factor.
+ * @param {string} hex - CSS hex color (e.g. '#FF6B35')
+ * @param {number} factor - 0 = same, 1 = black
+ * @returns {string}
+ */
+function darkenColor(hex, factor) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const dr = Math.round(r * (1 - factor));
+    const dg = Math.round(g * (1 - factor));
+    const db = Math.round(b * (1 - factor));
+    return `rgb(${dr},${dg},${db})`;
+}
+
+/**
+ * Lighten a hex color string by a given factor.
+ * @param {string} hex - CSS hex color
+ * @param {number} factor - 0 = same, 1 = white
+ * @returns {string}
+ */
+function lightenColor(hex, factor) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const lr = Math.round(r + (255 - r) * factor);
+    const lg = Math.round(g + (255 - g) * factor);
+    const lb = Math.round(b + (255 - b) * factor);
+    return `rgb(${lr},${lg},${lb})`;
+}
+
+// ----------------------------------------------------------
+// Cell Drawing
+// ----------------------------------------------------------
+
+/**
+ * Draw a single hex cell with value, gradient, text, crown, and highlight.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx - Center x in canvas coordinates
+ * @param {number} cy - Center y in canvas coordinates
+ * @param {number} size - Hex outer radius
+ * @param {number} value - Tile numeric value
+ * @param {object} [options={}]
+ * @param {boolean} [options.hasCrown=false]
+ * @param {number} [options.scale=1]
+ * @param {number} [options.alpha=1]
+ * @param {boolean} [options.highlight=true]
+ */
+export function drawCell(ctx, cx, cy, size, value, options = {}) {
+    const {
+        hasCrown = false,
+        scale = 1,
+        alpha = 1,
+        highlight = true,
+    } = options;
+
+    if (value <= 0) return;
+
+    const effectiveSize = size * scale;
+    if (effectiveSize <= 0) return;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // --- Background: near-flat solid color with a subtle vertical gradient ---
+    // Benchmark (XUP) tiles are matte, saturated solids separated by black gaps;
+    // the crisp boundary comes from the vivid fill meeting the gap directly, not
+    // from an outline. Keep only a gentle top→bottom shade for slight volume so
+    // the edges stay saturated and read sharply (no edge-darkening, no outline,
+    // no glass highlight — those muddied the perimeter and softened the edge).
+    const bgColor = getColor(value);
+    const topBg = lightenColor(bgColor, 0.12);
+    const botBg = darkenColor(bgColor, 0.10);
+
+    const grad = ctx.createLinearGradient(cx, cy - effectiveSize, cx, cy + effectiveSize);
+    grad.addColorStop(0, topBg);
+    grad.addColorStop(1, botBg);
+
+    drawHexagon(ctx, cx, cy, effectiveSize);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // --- Text: formatValue(value) with dynamic font size ---
+    const display = formatValue(value);
+    if (display) {
+        const textColor = getTextColor(value);
+        const len = display.length;
+        let fontSize;
+        if (len <= 1) fontSize = effectiveSize * 0.7;
+        else if (len <= 2) fontSize = effectiveSize * 0.55;
+        else if (len <= 3) fontSize = effectiveSize * 0.45;
+        else fontSize = effectiveSize * 0.35;
+
+        ctx.fillStyle = textColor;
+        ctx.font = `bold ${Math.round(fontSize)}px 'Nunito ExtraBold', 'Nunito', 'Arial Black', sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(display, cx, cy + 1); // +1 for visual centering
+    }
+
+    // --- Crown icon above the cell ---
+    if (hasCrown) {
+        const crownSize = effectiveSize * 0.35;
+        const crownY = cy - effectiveSize * 0.72;
+        drawCrown(ctx, cx, crownY, crownSize);
+    }
+
+    ctx.restore();
+}
+
+// ----------------------------------------------------------
+// Empty Cell
+// ----------------------------------------------------------
+
+/**
+ * Draw an empty cell placeholder (dark gray hexagon).
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx
+ * @param {number} cy
+ * @param {number} size
+ */
+export function drawEmptyCell(ctx, cx, cy, size) {
+    ctx.save();
+
+    drawHexagon(ctx, cx, cy, size);
+    ctx.fillStyle = '#383840';
+    ctx.fill();
+
+    // Subtle border
+    drawHexagon(ctx, cx, cy, size);
+    ctx.strokeStyle = '#2a2a30';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+// ----------------------------------------------------------
+// Crown Icon
+// ----------------------------------------------------------
+
+/**
+ * Draw a crown icon at the specified position.
+ * 5 peaks with a bottom band and 3 circular gems at peak tips.
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} cx - Center x of the crown
+ * @param {number} cy - Center y of the crown
+ * @param {number} crownSize - Overall size reference
+ */
+export function drawCrown(ctx, cx, cy, crownSize) {
+    const w = crownSize * 2;       // total width
+    const h = crownSize * 1.4;     // total height
+    const halfW = w / 2;
+    const halfH = h / 2;
+
+    // Crown base rectangle
+    const baseTop = cy + halfH * 0.15;
+    const baseBottom = cy + halfH;
+    const baseLeft = cx - halfW * 0.85;
+    const baseRight = cx + halfW * 0.85;
+
+    // 5 peak positions (x, y) - from left to right
+    const peaks = [
+        { x: cx - halfW * 0.8,  y: cy - halfH * 0.6 },
+        { x: cx - halfW * 0.4,  y: cy - halfH * 0.35 },
+        { x: cx,                 y: cy - halfH },
+        { x: cx + halfW * 0.4,  y: cy - halfH * 0.35 },
+        { x: cx + halfW * 0.8,  y: cy - halfH * 0.6 },
+    ];
+
+    // Valley depth between peaks
+    const valleyY = cy + halfH * 0.05;
+
+    ctx.save();
+
+    // Draw crown body path
+    ctx.beginPath();
+    ctx.moveTo(baseLeft, baseBottom);
+    ctx.lineTo(baseLeft, valleyY);
+
+    // Zigzag through peaks
+    ctx.lineTo(peaks[0].x, peaks[0].y);
+    ctx.lineTo((peaks[0].x + peaks[1].x) / 2, valleyY);
+    ctx.lineTo(peaks[1].x, peaks[1].y);
+    ctx.lineTo((peaks[1].x + peaks[2].x) / 2, valleyY);
+    ctx.lineTo(peaks[2].x, peaks[2].y);
+    ctx.lineTo((peaks[2].x + peaks[3].x) / 2, valleyY);
+    ctx.lineTo(peaks[3].x, peaks[3].y);
+    ctx.lineTo((peaks[3].x + peaks[4].x) / 2, valleyY);
+    ctx.lineTo(peaks[4].x, peaks[4].y);
+
+    ctx.lineTo(baseRight, valleyY);
+    ctx.lineTo(baseRight, baseBottom);
+    ctx.closePath();
+
+    // Gold fill with gradient
+    const crownGrad = ctx.createLinearGradient(cx, cy - halfH, cx, cy + halfH);
+    crownGrad.addColorStop(0, '#FFE44D');
+    crownGrad.addColorStop(0.5, '#FFD700');
+    crownGrad.addColorStop(1, '#DAA520');
+    ctx.fillStyle = crownGrad;
+    ctx.fill();
+
+    // Dark gold stroke
+    ctx.strokeStyle = '#B8860B';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Circular gems at 3 main peak tips (indices 0, 2, 4)
+    const gemRadius = crownSize * 0.12;
+    const gemPeaks = [peaks[0], peaks[2], peaks[4]];
+    for (const peak of gemPeaks) {
+        ctx.beginPath();
+        ctx.arc(peak.x, peak.y, gemRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#FF4444';
+        ctx.fill();
+        ctx.strokeStyle = '#CC0000';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+    }
+
+    ctx.restore();
+}
