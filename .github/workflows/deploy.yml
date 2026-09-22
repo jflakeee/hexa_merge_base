@@ -20,6 +20,7 @@ on:
       - 'audio/**'
       - 'src/**'
       - 'home/**'
+      - 'landing/**'
       - '.github/workflows/deploy.yml'
   workflow_dispatch: {}   # 수동 실행(Actions 탭) 허용
 
@@ -63,12 +64,14 @@ jobs:
         run: |
           set -euo pipefail
           cd main
-          # gh-pages 산출물 집합(현재 gh-pages 최상위와 동일하게 유지)
-          FILES="index.html about.html faq.html how-to-play.html privacy.html tips.html ads.txt CNAME .gitattributes"
+          # 기존 게임은 서브경로에 보존하고 루트는 Game Portal 랜딩으로 유지한다.
+          GAME_FILES="index.html about.html faq.html how-to-play.html privacy.html tips.html ads.txt"
           DIRS="Build audio src home"
-          # 디렉터리는 통째로 교체해 삭제된 파일이 남지 않게 함
-          for d in $DIRS; do rm -rf "../gh-pages/$d"; done
-          cp -r $FILES $DIRS "../gh-pages/"
+          rm -rf ../gh-pages/hexa_merge_base
+          mkdir -p ../gh-pages/hexa_merge_base
+          cp -r $GAME_FILES $DIRS ../gh-pages/hexa_merge_base/
+          cp landing/index.html ../gh-pages/index.html
+          cp CNAME .gitattributes ../gh-pages/
 
       - name: Commit and push to gh-pages
         run: |
