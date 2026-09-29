@@ -54,16 +54,42 @@ export class SampleSFX {
      * MUST be called after a user gesture (autoplay policy).
      */
     init() {
-        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        // iOS Safari often creates the context already 'suspended' even when
-        // constructed inside a user-gesture handler; resume() must be called
-        // (still inside the same gesture) to actually unlock audio output.
-        if (this.audioContext.state === 'suspended') {
-            this.audioContext.resume().catch(() => {});
+        if (this.audioContext) {
+            this.unlock();
+            return;
         }
+        // Use media playback routing on iOS, including when the ringer is silent.
+        // Older browsers do not expose AudioSession.
+        try {
+            if (navigator.audioSession) navigator.audioSession.type = 'playback';
+        } catch { /* AudioSession is optional. */ }
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // A touch pointerdown may precede user activation. Keep listening for
+        // touchend/pointerup, and retry after interruptions on later gestures.
+        const unlock = () => this.unlock();
+        for (const event of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) {
+            document.addEventListener(event, unlock, { capture: true, passive: true });
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') this.unlock();
+        });
+        this.unlock();
         for (const [name, url] of Object.entries(this._files)) {
             this._load(name, url);
         }
+    }
+
+    /** Resume synchronously within the gesture, before fetching or decoding. */
+    unlock() {
+        const ctx = this.audioContext;
+        if (!ctx || ctx.state === 'closed' || ctx.state === 'running') return;
+        // WebKit also reports 'interrupted' after backgrounding/phone calls.
+        ctx.resume().catch(() => {});
+        const source = ctx.createBufferSource();
+        source.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+        source.connect(ctx.destination);
+        source.onended = () => source.disconnect();
+        source.start(0);
     }
 
     /**
@@ -96,11 +122,7 @@ export class SampleSFX {
         const buffer = this.buffers[entry.clip];
         if (!buffer) return;
 
-        // iOS Safari can re-suspend the context (e.g. after the tab was
-        // backgrounded); re-resume on every play() call as a safety net.
-        if (this.audioContext.state === 'suspended') {
-            this.audioContext.resume().catch(() => {});
-        }
+        this.unlock();
 
         // Chord entries layer the same clip at several pitch ratios. If
         // `arpeggio` is set, notes are staggered (root first) instead of
