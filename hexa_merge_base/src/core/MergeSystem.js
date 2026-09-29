@@ -107,10 +107,10 @@ export class MergeSystem {
         // cascade animation grouping, not for the merge value).
         const depthLevels = depthGroupsMap.size;
 
-        // Merge value follows the How To Play rule: result = base × 2^floor(log2(N))
-        // where N = total merged tiles. 2 tiles → ×2, 4 → ×4, 8 → ×8
-        // ("at least N tiles → ×N"; thresholds at powers of 2, shape-independent).
-        const mergeExponent = Math.floor(Math.log2(totalCells));
+        // Merge value follows the How To Play rule: result = base × 2^ceil(log2(N))
+        // where N = total merged tiles. 2 tiles → ×2, 3~4 → ×4, 5~8 → ×8, 9~16 → ×16
+        // (multiplier rounds UP to the next power of 2 at or above N, shape-independent).
+        const mergeExponent = Math.ceil(Math.log2(totalCells));
         const mergedValue = this._calculateMergeValue(baseValue, mergeExponent);
 
         // StepValues: one per doubling step (drives intermediate count-up visuals)

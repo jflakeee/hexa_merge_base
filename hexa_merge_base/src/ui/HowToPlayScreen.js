@@ -1,6 +1,6 @@
 /**
  * @fileoverview How To Play overlay — visual merge demos matching the XUP benchmark.
- * Purple "HOW TO PLAY?" header, three "Merge at least N tiles → ×N" rows with
+ * Purple "HOW TO PLAY?" header, three "Merge N tiles → ×N" rows with
  * hexagon clusters and a result hex, plus a pink GOT IT! button.
  * See docs/benchmark-vs-impl-diff.md §5 (menu HOW TO PLAY screen).
  * ES Module - pure web implementation.
@@ -94,7 +94,7 @@ export class HowToPlayScreen {
 
         const text = document.createElement('div');
         text.style.cssText = 'color:#e8e8ee;font-weight:800;font-size:14px;line-height:1.3;';
-        text.innerHTML = `Merge <span style="color:#EB3758">at least ${s.n} tiles</span> for multiply by <span style="color:#EB3758">${s.by}</span>`;
+        text.innerHTML = `Merge <span style="color:#EB3758">${s.n} tiles</span> for multiply by <span style="color:#EB3758">${s.by}</span>`;
         wrap.appendChild(text);
 
         const demo = document.createElement('div');
