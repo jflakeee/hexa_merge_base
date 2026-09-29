@@ -103,14 +103,14 @@ export class MergeSystem {
             if (depth > maxDepth) maxDepth = depth;
         }
 
-        // depthLevels = number of distinct BFS depth levels (used only for the
-        // cascade animation grouping, not for the merge value).
+        // depthLevels = number of distinct BFS depth levels (equals maxDepth for
+        // a connected BFS tree; also drives the cascade animation grouping).
         const depthLevels = depthGroupsMap.size;
 
-        // Merge value follows the How To Play rule: result = base × 2^ceil(log2(N))
-        // where N = total merged tiles. 2 tiles → ×2, 3~4 → ×4, 5~8 → ×8, 9~16 → ×16
-        // (multiplier rounds UP to the next power of 2 at or above N, shape-independent).
-        const mergeExponent = Math.ceil(Math.log2(totalCells));
+        // Merge value follows the BFS tree structure: each depth level absorbed
+        // into its parent doubles the value once, regardless of how many
+        // sibling tiles merge at that level. exponent = tree depth (maxDepth).
+        const mergeExponent = maxDepth;
         const mergedValue = this._calculateMergeValue(baseValue, mergeExponent);
 
         // StepValues: one per doubling step (drives intermediate count-up visuals)
