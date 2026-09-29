@@ -39,10 +39,10 @@ export class SampleSFX {
             mergeStep:   { clip: 'merge', vol: 0.6 },
             chainCombo:  { clip: 'chain', vol: 0.9 },
             milestone:   { clip: 'celebrate', vol: 0.85 },
-            // Crown move — bell chime (종소리) layered into a Cmaj7 chord
-            // (root/M3/5th/M7 pitch ratios) for a richer "화음" feel.
-            // Volume matched to the block merge tick.
-            crownChange: { clip: 'bell', vol: 0.6, chord: [1, 1.2599, 1.4983, 1.8877] },
+            // Crown move — bell chime (종소리) as a quick ascending Cmaj7
+            // arpeggio (root→M3→5th→M7 pitch ratios, 60ms apart) rather than
+            // a single note. Volume matched to the block merge tick.
+            crownChange: { clip: 'bell', vol: 0.6, chord: [1, 1.2599, 1.4983, 1.8877], arpeggio: 0.06 },
             // gameStart intentionally silent — the benchmark plays no start sound
             // (landing video is silent; main capture is silent until first tap).
             gameOver:    { clip: 'celebrate', vol: 0.9 },
@@ -55,6 +55,12 @@ export class SampleSFX {
      */
     init() {
         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // iOS Safari often creates the context already 'suspended' even when
+        // constructed inside a user-gesture handler; resume() must be called
+        // (still inside the same gesture) to actually unlock audio output.
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume().catch(() => {});
+        }
         for (const [name, url] of Object.entries(this._files)) {
             this._load(name, url);
         }
@@ -90,11 +96,20 @@ export class SampleSFX {
         const buffer = this.buffers[entry.clip];
         if (!buffer) return;
 
-        // Chord entries layer the same clip at several pitch ratios
-        // (played together) instead of a single note.
+        // iOS Safari can re-suspend the context (e.g. after the tab was
+        // backgrounded); re-resume on every play() call as a safety net.
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume().catch(() => {});
+        }
+
+        // Chord entries layer the same clip at several pitch ratios. If
+        // `arpeggio` is set, notes are staggered (root first) instead of
+        // starting all at once.
         const rates = entry.chord ? entry.chord.map((r) => r * playbackRate) : [playbackRate];
         const perNoteVol = entry.chord ? 1 / Math.sqrt(rates.length) : 1;
-        for (const rate of rates) {
+        const stagger = entry.arpeggio || 0;
+        const now = this.audioContext.currentTime;
+        rates.forEach((rate, i) => {
             const source = this.audioContext.createBufferSource();
             source.buffer = buffer;
             if (rate !== 1) source.playbackRate.value = rate;
@@ -102,8 +117,8 @@ export class SampleSFX {
             gain.gain.value = entry.vol * volume * perNoteVol;
             source.connect(gain);
             gain.connect(this.audioContext.destination);
-            source.start(0);
-        }
+            source.start(now + i * stagger);
+        });
     }
 
     /** @param {boolean} muted */
