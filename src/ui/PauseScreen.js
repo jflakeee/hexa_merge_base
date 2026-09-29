@@ -93,6 +93,16 @@ export class PauseScreen {
         cont.addEventListener('click', () => { if (this.onResume) this.onResume(); });
         body.appendChild(cont);
 
+        // Footer: last-deploy timestamp (mirrors the loading-screen build stamp
+        // at index.html's #bt span, injected by the CI deploy workflow).
+        const btSpan = document.getElementById('bt');
+        if (btSpan) {
+            const footer = document.createElement('div');
+            footer.textContent = `최근 업데이트: ${btSpan.textContent}`;
+            footer.style.cssText = 'text-align:center;color:#9a9aa2;font-size:11px;margin-top:-4px;';
+            body.appendChild(footer);
+        }
+
         container.appendChild(card);
     }
 
