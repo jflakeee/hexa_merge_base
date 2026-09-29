@@ -149,7 +149,7 @@ export class MergeSystem {
             tapCoord,
             baseValue,
             resultValue: mergedValue,
-            scoreGained: mergedValue * mergeExponent,
+            scoreGained: mergedValue * totalCells,
             mergedCount: totalCells,
             mergedCoords,
             stepValues,
