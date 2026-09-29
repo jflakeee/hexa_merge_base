@@ -1,8 +1,9 @@
 /**
- * @fileoverview How To Play overlay — visual merge demos matching the XUP benchmark.
- * Purple "HOW TO PLAY?" header, three "Merge N tiles → ×N" rows with
- * hexagon clusters and a result hex, plus a pink GOT IT! button.
- * See docs/benchmark-vs-impl-diff.md §5 (menu HOW TO PLAY screen).
+ * @fileoverview How To Play overlay — visual merge demos.
+ * Purple "HOW TO PLAY?" header, three "chain N deep → ×N-th power of 2" rows
+ * with hexagon chains and a result hex, plus a pink GOT IT! button.
+ * Merge value follows the BFS tree depth from the tapped tile, not the raw
+ * tile count — see MergeSystem.tryMerge.
  * ES Module - pure web implementation.
  */
 
@@ -51,11 +52,11 @@ export class HowToPlayScreen {
         body.style.cssText = 'padding:20px;display:flex;flex-direction:column;gap:18px;';
         card.appendChild(body);
 
-        // [count, multiplier, resultValue]
+        // [chain depth, tiles needed for that depth, multiplier, resultValue]
         const steps = [
-            { n: 2, by: 2, result: 4 },
-            { n: 4, by: 4, result: 8 },
-            { n: 8, by: 8, result: 16 },
+            { depth: 1, total: 2, by: 2, result: 4 },
+            { depth: 2, total: 3, by: 4, result: 8 },
+            { depth: 3, total: 4, by: 8, result: 16 },
         ];
         for (const s of steps) body.appendChild(this._stepRow(s));
 
@@ -85,8 +86,8 @@ export class HowToPlayScreen {
     }
 
     /**
-     * @private Build one instruction row: text + source cluster → result hex.
-     * @param {{n:number, by:number, result:number}} s
+     * @private Build one instruction row: text + source chain → result hex.
+     * @param {{depth:number, total:number, by:number, result:number}} s
      */
     _stepRow(s) {
         const wrap = document.createElement('div');
@@ -94,17 +95,13 @@ export class HowToPlayScreen {
 
         const text = document.createElement('div');
         text.style.cssText = 'color:#e8e8ee;font-weight:800;font-size:14px;line-height:1.3;';
-        text.innerHTML = `Merge <span style="color:#EB3758">${s.n} tiles</span> for multiply by <span style="color:#EB3758">${s.by}</span>`;
+        text.innerHTML = `Merge a chain <span style="color:#EB3758">${s.depth} deep</span> for multiply by <span style="color:#EB3758">${s.by}</span>`;
         wrap.appendChild(text);
 
         const demo = document.createElement('div');
         demo.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
-        // source cluster (show up to 4 yellow "2" hexes)
-        const shown = Math.min(s.n, 4);
-        for (let i = 0; i < shown; i++) demo.innerHTML += this._hex('#FECC33', '2', 34);
-        if (s.n > shown) {
-            demo.innerHTML += `<span style="color:#9a9aa2;font-weight:900;font-size:16px;">+${s.n - shown}</span>`;
-        }
+        // source chain (one hex per tile, tap-to-deepest)
+        for (let i = 0; i < s.total; i++) demo.innerHTML += this._hex('#FECC33', '2', 34);
         // arrow
         demo.innerHTML += `<span style="color:#9B30FF;font-size:22px;font-weight:900;">→</span>`;
         // result hex (pink)
