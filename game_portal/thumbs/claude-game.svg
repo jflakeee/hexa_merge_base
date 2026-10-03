@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+<defs><radialGradient id="bg"><stop stop-color="#363047"/><stop offset="1" stop-color="#14141e"/></radialGradient><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity=".04"/></pattern></defs>
+<rect width="800" height="450" fill="url(#bg)"/><rect width="800" height="450" fill="url(#grid)"/>
+<circle cx="400" cy="180" r="116" fill="none" stroke="#e07856" stroke-opacity=".18" stroke-width="2"/><circle cx="400" cy="180" r="78" fill="none" stroke="#e07856" stroke-opacity=".3" stroke-dasharray="5 10"/>
+<g fill="#e07856"><rect x="377" y="157" width="46" height="46" rx="5" stroke="#ffe4d9" stroke-width="3"/><path d="m400 111 6 13-6 13-6-13z" fill="#ffdb91"/></g>
+<g fill="#9271cb" stroke="#c1a4eb" stroke-width="2"><rect x="271" y="124" width="24" height="24" rx="3"/><rect x="493" y="206" width="24" height="24" rx="3"/><rect x="466" y="86" width="24" height="24" rx="3"/><rect x="313" y="243" width="24" height="24" rx="3"/></g>
+<text x="400" y="337" fill="#fff5ef" font-family="Arial,sans-serif" font-size="52" font-weight="700" text-anchor="middle" letter-spacing="3">CLAUDE GAME</text>
+<text x="400" y="379" fill="#e4ac98" font-family="Arial,sans-serif" font-size="19" text-anchor="middle" letter-spacing="6">IDLE / SURVIVAL RPG</text>
+</svg>

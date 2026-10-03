@@ -1,0 +1,24 @@
+{
+  "name": "스도쿠",
+  "short_name": "스도쿠",
+  "description": "스도쿠 클래식 퍼즐 게임",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F0F6FF",
+  "theme_color": "#2979FF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232979FF'/><text x='50' y='68' font-size='50' font-weight='bold' fill='white' text-anchor='middle' font-family='system-ui'>9</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232979FF'/><text x='50' y='68' font-size='50' font-weight='bold' fill='white' text-anchor='middle' font-family='system-ui'>9</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

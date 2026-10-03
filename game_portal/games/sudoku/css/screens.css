@@ -1,0 +1,1150 @@
+/* ============================================
+   screens.css - Screen-specific Layouts
+   All individual screen component styles
+   ============================================ */
+
+/* ===========================
+   Game Play Screen
+   =========================== */
+
+/* --- Game Header --- */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+.game-score {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* --- Game Info Bar --- */
+.game-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  flex-shrink: 0;
+  gap: var(--spacing-xs);
+}
+
+.game-info-bar > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.info-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.info-mistakes .info-value {
+  color: var(--text-primary);
+}
+
+.btn-pause {
+  color: var(--text-secondary);
+}
+
+/* --- Toolbar --- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: var(--spacing-md) var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.tool-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: var(--spacing-sm);
+  min-width: 56px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.tool-btn:hover {
+  background: var(--cell-highlight);
+}
+
+.tool-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.tool-label {
+  font-size: 0.65rem;
+  font-weight: 500;
+}
+
+.tool-status {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--cell-highlight);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+}
+
+.tool-btn.active-tool .tool-status {
+  color: var(--bg-white);
+  background: var(--primary);
+}
+
+.tool-badge {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 0.6rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  padding: 0 4px;
+}
+
+/* --- Number Pad --- */
+.numberpad {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+.num-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: #FFFFFF;
+  font-size: 1.25rem;
+  font-weight: 700;
+  transition: all var(--transition-fast);
+  touch-action: manipulation;
+  user-select: none;
+  box-shadow: 0 2px 4px rgba(41, 121, 255, 0.25);
+}
+
+.num-btn:hover {
+  background: var(--primary-dark);
+  box-shadow: 0 3px 8px rgba(41, 121, 255, 0.35);
+}
+
+.num-btn:active {
+  background: var(--primary-dark);
+  box-shadow: none;
+}
+
+.num-btn.disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.num-btn.locked {
+  box-shadow: 0 0 0 2px var(--primary);
+  background: var(--highlight-same);
+  color: var(--primary);
+}
+
+/* Responsive number pad sizing */
+@media (min-width: 380px) {
+  .num-btn {
+    width: 38px;
+    height: 50px;
+    font-size: 1.3rem;
+  }
+}
+
+@media (min-width: 410px) {
+  .num-btn {
+    width: 40px;
+    height: 52px;
+    font-size: 1.35rem;
+    gap: 8px;
+  }
+}
+
+
+/* ===========================
+   Main Screen
+   =========================== */
+
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+}
+
+.main-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.streak-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.streak-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-md) var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+/* --- Daily Challenge Card --- */
+.daily-challenge-card {
+  background: linear-gradient(135deg, var(--complete-gradient-start), var(--complete-gradient-end));
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-lg);
+  color: #FFFFFF;
+  text-align: center;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.daily-challenge-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -30%;
+  width: 120px;
+  height: 120px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+.daily-challenge-card::after {
+  content: '';
+  position: absolute;
+  bottom: -40%;
+  left: -20%;
+  width: 100px;
+  height: 100px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+}
+
+.daily-challenge-card:active {
+  transform: scale(0.98);
+}
+
+.daily-card-icon {
+  font-size: 2rem;
+  margin-bottom: var(--spacing-sm);
+}
+
+.daily-card-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+.daily-card-date {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: var(--spacing-xs) 0 var(--spacing-md);
+}
+
+.daily-card-btn {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  padding: 8px 28px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+  transition: background var(--transition-fast);
+}
+
+.daily-card-btn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Best Score Section --- */
+.best-score-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  gap: var(--spacing-xs);
+}
+
+.best-score-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.best-score-value {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.trophy-icon {
+  font-size: 1.2rem;
+}
+
+.best-score-number {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Continue & New Game Buttons --- */
+.btn-continue-game {
+  flex-direction: column;
+  padding: 16px 24px;
+}
+
+.btn-new-game {
+  margin-top: var(--spacing-xs);
+}
+
+
+/* ===========================
+   Game Complete Screen
+   =========================== */
+
+#screen-complete {
+  background: linear-gradient(180deg, var(--complete-gradient-start) 0%, var(--complete-gradient-end) 100%);
+  color: #FFFFFF;
+}
+
+.complete-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  position: relative;
+  text-align: center;
+}
+
+.confetti-area {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.complete-icon {
+  font-size: 3.5rem;
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  z-index: 5;
+}
+
+.complete-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  margin-bottom: var(--spacing-sm);
+  position: relative;
+  z-index: 5;
+}
+
+.complete-message {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+  z-index: 5;
+}
+
+.complete-stats {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: var(--spacing-lg);
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 5;
+}
+
+.complete-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
+}
+
+.complete-stat-row:not(:last-child) {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.complete-stat-row .stat-label {
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
+
+.complete-stat-row .stat-value {
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.complete-high-scores {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: var(--spacing-xl);
+  position: relative;
+  z-index: 5;
+}
+
+.complete-high-scores h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  opacity: 0.85;
+  margin-bottom: var(--spacing-md);
+}
+
+.high-score-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.high-score-item {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: center;
+}
+
+.hs-label {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+  margin-bottom: 2px;
+}
+
+.hs-value {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.complete-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  width: 100%;
+  max-width: 260px;
+  position: relative;
+  z-index: 5;
+}
+
+.complete-actions .btn-primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.complete-actions .btn-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.complete-actions .btn-secondary {
+  background: transparent;
+  color: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+}
+
+.complete-actions .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+
+/* ===========================
+   Daily Challenge Screen
+   =========================== */
+
+.daily-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
+}
+
+.daily-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.daily-trophy {
+  font-size: 2.5rem;
+}
+
+/* --- Month Tabs --- */
+.daily-month-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-sm) var(--spacing-md);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.daily-month-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.month-tab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-main);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.month-tab.active {
+  background: var(--primary);
+  color: #FFFFFF;
+}
+
+/* --- Calendar Header --- */
+.daily-calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.calendar-year-month {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.calendar-star-count {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* --- Calendar Grid --- */
+.daily-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  padding: 0 var(--spacing-lg);
+}
+
+.calendar-weekday {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: var(--spacing-sm) 0;
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.calendar-day:hover {
+  background: var(--cell-highlight);
+}
+
+.calendar-day.today {
+  background: var(--primary);
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.calendar-day.completed {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.calendar-day.completed::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+}
+
+.calendar-day.future {
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.calendar-day.empty {
+  pointer-events: none;
+}
+
+/* --- Daily Play Section --- */
+.daily-play-section {
+  padding: var(--spacing-lg);
+}
+
+
+/* ===========================
+   Profile Screen
+   =========================== */
+
+.profile-header {
+  padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+}
+
+.profile-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+.profile-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 0 var(--spacing-md);
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-md);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+  gap: var(--spacing-md);
+}
+
+.menu-item:hover {
+  background: var(--bg-main);
+}
+
+.menu-item:active {
+  background: var(--cell-highlight);
+}
+
+.menu-icon {
+  font-size: 1.3rem;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.menu-label {
+  flex: 1;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: left;
+}
+
+.menu-arrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+
+/* ===========================
+   Statistics Screen
+   =========================== */
+
+/* --- Stats Tabs --- */
+.stats-tabs {
+  display: flex;
+  overflow-x: auto;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-md);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  border-bottom: 1px solid var(--cell-border);
+}
+
+.stats-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.stats-tab {
+  flex-shrink: 0;
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.stats-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* --- Stats Content --- */
+.stats-content {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.stats-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.stats-section-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--spacing-sm);
+}
+
+.stats-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cell-border);
+  font-size: 0.9rem;
+}
+
+.stats-row span:first-child {
+  color: var(--text-primary);
+}
+
+.stat-val {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Stats Progress Bar --- */
+.stat-bar {
+  width: 100%;
+  height: 6px;
+  background: var(--cell-border);
+  border-radius: var(--radius-full);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 500ms ease;
+  min-width: 0;
+}
+
+.stats-row.has-bar {
+  flex-wrap: wrap;
+}
+
+.stats-row.has-bar > .stat-bar {
+  flex-basis: 100%;
+}
+
+/* --- High Score Bar (horizontal comparison) --- */
+.hs-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--cell-border);
+  border-radius: var(--radius-full);
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.hs-bar-fill {
+  height: 100%;
+  background: var(--primary);
+  border-radius: var(--radius-full);
+  transition: width 500ms ease;
+}
+
+.btn-reset-stats {
+  margin-top: var(--spacing-lg);
+  color: var(--text-error);
+  font-size: 0.85rem;
+}
+
+
+/* ===========================
+   Awards Screen
+   =========================== */
+
+.awards-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--cell-border);
+}
+
+.awards-tab {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.awards-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+.awards-content {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.awards-year {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.awards-year-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.awards-months-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-md);
+}
+
+.award-month {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--bg-main);
+}
+
+.award-month-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.award-month-count {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.award-month-icon {
+  font-size: 1.4rem;
+  opacity: 0.4;
+}
+
+.award-month.has-awards .award-month-icon {
+  opacity: 1;
+}
+
+/* Challenge achievements */
+.award-month.challenge-item {
+  text-align: center;
+}
+
+.award-month.challenge-item .award-month-icon {
+  font-size: 1.6rem;
+  opacity: 0.3;
+  filter: grayscale(1);
+  transition: all var(--transition-normal);
+}
+
+.award-month.challenge-item.achieved .award-month-icon {
+  opacity: 1;
+  filter: none;
+}
+
+.award-month.challenge-item.achieved {
+  background: linear-gradient(135deg, rgba(41, 121, 255, 0.1), rgba(41, 121, 255, 0.05));
+}
+
+
+/* ===========================
+   Settings Screen
+   =========================== */
+
+.settings-content {
+  padding: var(--spacing-md) var(--spacing-lg);
+}
+
+.settings-group {
+  margin-bottom: var(--spacing-lg);
+  background: var(--bg-main);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-xs) var(--spacing-md);
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 0;
+}
+
+.setting-row:not(:last-child) {
+  border-bottom: 1px solid rgba(207, 216, 220, 0.5);
+}
+
+.setting-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+
+/* ===========================
+   Tutorial Screen
+   =========================== */
+
+#screen-tutorial {
+  padding-bottom: 0;
+}
+
+.tutorial-slides {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.tutorial-slide {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  text-align: center;
+  position: absolute;
+  inset: 0;
+}
+
+.tutorial-slide.active {
+  display: flex;
+}
+
+.tutorial-illustration {
+  width: 200px;
+  height: 200px;
+  background: var(--bg-main);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--spacing-xl);
+}
+
+.tutorial-grid-demo {
+  width: 120px;
+  height: 120px;
+  border: 2px solid var(--block-border);
+  border-radius: 4px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  background: var(--bg-white);
+}
+
+.tutorial-grid-demo > * {
+  border-right: 1px solid var(--cell-border);
+  border-bottom: 1px solid var(--cell-border);
+}
+
+.tutorial-heading {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+}
+
+.tutorial-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 300px;
+}
+
+/* --- Tutorial Navigation --- */
+.tutorial-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-xl);
+}
+
+.tutorial-dots {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cell-border);
+  transition: all var(--transition-fast);
+}
+
+.dot.active {
+  background: var(--primary);
+  width: 24px;
+  border-radius: var(--radius-full);
+}
+
+/* --- Rules Screen --- */
+.rules-content {
+  padding: var(--spacing-lg);
+}
+
+.rules-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.rules-heading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.rules-text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.btn-skip {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.tutorial-prev,
+.tutorial-next {
+  color: var(--text-secondary);
+}
+
+.tutorial-prev:disabled,
+.tutorial-next:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+
+/* ===========================
+   Tablet Adaptations
+   =========================== */
+
+@media (min-width: 600px) {
+  /* Game screen: expand grid and spacing */
+  .grid-container {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+
+  .sudoku-grid {
+    max-width: 480px;
+  }
+
+  .cell {
+    font-size: 1.7rem;
+  }
+
+  /* Distribute extra vertical space evenly */
+  #screen-game .grid-container {
+    flex: 1;
+    align-items: center;
+  }
+
+  .num-btn {
+    width: 48px;
+    height: 58px;
+    font-size: 1.45rem;
+  }
+
+  .numberpad {
+    gap: 10px;
+  }
+
+  .toolbar {
+    padding: var(--spacing-md) var(--spacing-xl);
+  }
+}
