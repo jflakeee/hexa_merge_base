@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "bars": {
+    "hp": 60.008,
+    "trail": 100
+  },
+  "settlement": {
+    "first": 132,
+    "second": 132
+  },
+  "bossEnding": {
+    "width": "0%",
+    "dialog": false,
+    "ending": true
+  },
+  "videoPath": "D:\\htdocs\\claude_game\\claude_game\\docs\\qa\\2026-10-05\\presentation\\video\\e237cc92f6d2f839b086e208ad317d67.webm",
+  "checks": [
+    "motion toggle",
+    "damage history",
+    "leader tint restored",
+    "single kill reward",
+    "repeat end settles once",
+    "boss death then result",
+    "reward flight shutdown cleanup",
+    "reduced motion camera",
+    "mobile and desktop"
+  ],
+  "passed": true
+}

@@ -1,0 +1,27 @@
+{
+  "kind": "function-level probes; not visual or user testing",
+  "autoEquip": {
+    "oldItemSum": 15,
+    "candidateSum": 18,
+    "equipped": true,
+    "before": {
+      "atk": 31,
+      "def": 26,
+      "crit": 0.05,
+      "setPieces": 2
+    },
+    "after": {
+      "atk": 27,
+      "def": 21,
+      "crit": 0.15000000000000002,
+      "setPieces": 1
+    },
+    "interpretation": "Automatic replacement loses set bonus but gains crit; overall combat value not measured"
+  },
+  "charge": {
+    "playerCenterDistanceToSegment": 15,
+    "hpAfter": 79.75,
+    "hurt": true,
+    "interpretation": "Center-distance rule confirmed; visual width requires explicit player hitbox/contact-envelope review, not proof of unfairness"
+  }
+}

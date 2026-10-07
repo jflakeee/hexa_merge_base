@@ -1,0 +1,14 @@
+{
+  "source": "c094234",
+  "bundle": "/claude_game/assets/index-CidQAHNm.js",
+  "cpuThrottle": 4,
+  "viewport": "390x844",
+  "status": 200,
+  "durationMs": 10006,
+  "frames": 166,
+  "averageFps": 16.6,
+  "p95FrameMs": 66.7,
+  "over32msPercent": 98.8,
+  "heapUsedBytes": 15200000,
+  "errors": []
+}

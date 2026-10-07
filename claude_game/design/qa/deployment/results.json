@@ -1,0 +1,15 @@
+{
+  "sourceCommit": "cf25c97",
+  "gamePages": "fd17f7a",
+  "domainPages": "35e3ac8",
+  "bundle": "/claude_game/assets/index-wX80CaSN.js",
+  "status": 200,
+  "checks": [
+    "apex URL redirect and game load",
+    "production build without debug hook",
+    "motion setting persists",
+    "combat and result",
+    "portal iframe new bundle"
+  ],
+  "errors": []
+}

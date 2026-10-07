@@ -1,0 +1,3 @@
+# Downloaded reference media and raw page data stay local.
+media/
+page-metadata.json

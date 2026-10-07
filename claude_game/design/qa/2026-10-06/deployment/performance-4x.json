@@ -1,0 +1,24 @@
+{
+  "source": "957ab50",
+  "bundle": "/claude_game/assets/index-2Rgyv_5u.js",
+  "cpuThrottle": 4,
+  "viewport": "390x844",
+  "status": 200,
+  "idle": {
+    "durationMs": 5022,
+    "frames": 129,
+    "averageFps": 25.7,
+    "p95FrameMs": 66.6,
+    "over32msPercent": 99.2,
+    "heapUsedBytes": 14300000
+  },
+  "combat": {
+    "durationMs": 5010,
+    "frames": 86,
+    "averageFps": 17.2,
+    "p95FrameMs": 66.7,
+    "over32msPercent": 98.8,
+    "heapUsedBytes": 14300000
+  },
+  "errors": []
+}

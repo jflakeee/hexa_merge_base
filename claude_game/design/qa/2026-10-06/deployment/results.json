@@ -1,0 +1,16 @@
+{
+  "source": "957ab50",
+  "gamePages": "4ef7281",
+  "domainPages": "ae656bc",
+  "bundle": "/claude_game/assets/index-2Rgyv_5u.js",
+  "status": 200,
+  "errors": [],
+  "checks": [
+    "desktop preparation 1180px",
+    "boss combat 520px and return",
+    "mobile survival and return",
+    "motion preference persists",
+    "portal loads release",
+    "production debug hook absent"
+  ]
+}

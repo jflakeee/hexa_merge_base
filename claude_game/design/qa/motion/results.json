@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "errors": [],
+  "frames": [
+    "hero-step-a",
+    "hero-step-b",
+    "hero-strike",
+    "hero-ready"
+  ],
+  "warningResult": {
+    "priority": "돌진 예고",
+    "combined": "돌진 예고 · 원형 붕괴 예고"
+  },
+  "checks": [
+    "intro freezes timer",
+    "skip resumes combat",
+    "movement poses for every enemy silhouette",
+    "reduced motion static pose",
+    "reduced motion skips intro",
+    "shared hazard geometry overlay",
+    "warning priority and merge",
+    "reward equipment comparison",
+    "result restored from save"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "source": "https://www.youtube.com/watch?v=25olpo56QT4",
+  "method": "Playwright page inspection and incomplete MSE capture; yt-dlp + FFmpeg full download",
+  "sha256": "54e3d7348d8447f002c8ef284146e017b0cfba532bf36137a97c2e18f469f0b8",
+  "probe": {
+    "programs": [],
+    "stream_groups": [],
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "av1",
+        "width": 1280,
+        "height": 720,
+        "duration": "212.633333"
+      },
+      {
+        "index": 1,
+        "codec_name": "opus",
+        "duration": "212.661000"
+      }
+    ],
+    "format": {
+      "duration": "212.661000",
+      "size": "7572578"
+    }
+  },
+  "sample_seconds": [
+    0,
+    17,
+    25,
+    35,
+    45,
+    55,
+    61,
+    70,
+    82,
+    90,
+    100,
+    112,
+    116,
+    128,
+    136,
+    145,
+    151,
+    160,
+    173,
+    190,
+    195,
+    205
+  ],
+  "partial_files": [
+    "stream-0.webm",
+    "stream-1.mp4"
+  ],
+  "full_decode_verification": {
+    "video_frames": 6379,
+    "audio_frames": 10633,
+    "tool": "ffprobe -count_frames",
+    "status": "completed"
+  }
+}

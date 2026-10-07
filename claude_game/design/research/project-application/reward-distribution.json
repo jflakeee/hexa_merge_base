@@ -1,0 +1,185 @@
+{
+  "totalGradeWeight": 100,
+  "assumptions": {
+    "idleItemRollsPerKill": 1,
+    "survivalItemRollChancePerKill": 0.25,
+    "gachaCost": 20,
+    "geometricIndependentRolls": true,
+    "cubeConsumesThreeIdentifiedUnsocketedItemsOfSameGrade": true,
+    "inventoryOverflowConvertsItemToGold": true,
+    "bossClearGuaranteesOneEpicItem": true
+  },
+  "grades": {
+    "normal": {
+      "probabilityPerItemRoll": 1,
+      "expectedRolls": 1,
+      "rollsFor95Percent": 1,
+      "sources": {
+        "idleKill": {
+          "probabilityPerKillOrPull": 1,
+          "expectedEvents": 1,
+          "eventsFor95Percent": 1,
+          "gachaGoldFor95Percent": null
+        },
+        "survivalKill": {
+          "probabilityPerKillOrPull": 0.25,
+          "expectedEvents": 4,
+          "eventsFor95Percent": 11,
+          "gachaGoldFor95Percent": null
+        },
+        "gacha": {
+          "probabilityPerKillOrPull": 1,
+          "expectedEvents": 1,
+          "eventsFor95Percent": 1,
+          "gachaGoldFor95Percent": 20
+        }
+      },
+      "fromNormalByCube": null
+    },
+    "magic": {
+      "probabilityPerItemRoll": 0.42,
+      "expectedRolls": 2.380952380952381,
+      "rollsFor95Percent": 6,
+      "sources": {
+        "idleKill": {
+          "probabilityPerKillOrPull": 0.42,
+          "expectedEvents": 2.380952380952381,
+          "eventsFor95Percent": 6,
+          "gachaGoldFor95Percent": null
+        },
+        "survivalKill": {
+          "probabilityPerKillOrPull": 0.105,
+          "expectedEvents": 9.523809523809524,
+          "eventsFor95Percent": 28,
+          "gachaGoldFor95Percent": null
+        },
+        "gacha": {
+          "probabilityPerKillOrPull": 0.42,
+          "expectedEvents": 2.380952380952381,
+          "eventsFor95Percent": 6,
+          "gachaGoldFor95Percent": 120
+        }
+      },
+      "fromNormalByCube": {
+        "sourceItems": 3,
+        "cubeGold": 30
+      }
+    },
+    "rare": {
+      "probabilityPerItemRoll": 0.17,
+      "expectedRolls": 5.88235294117647,
+      "rollsFor95Percent": 17,
+      "sources": {
+        "idleKill": {
+          "probabilityPerKillOrPull": 0.17,
+          "expectedEvents": 5.88235294117647,
+          "eventsFor95Percent": 17,
+          "gachaGoldFor95Percent": null
+        },
+        "survivalKill": {
+          "probabilityPerKillOrPull": 0.0425,
+          "expectedEvents": 23.52941176470588,
+          "eventsFor95Percent": 69,
+          "gachaGoldFor95Percent": null
+        },
+        "gacha": {
+          "probabilityPerKillOrPull": 0.17,
+          "expectedEvents": 5.88235294117647,
+          "eventsFor95Percent": 17,
+          "gachaGoldFor95Percent": 340
+        }
+      },
+      "fromNormalByCube": {
+        "sourceItems": 9,
+        "cubeGold": 150
+      }
+    },
+    "epic": {
+      "probabilityPerItemRoll": 0.05,
+      "expectedRolls": 20,
+      "rollsFor95Percent": 59,
+      "sources": {
+        "idleKill": {
+          "probabilityPerKillOrPull": 0.05,
+          "expectedEvents": 20,
+          "eventsFor95Percent": 59,
+          "gachaGoldFor95Percent": null
+        },
+        "survivalKill": {
+          "probabilityPerKillOrPull": 0.0125,
+          "expectedEvents": 80,
+          "eventsFor95Percent": 239,
+          "gachaGoldFor95Percent": null
+        },
+        "gacha": {
+          "probabilityPerKillOrPull": 0.05,
+          "expectedEvents": 20,
+          "eventsFor95Percent": 59,
+          "gachaGoldFor95Percent": 1180
+        }
+      },
+      "fromNormalByCube": {
+        "sourceItems": 27,
+        "cubeGold": 540
+      }
+    },
+    "set": {
+      "probabilityPerItemRoll": 0.02,
+      "expectedRolls": 50,
+      "rollsFor95Percent": 149,
+      "sources": {
+        "idleKill": {
+          "probabilityPerKillOrPull": 0.02,
+          "expectedEvents": 50,
+          "eventsFor95Percent": 149,
+          "gachaGoldFor95Percent": null
+        },
+        "survivalKill": {
+          "probabilityPerKillOrPull": 0.005,
+          "expectedEvents": 200,
+          "eventsFor95Percent": 598,
+          "gachaGoldFor95Percent": null
+        },
+        "gacha": {
+          "probabilityPerKillOrPull": 0.02,
+          "expectedEvents": 50,
+          "eventsFor95Percent": 149,
+          "gachaGoldFor95Percent": 2980
+        }
+      },
+      "fromNormalByCube": {
+        "sourceItems": 81,
+        "cubeGold": 1740
+      }
+    },
+    "unique": {
+      "probabilityPerItemRoll": 0.005,
+      "expectedRolls": 200,
+      "rollsFor95Percent": 598,
+      "sources": {
+        "idleKill": {
+          "probabilityPerKillOrPull": 0.005,
+          "expectedEvents": 200,
+          "eventsFor95Percent": 598,
+          "gachaGoldFor95Percent": null
+        },
+        "survivalKill": {
+          "probabilityPerKillOrPull": 0.00125,
+          "expectedEvents": 800,
+          "eventsFor95Percent": 2396,
+          "gachaGoldFor95Percent": null
+        },
+        "gacha": {
+          "probabilityPerKillOrPull": 0.005,
+          "expectedEvents": 200,
+          "eventsFor95Percent": 598,
+          "gachaGoldFor95Percent": 11960
+        }
+      },
+      "fromNormalByCube": {
+        "sourceItems": 243,
+        "cubeGold": 5370
+      }
+    }
+  }
+}

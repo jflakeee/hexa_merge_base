@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "errors": [],
+  "steps": [
+    "find first gear",
+    "compare stat changes",
+    "equip and review current stats",
+    "start explicit survival combat",
+    "hide guide after first kill"
+  ]
+}

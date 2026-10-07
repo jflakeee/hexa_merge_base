@@ -1,0 +1,26 @@
+{
+  "snapshot_date": "2026-10-05",
+  "kind": "analytical examples, not gameplay measurements",
+  "assumptions": [
+    "Independent base grade rolls with constant probability; no pity or guaranteed rewards",
+    "Level 1 with zero EXP; only 3 EXP per idle kill for the EXP example",
+    "No conversion from roll or kill counts into elapsed play time"
+  ],
+  "grade_weights": {
+    "normal": 58,
+    "magic": 25,
+    "rare": 12,
+    "epic": 3,
+    "set": 1.5,
+    "unique": 0.5
+  },
+  "unique_probability": 0.005,
+  "expected_rolls_to_first_unique": 200.0,
+  "rolls_for_50_percent": 139,
+  "rolls_for_90_percent": 460,
+  "rolls_for_95_percent": 598,
+  "probability_no_unique_after_200_rolls": 0.36695782172616703,
+  "target_level": 10,
+  "exp_from_level_1_to_target": 2250,
+  "idle_kills_at_3_exp_only": 750
+}

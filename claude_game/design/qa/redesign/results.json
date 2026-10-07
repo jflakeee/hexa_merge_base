@@ -1,0 +1,29 @@
+{
+  "passed": true,
+  "errors": [],
+  "desktop": {
+    "app": 1180,
+    "game": 790,
+    "panel": 390,
+    "overflow": false
+  },
+  "mobileCombat": 390,
+  "compact": {
+    "heroBottom": 262.1065625,
+    "actionsTop": 275.171875,
+    "overflow": false
+  },
+  "checks": [
+    "first gear hint opens comparison",
+    "comparison reflects set loss",
+    "lock saved and restored",
+    "manual replacement allowed while locked",
+    "details retained after state render",
+    "explicit departure only",
+    "mobile layout",
+    "hazard render fixture",
+    "desktop combat width preserved",
+    "return restores wide preparation",
+    "reduced motion flow"
+  ]
+}
